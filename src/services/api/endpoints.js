@@ -1,0 +1,75 @@
+/**
+ * API Endpoints
+ * Centralized endpoint definitions
+ * Update these based on your actual API endpoints
+ */
+
+const API_ENDPOINTS = {
+  // Authentication
+  AUTH: {
+    LOGIN: "/auth/login",
+    LOGOUT: "/auth/logout",
+    REGISTER: "/auth/register",
+    REFRESH_TOKEN: "/auth/refresh",
+    FORGOT_PASSWORD: "/auth/forgot-password",
+    RESET_PASSWORD: "/auth/reset-password",
+    VERIFY_EMAIL: "/auth/verify-email",
+  },
+
+  // Patients
+  PATIENTS: {
+    // ERPNext/Frappe-style patient resource
+    LIST: "/resource/Patient",
+    CREATE: "/resource/Patient",
+    GET_BY_ID: (id) => `/resource/Patient/${id}`,
+    UPDATE: (id) => `/resource/Patient/${id}`,
+    DELETE: (id) => `/resource/Patient/${id}`,
+    SEARCH: "/resource/Patient",
+  },
+
+  // Appointments
+  APPOINTMENTS: {
+    LIST: "/appointments",
+    CREATE: "/appointments",
+    GET_BY_ID: (id) => `/appointments/${id}`,
+    UPDATE: (id) => `/appointments/${id}`,
+    DELETE: (id) => `/appointments/${id}`,
+    CANCEL: (id) => `/appointments/${id}/cancel`,
+    RESCHEDULE: (id) => `/appointments/${id}/reschedule`,
+  },
+
+  // Billing
+  BILLING: {
+    LIST: "/billing",
+    CREATE: "/billing",
+    GET_BY_ID: (id) => `/billing/${id}`,
+    UPDATE: (id) => `/billing/${id}`,
+    DELETE: (id) => `/billing/${id}`,
+    GENERATE_INVOICE: (id) => `/billing/${id}/invoice`,
+  },
+
+  // Dashboard
+  DASHBOARD: {
+    STATS: "/dashboard/stats",
+    RECENT_ACTIVITIES: "/dashboard/activities",
+    UPCOMING_APPOINTMENTS: "/dashboard/appointments",
+  },
+
+  // Settings
+  SETTINGS: {
+    GET: "/settings",
+    UPDATE: "/settings",
+    CHANGE_PASSWORD: "/settings/password",
+  },
+
+  // Users
+  USERS: {
+    LIST: "/users",
+    CREATE: "/users",
+    GET_BY_ID: (id) => `/users/${id}`,
+    UPDATE: (id) => `/users/${id}`,
+    DELETE: (id) => `/users/${id}`,
+  },
+};
+
+export default API_ENDPOINTS;
