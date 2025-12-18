@@ -5,9 +5,18 @@ import ProtectedRoute from './hoc/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Patients from './pages/Patients';
+import PatientDetail from './pages/PatientDetail';
 import PatientRegistration from './pages/PatientRegistration';
+import PathLab from './pages/PathLab';
+import Collection from './pages/Collection';
+import NewCollection from './pages/NewCollection';
+import LabTest from './pages/LabTest';
+import NewLabTest from './pages/NewLabTest';
+import LabTestResult from './pages/LabTestResult';
+import Consultations from './pages/Consultations';
 import Appointments from './pages/Appointments';
 import Billing from './pages/Billing';
+import ClinicDetails from './pages/ClinicDetails';
 import Settings from './pages/Settings';
 import './App.css';
 
@@ -44,10 +53,74 @@ function App() {
             }
           />
           <Route
+            path="/patients/:id"
+            element={
+              <ProtectedRoute>
+                <PatientDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/patient-registration"
             element={
               <ProtectedRoute>
                 <PatientRegistration />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab"
+            element={
+              <ProtectedRoute>
+                <PathLab />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/collection"
+            element={
+              <ProtectedRoute>
+                <Collection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/collection/new"
+            element={
+              <ProtectedRoute>
+                <NewCollection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/labtest"
+            element={
+              <ProtectedRoute>
+                <LabTest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/labtest/new"
+            element={
+              <ProtectedRoute>
+                <NewLabTest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/labtest/:id/result"
+            element={
+              <ProtectedRoute>
+                <LabTestResult />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/consultations"
+            element={
+              <ProtectedRoute>
+                <Consultations />
               </ProtectedRoute>
             }
           />
@@ -64,6 +137,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/clinic-details"
+            element={
+              <ProtectedRoute>
+                <ClinicDetails />
               </ProtectedRoute>
             }
           />

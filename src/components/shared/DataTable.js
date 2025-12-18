@@ -43,13 +43,16 @@ const TableHeaderCell = styled.th`
 const SortableHeader = styled(TableHeaderCell)`
   cursor: pointer;
   user-select: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 
   &:hover {
     color: #4a90e2;
   }
+`;
+
+const SortableHeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const SortIcon = styled.div`
@@ -209,10 +212,21 @@ const DataTable = ({
   renderCell,
   renderStatus,
   renderActions,
+  // Server-side pagination props
+  serverSide = false,
+  totalCount = 0,
+  currentPageProp,
+  rowsPerPageProp,
+  onPageChange,
+  onRowsPerPageChange,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
+  // Use controlled values if serverSide is true
+  const effectiveCurrentPage = serverSide ? currentPageProp : currentPage;
+  const effectiveRowsPerPage = serverSide ? rowsPerPageProp : rowsPerPage;
 
   const handleSort = (columnKey) => {
     if (!sortableColumns.includes(columnKey)) return;
@@ -226,25 +240,50 @@ const DataTable = ({
     }
   };
 
-  const totalPages = Math.ceil(data.length / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const currentData = data.slice(startIndex, endIndex);
+  // Calculate pagination values
+  const totalPages = serverSide
+    ? Math.ceil(totalCount / effectiveRowsPerPage)
+    : Math.ceil(data.length / effectiveRowsPerPage);
+
+  const startIndex = serverSide
+    ? (effectiveCurrentPage - 1) * effectiveRowsPerPage
+    : (currentPage - 1) * rowsPerPage;
+
+  const endIndex = serverSide
+    ? Math.min(startIndex + effectiveRowsPerPage, totalCount)
+    : startIndex + rowsPerPage;
+
+  const currentData = serverSide ? data : data.slice(startIndex, endIndex);
+
+  const totalRecords = serverSide ? totalCount : data.length;
 
   const handleRowsPerPageChange = (e) => {
-    setRowsPerPage(Number(e.target.value));
-    setCurrentPage(1);
+    const newRowsPerPage = Number(e.target.value);
+    if (serverSide && onRowsPerPageChange) {
+      onRowsPerPageChange(newRowsPerPage);
+    } else {
+      setRowsPerPage(newRowsPerPage);
+      setCurrentPage(1);
+    }
   };
 
   const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+    if (effectiveCurrentPage > 1) {
+      if (serverSide && onPageChange) {
+        onPageChange(effectiveCurrentPage - 1);
+      } else {
+        setCurrentPage(currentPage - 1);
+      }
     }
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
+    if (effectiveCurrentPage < totalPages) {
+      if (serverSide && onPageChange) {
+        onPageChange(effectiveCurrentPage + 1);
+      } else {
+        setCurrentPage(currentPage + 1);
+      }
     }
   };
 
@@ -260,19 +299,21 @@ const DataTable = ({
               if (isSortable) {
                 return (
                   <SortableHeader key={column.key} onClick={() => handleSort(column.key)}>
-                    {column.label}
-                    <SortIcon active={isActive}>
-                      <ChevronUp
-                        style={{
-                          opacity: isActive && sortConfig.direction === "asc" ? 1 : 0.3,
-                        }}
-                      />
-                      <ChevronDown
-                        style={{
-                          opacity: isActive && sortConfig.direction === "desc" ? 1 : 0.3,
-                        }}
-                      />
-                    </SortIcon>
+                    <SortableHeaderContent>
+                      {column.label}
+                      <SortIcon active={isActive}>
+                        <ChevronUp
+                          style={{
+                            opacity: isActive && sortConfig.direction === "asc" ? 1 : 0.3,
+                          }}
+                        />
+                        <ChevronDown
+                          style={{
+                            opacity: isActive && sortConfig.direction === "desc" ? 1 : 0.3,
+                          }}
+                        />
+                      </SortIcon>
+                    </SortableHeaderContent>
                   </SortableHeader>
                 );
               }
@@ -319,7 +360,7 @@ const DataTable = ({
       <PaginationContainer>
         <RowsPerPage>
           <span>Rows per page:</span>
-          <RowsPerPageSelect value={rowsPerPage} onChange={handleRowsPerPageChange}>
+          <RowsPerPageSelect value={effectiveRowsPerPage} onChange={handleRowsPerPageChange}>
             {rowsPerPageOptions.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -329,13 +370,13 @@ const DataTable = ({
         </RowsPerPage>
         <PaginationInfo>
           <span>
-            {startIndex + 1}-{Math.min(endIndex, data.length)} of {data.length}
+            {startIndex + 1}-{Math.min(endIndex, totalRecords)} of {totalRecords}
           </span>
           <PaginationButtons>
-            <PaginationButton onClick={handlePreviousPage} disabled={currentPage === 1}>
+            <PaginationButton onClick={handlePreviousPage} disabled={effectiveCurrentPage === 1}>
               <ChevronLeft />
             </PaginationButton>
-            <PaginationButton onClick={handleNextPage} disabled={currentPage === totalPages}>
+            <PaginationButton onClick={handleNextPage} disabled={effectiveCurrentPage === totalPages}>
               <ChevronRight />
             </PaginationButton>
           </PaginationButtons>

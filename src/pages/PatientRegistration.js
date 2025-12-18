@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Calendar } from "lucide-react";
+import { Calendar, Plus, Minus } from "lucide-react";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -64,9 +64,10 @@ const ProgressBarFill = styled.div`
   border-radius: 4px;
   transition: width 0.3s ease;
   width: ${(props) => {
-    if (props.currentStep === 1) return "33.33%";
-    if (props.currentStep === 2) return "66.66%";
-    if (props.currentStep === 3) return "100%";
+    if (props.currentStep === 1) return "25%";
+    if (props.currentStep === 2) return "50%";
+    if (props.currentStep === 3) return "75%";
+    if (props.currentStep === 4) return "100%";
     return "0%";
   }};
 `;
@@ -258,8 +259,370 @@ const NextButton = styled.button`
   }
 `;
 
+const BackButton = styled.button`
+  background-color: #f5f5f5;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #e8e8e8;
+  }
+`;
+
+const CheckboxGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333333;
+  cursor: pointer;
+`;
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4a90e2;
+`;
+
+const ItemsSection = styled.div`
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  margin-top: 20px;
+`;
+
+const ItemsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+`;
+
+const ItemsTitle = styled.h2`
+  font-size: 18px;
+  font-weight: 600;
+  color: #333333;
+  margin: 0;
+`;
+
+const ItemButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const IconButton = styled.button`
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #f5f5f5;
+    border-color: #4a90e2;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: #333333;
+  }
+`;
+
+const ItemsTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+`;
+
+const TableHead = styled.thead`
+  background-color: #f8f9fa;
+`;
+
+const TableRow = styled.tr`
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const TableHeader = styled.th`
+  padding: 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+  text-transform: uppercase;
+
+  &:first-child {
+    padding-left: 16px;
+    width: 50px;
+  }
+
+  &:last-child {
+    text-align: right;
+    padding-right: 16px;
+  }
+`;
+
+const TableBody = styled.tbody``;
+
+const TableCell = styled.td`
+  padding: 12px;
+  font-size: 14px;
+  color: #333333;
+
+  &:first-child {
+    padding-left: 16px;
+    color: #666666;
+  }
+
+  &:last-child {
+    text-align: right;
+    padding-right: 16px;
+    font-weight: 500;
+  }
+`;
+
+const ItemInput = styled.input`
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+`;
+
+const ItemFooter = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+`;
+
+const FooterItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333333;
+`;
+
+const FooterLabel = styled.span`
+  font-weight: 500;
+`;
+
+const FooterValue = styled.span`
+  font-weight: 600;
+`;
+
+const DiscountInput = styled.input`
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+`;
+
+const BottomSection = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const CalculationCard = styled.div`
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+`;
+
+const CardTitle = styled.h3`
+  font-size: 16px;
+  font-weight: 600;
+  color: #333333;
+  margin: 0 0 16px 0;
+`;
+
+const CalculationRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+    padding-top: 16px;
+    margin-top: 8px;
+    border-top: 2px solid #e0e0e0;
+  }
+`;
+
+const CalculationLabel = styled.span`
+  font-size: 14px;
+  color: #666666;
+  font-weight: ${(props) => (props.bold ? "600" : "400")};
+`;
+
+const CalculationValue = styled.span`
+  font-size: 14px;
+  color: ${(props) => (props.highlight ? "#4a90e2" : "#333333")};
+  font-weight: ${(props) => (props.bold ? "600" : "500")};
+`;
+
+const SubmitButton = styled.button`
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+
+  &:hover {
+    background-color: #357abd;
+  }
+`;
+
+const TagContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  min-height: 48px;
+  align-items: center;
+`;
+
+const Tag = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+`;
+
+const TagRemove = styled.button`
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    color: #1565c0;
+  }
+`;
+
+const TagInput = styled.input`
+  flex: 1;
+  min-width: 150px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #333333;
+  padding: 4px;
+
+  &::placeholder {
+    color: #999999;
+  }
+`;
+
+const RiskFactorsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const RiskFactorOption = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: ${(props) => (props.selected ? "#e3f2fd" : "#ffffff")};
+  border-color: ${(props) => (props.selected ? "#1976d2" : "#e0e0e0")};
+
+  &:hover {
+    border-color: #1976d2;
+  }
+`;
+
+const RiskFactorCheckbox = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4a90e2;
+`;
+
+const RiskFactorLabel = styled.span`
+  font-size: 14px;
+  color: #333333;
+`;
+
 const PatientRegistration = () => {
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -275,6 +638,28 @@ const PatientRegistration = () => {
     assignedDoctor: "",
   });
 
+  const [medicalHistory, setMedicalHistory] = useState({
+    occupation: "",
+    maritalStatus: "",
+    allergies: ["Pollen", "Penicillin"],
+    preExistingConditions: ["Hypertension"],
+    regularMedication: "",
+    surgeryHistory: "",
+    riskFactors: ["Alcohol Consumption"],
+  });
+
+  const [billingData, setBillingData] = useState({
+    referringPractitioner: "",
+    editPostingDate: false,
+    discountPercent: 0,
+    paymentType: "Cash",
+  });
+
+  const [items, setItems] = useState([
+    { no: 1, item: "CONS-GEN", itemName: "General Consultation", qty: 1, rate: 800.0, amount: 800.0 },
+    { no: 2, item: "LAB-CBC", itemName: "Complete Blood Count", qty: 1, rate: 350.0, amount: 350.0 },
+  ]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -283,11 +668,110 @@ const PatientRegistration = () => {
     }));
   };
 
+  const handleBillingChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setBillingData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleMedicalHistoryChange = (e) => {
+    const { name, value } = e.target;
+    setMedicalHistory((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const addTag = (field, value) => {
+    if (value.trim() && !medicalHistory[field].includes(value.trim())) {
+      setMedicalHistory((prev) => ({
+        ...prev,
+        [field]: [...prev[field], value.trim()],
+      }));
+    }
+  };
+
+  const removeTag = (field, tagToRemove) => {
+    setMedicalHistory((prev) => ({
+      ...prev,
+      [field]: prev[field].filter((tag) => tag !== tagToRemove),
+    }));
+  };
+
+  const toggleRiskFactor = (factor) => {
+    setMedicalHistory((prev) => ({
+      ...prev,
+      riskFactors: prev.riskFactors.includes(factor)
+        ? prev.riskFactors.filter((f) => f !== factor)
+        : [...prev.riskFactors, factor],
+    }));
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...items];
+    updatedItems[index][field] = value;
+
+    if (field === "qty" || field === "rate") {
+      updatedItems[index].amount = updatedItems[index].qty * updatedItems[index].rate;
+    }
+
+    setItems(updatedItems);
+  };
+
+  const addItem = () => {
+    const newItem = {
+      no: items.length + 1,
+      item: "",
+      itemName: "",
+      qty: 1,
+      rate: 0,
+      amount: 0,
+    };
+    setItems([...items, newItem]);
+  };
+
+  const removeItem = () => {
+    if (items.length > 1) {
+      setItems(items.slice(0, -1));
+    }
+  };
+
+  const calculateTotals = () => {
+    const totalQty = items.reduce((sum, item) => sum + parseFloat(item.qty || 0), 0);
+    const grossTotal = items.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    const discountAmount = (grossTotal * parseFloat(billingData.discountPercent || 0)) / 100;
+    const netTotal = grossTotal - discountAmount;
+
+    return { totalQty, grossTotal, discountAmount, netTotal };
+  };
+
+  const handleNextStep = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePreviousStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form data:", formData);
-    // Navigate to next step or save
+    if (currentStep < 4) {
+      handleNextStep();
+    } else {
+      // Final submission
+      console.log("Form data:", formData);
+      console.log("Medical History:", medicalHistory);
+      console.log("Billing data:", billingData);
+      console.log("Items:", items);
+      console.log("Final submission");
+      navigate("/patients");
+    }
   };
 
   return (
@@ -298,23 +782,28 @@ const PatientRegistration = () => {
         <ProgressIndicator>
           <ProgressStepsContainer>
             <ProgressStep>
-              <StepLabel active>Step 1: Registration</StepLabel>
+              <StepLabel active={currentStep >= 1}>Step 1: Registration</StepLabel>
             </ProgressStep>
             <ProgressStep>
-              <StepLabel>Step 2: Billing</StepLabel>
+              <StepLabel active={currentStep >= 2}>Step 2: Medical History</StepLabel>
             </ProgressStep>
             <ProgressStep>
-              <StepLabel>Step 3: Pre-Screening</StepLabel>
+              <StepLabel active={currentStep >= 3}>Step 3: Billing</StepLabel>
+            </ProgressStep>
+            <ProgressStep>
+              <StepLabel active={currentStep >= 4}>Step 4: Pre-Screening</StepLabel>
             </ProgressStep>
           </ProgressStepsContainer>
           <ProgressBarContainer>
-            <ProgressBarFill currentStep={1} />
+            <ProgressBarFill currentStep={currentStep} />
           </ProgressBarContainer>
         </ProgressIndicator>
 
         <form onSubmit={handleSubmit}>
-          <FormSection>
-            <SectionTitle>Personal Information</SectionTitle>
+          {currentStep === 1 && (
+            <>
+              <FormSection>
+                <SectionTitle>Personal Information</SectionTitle>
             <FormGrid>
               <FormGroup>
                 <FormLabel>First Name</FormLabel>
@@ -338,10 +827,7 @@ const PatientRegistration = () => {
 
               <FormGroup>
                 <FormLabel>Date of Birth</FormLabel>
-                <DateInputWrapper>
-                  <FormInput type="text" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} placeholder="mm/dd/yyyy" />
-                  <Calendar />
-                </DateInputWrapper>
+                <FormInput type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} />
               </FormGroup>
 
               <FormGroup>
@@ -356,7 +842,20 @@ const PatientRegistration = () => {
 
               <FormGroup>
                 <FormLabel>Mobile</FormLabel>
-                <FormInput type="tel" name="mobile" value={formData.mobile} onChange={handleInputChange} required />
+                <FormInput
+                  type="tel"
+                  name="mobile"
+                  value={formData.mobile}
+                  onChange={handleInputChange}
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                    handleInputChange(e);
+                  }}
+                  maxLength={10}
+                  pattern="[0-9]{10}"
+                  placeholder="Enter 10-digit mobile number"
+                  required
+                />
                 <HelperText>Existing patient data will be fetched automatically.</HelperText>
               </FormGroup>
 
@@ -415,11 +914,496 @@ const PatientRegistration = () => {
               </FormSelect>
             </FormGroup>
           </FormSection>
+            </>
+          )}
 
-          <ActionButtons>
-            <SaveLink type="button">Save & Continue</SaveLink>
-            <NextButton type="submit">Next</NextButton>
-          </ActionButtons>
+          {currentStep === 2 && (
+            <>
+              <FormSection>
+                <SectionTitle>Personal & Social History</SectionTitle>
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Occupation</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="occupation"
+                      value={medicalHistory.occupation}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="Software Engineer"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Marital Status</FormLabel>
+                    <FormSelect
+                      name="maritalStatus"
+                      value={medicalHistory.maritalStatus}
+                      onChange={handleMedicalHistoryChange}
+                    >
+                      <option value="">Select status</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Widowed">Widowed</option>
+                    </FormSelect>
+                  </FormGroup>
+                </FormGrid>
+              </FormSection>
+
+              <FormSection>
+                <SectionTitle>Medical Conditions & Allergies</SectionTitle>
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Allergies</FormLabel>
+                    <TagContainer>
+                      {medicalHistory.allergies.map((allergy, index) => (
+                        <Tag key={index}>
+                          {allergy}
+                          <TagRemove type="button" onClick={() => removeTag("allergies", allergy)}>
+                            ×
+                          </TagRemove>
+                        </Tag>
+                      ))}
+                      <TagInput
+                        type="text"
+                        placeholder="Add allergy..."
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addTag("allergies", e.target.value);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </TagContainer>
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Pre-existing Conditions</FormLabel>
+                    <TagContainer>
+                      {medicalHistory.preExistingConditions.map((condition, index) => (
+                        <Tag key={index}>
+                          {condition}
+                          <TagRemove type="button" onClick={() => removeTag("preExistingConditions", condition)}>
+                            ×
+                          </TagRemove>
+                        </Tag>
+                      ))}
+                      <TagInput
+                        type="text"
+                        placeholder="Add condition..."
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addTag("preExistingConditions", e.target.value);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </TagContainer>
+                  </FormGroup>
+                </FormGrid>
+              </FormSection>
+
+              <FormSection>
+                <SectionTitle>Treatments & History</SectionTitle>
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Regular Medication</FormLabel>
+                    <TextArea
+                      name="regularMedication"
+                      value={medicalHistory.regularMedication}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="Lisinopril 10mg daily, Metformin 500mg twice daily"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Surgery History</FormLabel>
+                    <TextArea
+                      name="surgeryHistory"
+                      value={medicalHistory.surgeryHistory}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="Appendectomy - 2015"
+                    />
+                  </FormGroup>
+                </FormGrid>
+              </FormSection>
+
+              <FormSection>
+                <SectionTitle>Lifestyle & Risk Factors</SectionTitle>
+                <FormGroup fullWidth>
+                  <FormLabel>Select all applicable risk factors</FormLabel>
+                  <RiskFactorsGrid>
+                    {["Tobacco Use", "Alcohol Consumption", "Occupational Hazard", "Environmental Exposure", "Others"].map((factor) => (
+                      <RiskFactorOption key={factor} selected={medicalHistory.riskFactors.includes(factor)}>
+                        <RiskFactorCheckbox
+                          type="checkbox"
+                          checked={medicalHistory.riskFactors.includes(factor)}
+                          onChange={() => toggleRiskFactor(factor)}
+                        />
+                        <RiskFactorLabel>{factor}</RiskFactorLabel>
+                      </RiskFactorOption>
+                    ))}
+                  </RiskFactorsGrid>
+                </FormGroup>
+              </FormSection>
+            </>
+          )}
+
+          {currentStep === 3 && (
+            <>
+              <FormSection>
+                <SectionTitle>Patient Information</SectionTitle>
+                <FormGroup>
+                  <FormLabel>Referring Practitioner</FormLabel>
+                  <FormSelect
+                    name="referringPractitioner"
+                    value={billingData.referringPractitioner}
+                    onChange={handleBillingChange}
+                  >
+                    <option value="">Select practitioner</option>
+                    <option value="Dr. Emily White">Dr. Emily White</option>
+                    <option value="Dr. Smith">Dr. Smith</option>
+                    <option value="Dr. Johnson">Dr. Johnson</option>
+                  </FormSelect>
+                </FormGroup>
+                <CheckboxGroup>
+                  <CheckboxLabel>
+                    <Checkbox
+                      type="checkbox"
+                      name="editPostingDate"
+                      checked={billingData.editPostingDate}
+                      onChange={handleBillingChange}
+                    />
+                    Edit Posting Date and Time
+                  </CheckboxLabel>
+                </CheckboxGroup>
+              </FormSection>
+
+              <ItemsSection>
+                <ItemsHeader>
+                  <ItemsTitle>Items</ItemsTitle>
+                  <ItemButtons>
+                    <IconButton type="button" onClick={addItem}>
+                      <Plus />
+                    </IconButton>
+                    <IconButton type="button" onClick={removeItem}>
+                      <Minus />
+                    </IconButton>
+                  </ItemButtons>
+                </ItemsHeader>
+
+                <ItemsTable>
+                  <TableHead>
+                    <TableRow>
+                      <TableHeader>No.</TableHeader>
+                      <TableHeader>Item</TableHeader>
+                      <TableHeader>Item Name</TableHeader>
+                      <TableHeader>Qty</TableHeader>
+                      <TableHeader>Rate</TableHeader>
+                      <TableHeader>Amount</TableHeader>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {items.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{item.no}</TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="text"
+                            value={item.item}
+                            onChange={(e) => handleItemChange(index, 'item', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="text"
+                            value={item.itemName}
+                            onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="number"
+                            value={item.qty}
+                            onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="number"
+                            step="0.01"
+                            value={item.rate}
+                            onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>{item.amount.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </ItemsTable>
+
+                <ItemFooter>
+                  <FooterItem>
+                    <FooterLabel>Discount %</FooterLabel>
+                    <DiscountInput
+                      type="number"
+                      name="discountPercent"
+                      value={billingData.discountPercent}
+                      onChange={handleBillingChange}
+                    />
+                  </FooterItem>
+                  <FooterItem>
+                    <FooterLabel>Total Qty:</FooterLabel>
+                    <FooterValue>{calculateTotals().totalQty}</FooterValue>
+                  </FooterItem>
+                  <FooterItem>
+                    <FooterLabel>Total:</FooterLabel>
+                    <FooterValue>{calculateTotals().grossTotal.toFixed(2)}</FooterValue>
+                  </FooterItem>
+                </ItemFooter>
+              </ItemsSection>
+
+              <BottomSection>
+                <CalculationCard>
+                  <CardTitle>Calculation</CardTitle>
+                  <CalculationRow>
+                    <CalculationLabel>Gross Total</CalculationLabel>
+                    <CalculationValue>{calculateTotals().grossTotal.toFixed(2)}</CalculationValue>
+                  </CalculationRow>
+                  <CalculationRow>
+                    <CalculationLabel>Discount Amount</CalculationLabel>
+                    <CalculationValue>{calculateTotals().discountAmount.toFixed(2)}</CalculationValue>
+                  </CalculationRow>
+                  <CalculationRow>
+                    <CalculationLabel bold>Net Total (INR)</CalculationLabel>
+                    <CalculationValue bold highlight>{calculateTotals().netTotal.toFixed(2)}</CalculationValue>
+                  </CalculationRow>
+                </CalculationCard>
+
+                <CalculationCard>
+                  <CardTitle>Payment</CardTitle>
+                  <FormGroup>
+                    <FormLabel>Payment Type</FormLabel>
+                    <FormSelect
+                      name="paymentType"
+                      value={billingData.paymentType}
+                      onChange={handleBillingChange}
+                    >
+                      <option value="Cash">Cash</option>
+                      <option value="Card">Card</option>
+                      <option value="UPI">UPI</option>
+                      <option value="Insurance">Insurance</option>
+                    </FormSelect>
+                  </FormGroup>
+                </CalculationCard>
+              </BottomSection>
+            </>
+          )}
+
+          {currentStep === 4 && (
+            <>
+              <FormSection>
+                <SectionTitle>Pre-screening</SectionTitle>
+                <FormGroup fullWidth>
+                  <FormLabel>Medication</FormLabel>
+                  <FormInput type="text" placeholder="Enter medication..." />
+                </FormGroup>
+
+                <FormGroup fullWidth>
+                  <FormLabel>Surgical History</FormLabel>
+                  <FormInput type="text" placeholder="Enter surgical history..." />
+                </FormGroup>
+
+                <FormGroup fullWidth>
+                  <FormLabel>Occupational Hazards and Environmental Factors</FormLabel>
+                  <FormInput type="text" placeholder="Enter occupational hazards and environmental factors..." />
+                </FormGroup>
+
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Tobacco Consumption (Past)</FormLabel>
+                    <FormInput type="text" placeholder="Enter past tobacco consumption..." />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Tobacco Consumption (Present)</FormLabel>
+                    <FormInput type="text" placeholder="Enter present tobacco consumption..." />
+                  </FormGroup>
+                </FormGrid>
+
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Alcohol Consumption (Past)</FormLabel>
+                    <FormInput type="text" placeholder="Enter past alcohol consumption..." />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Alcohol Consumption (Present)</FormLabel>
+                    <FormInput type="text" placeholder="Enter present alcohol consumption..." />
+                  </FormGroup>
+                </FormGrid>
+
+                <FormGroup fullWidth>
+                  <FormLabel>Other Risk Factors</FormLabel>
+                  <FormInput type="text" placeholder="Enter other risk factors..." />
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>Marital Status</FormLabel>
+                  <FormSelect>
+                    <option value="">Select status</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Widowed">Widowed</option>
+                  </FormSelect>
+                </FormGroup>
+              </FormSection>
+
+              <FormSection>
+                <SectionTitle>Vital Signs</SectionTitle>
+                <FormGroup fullWidth>
+                  <FormLabel>Select Patient</FormLabel>
+                  <FormSelect>
+                    <option value="">Select patient</option>
+                    <option value="john-doe">John Doe</option>
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Date</FormLabel>
+                    <DateInputWrapper>
+                      <FormInput type="text" placeholder="mm/dd/yyyy" />
+                      <Calendar />
+                    </DateInputWrapper>
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Time</FormLabel>
+                    <FormInput type="time" placeholder="--:-- --" />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Body Temperature</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 36.6 °C" />
+                  </FormGroup>
+                </FormGrid>
+
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Heart Rate / Pulse</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 72 bpm" />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Blood Pressure (systolic)</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 120 mmHg" />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Blood Pressure (diastolic)</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 80 mmHg" />
+                  </FormGroup>
+                </FormGrid>
+
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Respiratory rate</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 16 bpm" />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Reflexes</FormLabel>
+                    <FormSelect>
+                      <option value="">Select value</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Abnormal">Abnormal</option>
+                    </FormSelect>
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Tongue</FormLabel>
+                    <FormSelect>
+                      <option value="">Select value</option>
+                      <option value="Normal">Normal</option>
+                      <option value="Coated">Coated</option>
+                    </FormSelect>
+                  </FormGroup>
+                </FormGrid>
+
+                <FormGroup>
+                  <FormLabel>Abdomen</FormLabel>
+                  <FormSelect>
+                    <option value="">Select value</option>
+                    <option value="Normal">Normal</option>
+                    <option value="Distended">Distended</option>
+                    <option value="Tender">Tender</option>
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGroup fullWidth>
+                  <FormLabel>Notes</FormLabel>
+                  <TextArea placeholder="Enter notes..." />
+                </FormGroup>
+              </FormSection>
+
+              <FormSection>
+                <SectionTitle>Nutrition Values</SectionTitle>
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Height (in Meter)</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 1.75" />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Weight (in Kilogram)</FormLabel>
+                    <FormInput type="text" placeholder="e.g., 70" />
+                  </FormGroup>
+                </FormGrid>
+
+                <FormGroup fullWidth>
+                  <FormLabel>BMI</FormLabel>
+                  <FormInput type="text" placeholder="e.g., 22.9" />
+                </FormGroup>
+
+                <FormGroup fullWidth>
+                  <FormLabel>Notes</FormLabel>
+                  <TextArea placeholder="Enter notes..." />
+                </FormGroup>
+              </FormSection>
+            </>
+          )}
+
+          {currentStep === 1 && (
+            <ActionButtons>
+              <BackButton type="button" onClick={() => navigate("/patients")}>Back</BackButton>
+              <NextButton type="submit">Next</NextButton>
+            </ActionButtons>
+          )}
+
+          {currentStep === 2 && (
+            <ActionButtons>
+              <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
+              <NextButton type="submit">Next</NextButton>
+            </ActionButtons>
+          )}
+
+          {currentStep === 3 && (
+            <ActionButtons>
+              <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
+              <NextButton type="submit">Next</NextButton>
+            </ActionButtons>
+          )}
+
+          {currentStep === 4 && (
+            <ActionButtons>
+              <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
+              <NextButton type="submit">Submit and Send to Doctor</NextButton>
+            </ActionButtons>
+          )}
         </form>
       </RegistrationContainer>
     </Layout>

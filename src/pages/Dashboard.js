@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
+import api, { API_ENDPOINTS } from "../services/api";
 
 import styled from "styled-components";
 import { UserPlus, Users, Receipt, ClipboardCheck, Video, FileBarChart, Mountain, Sun, Search, Users as UsersIcon, DollarSign, Clock, Pill } from "lucide-react";
@@ -37,7 +39,7 @@ const TopNavigation = styled.div`
   overflow: hidden;
   padding: 20px;
   gap: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 
   @media (max-width: 1200px) {
     grid-template-columns: repeat(3, 1fr);
@@ -95,7 +97,7 @@ const NavItem = styled.div`
   border-radius: 10px;
   background: #ffffff;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
   animation: navFade 0.45s ease forwards;
 
@@ -111,20 +113,23 @@ const NavItem = styled.div`
   }
 
   &:hover {
+    border-width: 2.5px;
     border-color: ${(props) => props.borderColor || "#3b82f6"};
     background: #f8fafc;
-    box-shadow: 0 2px 8px
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px
       ${(props) => {
         const color = props.borderColor || "#3b82f6";
         const r = parseInt(color.slice(1, 3), 16);
         const g = parseInt(color.slice(3, 5), 16);
         const b = parseInt(color.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, 0.15)`;
+        return `rgba(${r}, ${g}, ${b}, 0.2)`;
       }};
 
     ${IconCircle} {
       background: ${(props) => props.hoverBgColor || "#eff6ff"};
       border-color: ${(props) => props.borderColor || "#3b82f6"};
+      transform: scale(1.05);
     }
 
     ${IconWrapper} {
@@ -157,17 +162,17 @@ const SearchBar = styled.div`
   align-items: center;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px 20px;
+  border-radius: 50px;
+  padding: 16px 24px;
   gap: 12px;
   width: 100%;
   max-width: 800px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
 
   &:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #4a90e2;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   }
 `;
 
@@ -253,7 +258,7 @@ const InsightCard = styled.div`
   opacity: 0;
   animation: fadeSlideIn 0.5s ease forwards;
   position: relative;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
   cursor: pointer;
 
@@ -408,13 +413,19 @@ const AnimatedNumber = ({ value }) => {
 };
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef(null);
+
   const navItems = [
-    { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6" },
-    { icon: Users, label: "All Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9" },
-    { icon: Receipt, label: "Billing", bgColor: "#f5f3ff", iconColor: "#8b5cf6", borderColor: "#8b5cf6" },
-    { icon: ClipboardCheck, label: "Pre-Screening", bgColor: "#f0fdf4", iconColor: "#10b981", borderColor: "#10b981" },
-    { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b" },
-    { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444" },
+    { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
+    { icon: Users, label: "All Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", route: "/patients" },
+    { icon: Receipt, label: "Billing", bgColor: "#f5f3ff", iconColor: "#8b5cf6", borderColor: "#8b5cf6", route: "/billing" },
+    { icon: ClipboardCheck, label: "Pre-Screening", bgColor: "#f0fdf4", iconColor: "#10b981", borderColor: "#10b981", route: "/appointments" },
+    { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
+    { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444", route: null },
   ];
 
   const insights = [
@@ -460,6 +471,56 @@ const Dashboard = () => {
   const [visibleSections, setVisibleSections] = useState({});
   const sectionRefs = useRef({});
 
+  // Search patients function
+  const searchPatients = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      console.log("🔍 Searching for patients with query:", query);
+
+      const response = await api.get(API_ENDPOINTS.PATIENTS.SEARCH_LINK, {
+        txt: query,
+        doctype: "Patient",
+        page_length: 500,
+      });
+
+      console.log("✅ Search API Response:", response);
+      console.log("📊 Search results data:", response.data);
+
+      const results = response.data?.message || response.data?.data || [];
+
+      console.log("📋 Processed search results:", results);
+      console.log("📝 First search result:", results[0]);
+
+      setSearchResults(results);
+    } catch (err) {
+      console.error("❌ Error searching patients:", err);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle search input change with debouncing
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced search
+    searchTimeoutRef.current = setTimeout(() => {
+      searchPatients(query);
+    }, 500); // Wait 500ms after user stops typing
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 600);
     return () => clearTimeout(timer);
@@ -496,7 +557,13 @@ const Dashboard = () => {
             {navItems.map((item, index) => {
               const IconComponent = item.icon;
               return (
-                <NavItem key={index} style={{ animationDelay: `${index * 0.05}s` }} borderColor={item.borderColor} hoverBgColor={item.bgColor}>
+                <NavItem
+                  key={index}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                  borderColor={item.borderColor}
+                  hoverBgColor={item.bgColor}
+                  onClick={() => item.route && navigate(item.route)}
+                >
                   <IconCircle bgColor={item.bgColor}>
                     <>
                       <IconWrapper iconColor={item.iconColor}>
@@ -520,7 +587,12 @@ const Dashboard = () => {
               <SearchIcon>
                 <Search />
               </SearchIcon>
-              <SearchInput type="text" placeholder="Search for a patient by name, ID, or phone number" />
+              <SearchInput
+                type="text"
+                placeholder="Search for a patient by name, ID, or phone number"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
             </SearchBar>
           </SearchBarContainer>
         </FadeInWrapper>

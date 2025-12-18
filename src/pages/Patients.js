@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Plus, Calendar, MoreVertical } from "lucide-react";
+import { Plus, Calendar, Eye } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 
 /* ================= STYLES ================= */
@@ -105,14 +105,27 @@ const DateInputWrapper = styled.div`
   }
 `;
 
-const ActionButton = styled.button`
+const ViewButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #666;
+  color: #4a90e2;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s;
 
   &:hover {
-    color: #4a90e2;
+    background-color: #eaf4ff;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -124,6 +137,9 @@ const Patients = () => {
   const [patientsData, setPatientsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [filterDoctor, setFilterDoctor] = useState("");
   const [filterDate, setFilterDate] = useState("");
@@ -139,47 +155,63 @@ const Patients = () => {
   ];
 
   const renderActions = (row) => (
-    <ActionButton onClick={() => console.log("Actions for", row.patient_name)}>
-      <MoreVertical />
-    </ActionButton>
+    <ViewButton onClick={() => navigate(`/patients/${row.name}`)}>
+      <Eye />
+      View
+    </ViewButton>
   );
 
   /* ========= DATA FETCH ========= */
 
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchPatients = async (page, limit) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const fields = '["name","patient_name","sex","mobile","email","uid"]';
+      const fields = '["name","patient_name","sex","mobile","email","uid"]';
+      const limitStart = (page - 1) * limit;
 
-        const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, {
-          fields,
-          limit_start: 0,
-          limit_page_length: 2000,
-        });
+      const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, {
+        fields,
+        limit_start: limitStart,
+        limit_page_length: limit,
+      });
 
-        const rawData = Array.isArray(response.data?.data) ? response.data.data : [];
+      const rawData = Array.isArray(response.data?.data) ? response.data.data : [];
 
-        // 🔹 NORMALIZE NULL VALUES
-        const normalizedData = rawData.map((patient) => ({
-          ...patient,
-          mobile: patient.mobile || "-",
-          email: patient.email || "-",
-          uid: patient.uid || "-",
-        }));
+      // 🔹 NORMALIZE NULL VALUES
+      const normalizedData = rawData.map((patient) => ({
+        ...patient,
+        mobile: patient.mobile || "-",
+        email: patient.email || "-",
+        uid: patient.uid || "-",
+      }));
 
-        setPatientsData(normalizedData);
-      } catch (err) {
-        setError(err.message || "Failed to load patients");
-      } finally {
-        setLoading(false);
+      setPatientsData(normalizedData);
+
+      // Set total count if available in response
+      if (response.data?.total_count !== undefined) {
+        setTotalCount(response.data.total_count);
       }
-    };
+    } catch (err) {
+      setError(err.message || "Failed to load patients");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchPatients();
-  }, []);
+  useEffect(() => {
+    fetchPatients(currentPage, rowsPerPage);
+  }, [currentPage, rowsPerPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to first page when changing rows per page
+  };
 
   /* ================= UI ================= */
 
@@ -225,7 +257,17 @@ const Patients = () => {
           </FilterGroup>
         </FiltersCard>
 
-        <DataTable columns={columns} data={patientsData} renderActions={renderActions} />
+        <DataTable
+          columns={columns}
+          data={patientsData}
+          renderActions={renderActions}
+          serverSide={true}
+          totalCount={totalCount}
+          currentPageProp={currentPage}
+          rowsPerPageProp={rowsPerPage}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
       </PatientsContainer>
     </Layout>
   );

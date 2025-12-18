@@ -124,12 +124,25 @@ const Header = () => {
 
   const getBreadcrumbs = () => {
     const path = location.pathname;
+    // Hide breadcrumbs for patient detail pages (they have their own custom breadcrumbs)
+    if (path.startsWith("/patients/") && path !== "/patients") return { pages: [] };
+
+    // Handle lab test result pages
+    if (path.match(/^\/pathlab\/labtest\/.*\/result$/)) return { pages: ["PathLab", "Lab Test Results"] };
+
     if (path === "/login") return { pages: ["Login"] };
     if (path === "/dashboard") return { pages: ["Dashboard"] };
     if (path === "/patients") return { pages: ["Patients"] };
     if (path === "/patient-registration") return { pages: ["Patients", "Patient Registration"] };
+    if (path === "/pathlab") return { pages: ["PathLab"] };
+    if (path === "/pathlab/collection") return { pages: ["PathLab", "Collection"] };
+    if (path === "/pathlab/collection/new") return { pages: ["PathLab", "Sample Collection"] };
+    if (path === "/pathlab/labtest") return { pages: ["PathLab", "Lab Test List"] };
+    if (path === "/pathlab/labtest/new") return { pages: ["PathLab", "Add Lab Test"] };
+    if (path === "/consultations") return { pages: ["Consultations"] };
     if (path === "/appointments") return { pages: ["Appointments"] };
     if (path === "/billing") return { pages: ["Billing"] };
+    if (path === "/clinic-details") return { pages: ["Clinic Details"] };
     if (path === "/settings") return { pages: ["Settings"] };
     return { pages: [] };
   };

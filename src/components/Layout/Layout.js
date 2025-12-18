@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 const LayoutContainer = styled.div`
   min-height: 100vh;
-  background-color: #ffffff;
+  background-color: #F6F7F8;
 `;
 
 const MainContent = styled.main`

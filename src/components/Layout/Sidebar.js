@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import { LayoutDashboard, Users, Calendar, FileText, Settings, LogOut, Plus } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, FileText, MessageSquare, Building2, FlaskConical, Settings, LogOut, Plus } from "lucide-react";
 
 const SidebarContainer = styled.div`
   width: 250px;
@@ -109,8 +109,11 @@ const Sidebar = () => {
   const menuItems = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/patients", label: "Patients", icon: Users },
+    { path: "/pathlab", label: "PathLab", icon: FlaskConical },
+    { path: "/consultations", label: "Consultations", icon: MessageSquare },
     { path: "/appointments", label: "Appointments", icon: Calendar },
     { path: "/billing", label: "Billing", icon: FileText },
+    { path: "/clinic-details", label: "Clinic Details", icon: Building2 },
   ];
 
   const bottomItems = [
@@ -130,7 +133,20 @@ const Sidebar = () => {
       <SidebarNav>
         {menuItems.map((item) => {
           const IconComponent = item.icon;
-          const isActive = location.pathname === item.path;
+          let isActive = location.pathname === item.path;
+
+          // Highlight "Patients" menu item when on patient-related pages
+          if (item.path === "/patients") {
+            isActive = isActive ||
+                      location.pathname === "/patient-registration" ||
+                      location.pathname.startsWith("/patients/");
+          }
+
+          // Highlight "PathLab" menu item when on pathlab sub-pages
+          if (item.path === "/pathlab") {
+            isActive = isActive || location.pathname.startsWith("/pathlab/");
+          }
+
           return (
             <NavItem key={item.path} to={item.path} className={isActive ? "active" : ""}>
               <IconBadge active={isActive}>

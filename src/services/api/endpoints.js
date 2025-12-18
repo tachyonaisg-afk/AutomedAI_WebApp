@@ -22,9 +22,11 @@ const API_ENDPOINTS = {
     LIST: "/resource/Patient",
     CREATE: "/resource/Patient",
     GET_BY_ID: (id) => `/resource/Patient/${id}`,
+    DETAIL: (id) => `/resource/Patient/${id}`,
     UPDATE: (id) => `/resource/Patient/${id}`,
     DELETE: (id) => `/resource/Patient/${id}`,
     SEARCH: "/resource/Patient",
+    SEARCH_LINK: "/method/frappe.desk.search.search_link",
   },
 
   // Appointments
