@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Filter, Plus, Printer } from "lucide-react";
 
 const LabTestContainer = styled.div`
   display: flex;
@@ -164,6 +164,12 @@ const StatusBadge = styled.span`
   }};
 `;
 
+const ActionsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
 const ActionLink = styled.button`
   background: none;
   border: none;
@@ -173,11 +179,19 @@ const ActionLink = styled.button`
   cursor: pointer;
   text-decoration: none;
   padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   transition: color 0.2s;
 
   &:hover {
     color: #357abd;
     text-decoration: underline;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -251,14 +265,24 @@ const LabTest = () => {
 
   const renderActions = (row) => {
     return (
-      <ActionLink onClick={() => handleAddResult(row)}>
-        Add result
-      </ActionLink>
+      <ActionsContainer>
+        <ActionLink onClick={() => handleAddResult(row)}>
+          Add result
+        </ActionLink>
+        <ActionLink onClick={() => handlePrint(row)}>
+          <Printer />
+          Print
+        </ActionLink>
+      </ActionsContainer>
     );
   };
 
   const handleAddResult = (row) => {
     navigate(`/pathlab/labtest/${row.id}/result`);
+  };
+
+  const handlePrint = (row) => {
+    navigate("/pathlab/result-print");
   };
 
   const handleNewTest = () => {

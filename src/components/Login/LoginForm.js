@@ -177,12 +177,17 @@ const LoginButton = styled.button`
   transition: background-color 0.2s;
   margin-top: 8px;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #357abd;
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -191,10 +196,11 @@ const LoginForm = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -203,12 +209,19 @@ const LoginForm = () => {
       return;
     }
 
-    // Use email as username for login
-    const success = login(email, password);
-    if (success) {
-      navigate("/dashboard");
-    } else {
-      setError("Invalid email or password");
+    setLoading(true);
+    try {
+      // Use email as username for login
+      const success = await login(email, password);
+      if (success) {
+        navigate("/dashboard");
+      } else {
+        setError("Invalid email or password");
+      }
+    } catch (err) {
+      setError("An error occurred during login. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -245,7 +258,9 @@ const LoginForm = () => {
             </InputWrapper>
           </FormGroup>
 
-          <LoginButton type="submit">Log in</LoginButton>
+          <LoginButton type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Log in"}
+          </LoginButton>
         </LoginFormStyled>
       </LoginContent>
     </LoginContainer>

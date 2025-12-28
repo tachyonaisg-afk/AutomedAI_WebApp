@@ -151,12 +151,15 @@ class ApiService {
       // Open and send request
       const url = apiClient.buildURL(endpoint);
       xhr.open('POST', url);
-      
+
+      // Enable cookies for ERPNext session
+      xhr.withCredentials = true;
+
       // Set headers
       Object.keys(headers).forEach(key => {
         xhr.setRequestHeader(key, headers[key]);
       });
-      
+
       xhr.send(formData);
     });
   }

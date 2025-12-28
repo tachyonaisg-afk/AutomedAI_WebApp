@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
 import { Search, Filter, Plus } from "lucide-react";
+import apiService from "../services/api/apiService";
 
 const CollectionContainer = styled.div`
   display: flex;
@@ -162,73 +163,115 @@ const StatusBadge = styled.span`
   }};
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  color: #666666;
+  font-size: 14px;
+`;
+
+const ErrorContainer = styled.div`
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #fff5f5;
+  border: 1px solid #ffcccc;
+  border-radius: 8px;
+  color: #c62828;
+`;
+
+const ErrorMessage = styled.p`
+  margin: 0 0 16px 0;
+  font-size: 14px;
+`;
+
+const RetryButton = styled.button`
+  padding: 10px 20px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #357abd;
+  }
+`;
+
 const Collection = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [collectionsData, setCollectionsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sample data - replace with API call later
-  const collectionsData = [
-    {
-      patient_id: "P00123",
-      patient_name: "John Doe",
-      gender: "Male",
-      referring_practitioner: "Dr. Smith",
-      date: "2023-10-27",
-      status: "Collected",
-      sample: "Blood",
-      quantity_uom: "5 ml",
-      collection_datetime: "2023-10-27 09:30 AM",
-      collected_by: "Jane Austin",
-    },
-    {
-      patient_id: "P00124",
-      patient_name: "Emily White",
-      gender: "Female",
-      referring_practitioner: "Dr. Jones",
-      date: "2023-10-27",
-      status: "Pending",
-      sample: "Urine",
-      quantity_uom: "10 ml",
-      collection_datetime: "2023-10-27 10:15 AM",
-      collected_by: "Mike Ross",
-    },
-    {
-      patient_id: "P00125",
-      patient_name: "Michael Brown",
-      gender: "Male",
-      referring_practitioner: "Dr. Smith",
-      date: "2023-10-26",
-      status: "Collected",
-      sample: "Blood",
-      quantity_uom: "3 ml",
-      collection_datetime: "2023-10-26 03:00 PM",
-      collected_by: "Jane Austin",
-    },
-    {
-      patient_id: "P00126",
-      patient_name: "Jessica Green",
-      gender: "Female",
-      referring_practitioner: "Dr. Williams",
-      date: "2023-10-26",
-      status: "Rejected",
-      sample: "Saliva",
-      quantity_uom: "2 ml",
-      collection_datetime: "2023-10-26 11:45 AM",
-      collected_by: "Mike Ross",
-    },
-    {
-      patient_id: "P00127",
-      patient_name: "David Chen",
-      gender: "Male",
-      referring_practitioner: "Dr. Jones",
-      date: "2023-10-25",
-      status: "Collected",
-      sample: "Blood",
-      quantity_uom: "5 ml",
-      collection_datetime: "2023-10-25 08:00 AM",
-      collected_by: "Sarah Lee",
-    },
-  ];
+  // Fetch collections data from API
+  const fetchCollections = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // API endpoint with query parameters
+      const fields = JSON.stringify([
+        "creation",
+        "modified",
+        "modified_by",
+        "docstatus",
+        "idx",
+        "patient",
+        "patient_name",
+        "patient_age",
+        "patient_sex",
+        "referring_practitioner",
+        "status",
+        "sample",
+        "sample_uom",
+        "sample_qty",
+        "collected_by",
+        "_seen",
+      ]);
+
+      const response = await apiService.get("/resource/Sample Collection", {
+        limit_start: 0,
+        limit_page_length: 1200,
+        // fields: fields,
+      });
+
+      // Transform API response to match table format
+      const transformedData = response.data.data.map((item) => ({
+        patient_id: item.patient || "N/A",
+        patient_name: item.patient_name || "N/A",
+        gender: item.patient_sex || "N/A",
+        referring_practitioner: item.referring_practitioner || "N/A",
+        date: item.creation ? new Date(item.creation).toLocaleDateString() : "N/A",
+        status: item.status || "Pending",
+        sample: item.sample || "N/A",
+        quantity_uom: item.sample_qty && item.sample_uom
+          ? `${item.sample_qty} ${item.sample_uom}`
+          : "N/A",
+        collection_datetime: item.creation
+          ? new Date(item.creation).toLocaleString()
+          : "N/A",
+        collected_by: item.collected_by || "N/A",
+      }));
+
+      setCollectionsData(transformedData);
+    } catch (err) {
+      console.error("Error fetching collections:", err);
+      setError(err.message || "Failed to load collections. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchCollections();
+  }, []);
 
   const columns = [
     { key: "patient_id", label: "PATIENT ID" },
@@ -292,12 +335,21 @@ const Collection = () => {
           </ButtonGroup>
         </ToolbarSection>
 
-        <DataTable
-          columns={columns}
-          data={filteredData}
-          sortableColumns={["patient_id", "patient_name", "date"]}
-          renderStatus={renderStatus}
-        />
+        {loading ? (
+          <LoadingContainer>Loading collections...</LoadingContainer>
+        ) : error ? (
+          <ErrorContainer>
+            <ErrorMessage>{error}</ErrorMessage>
+            <RetryButton onClick={fetchCollections}>Retry</RetryButton>
+          </ErrorContainer>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={filteredData}
+            sortableColumns={["patient_id", "patient_name", "date"]}
+            renderStatus={renderStatus}
+          />
+        )}
       </CollectionContainer>
     </Layout>
   );

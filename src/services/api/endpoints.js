@@ -5,15 +5,14 @@
  */
 
 const API_ENDPOINTS = {
-  // Authentication
+  // Authentication (ERPNext/Frappe style)
   AUTH: {
-    LOGIN: "/auth/login",
-    LOGOUT: "/auth/logout",
-    REGISTER: "/auth/register",
-    REFRESH_TOKEN: "/auth/refresh",
-    FORGOT_PASSWORD: "/auth/forgot-password",
-    RESET_PASSWORD: "/auth/reset-password",
-    VERIFY_EMAIL: "/auth/verify-email",
+    LOGIN: "method/login", // ERPNext login endpoint (no leading slash)
+    LOGOUT: "method/logout", // ERPNext logout endpoint
+    REGISTER: "method/frappe.core.doctype.user.user.sign_up",
+    GET_LOGGED_USER: "method/frappe.auth.get_logged_user",
+    FORGOT_PASSWORD: "method/frappe.core.doctype.user.user.reset_password",
+    RESET_PASSWORD: "method/frappe.core.doctype.user.user.update_password",
   },
 
   // Patients

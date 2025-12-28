@@ -26,23 +26,85 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated);
   const [user, setUser] = useState(initialState.user);
 
-  const login = (username, password) => {
-    // Simulate authentication - replace with actual API call
-    if (username && password) {
-      setIsAuthenticated(true);
-      setUser({ username });
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('user', JSON.stringify({ username }));
-      return true;
+  const login = async (username, password) => {
+    try {
+      // ERPNext login expects form data, not JSON
+      const formData = new URLSearchParams();
+      formData.append('usr', username);
+      formData.append('pwd', password);
+
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/method/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        credentials: 'include', // Include cookies in request and save cookies from response
+        body: formData,
+      });
+
+      // Get response text first to check what we're receiving
+      const responseText = await response.text();
+      console.log('Login response text:', responseText);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log('Login response data:', { status: response.status, data });
+      } catch (e) {
+        console.error('Failed to parse JSON, received HTML instead');
+        console.log('First 500 chars:', responseText.substring(0, 500));
+        throw new Error('Server returned HTML instead of JSON. The endpoint might be incorrect.');
+      }
+
+      // ERPNext returns 200 OK on successful login with cookies set
+      // Response structure: { message: "Logged In", home_page: "/app/home", full_name: "User Name" }
+      if (response.ok) {
+        const userData = {
+          username,
+          full_name: data.full_name || username,
+          home_page: data.home_page || '/dashboard',
+          message: data.message
+        };
+
+        setIsAuthenticated(true);
+        setUser(userData);
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('✅ Login successful! User:', userData);
+        return true;
+      } else {
+        console.log('❌ Login failed:', data);
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      // Call ERPNext logout endpoint to clear server-side session
+      await fetch(`${process.env.REACT_APP_API_BASE_URL}/method/logout`, {
+        method: 'POST',
+        credentials: 'include', // Include cookies to clear the session
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Continue with client-side logout even if server logout fails
+    } finally {
+      // Clear client-side state and storage
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user');
+    }
   };
 
   return (

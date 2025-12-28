@@ -13,6 +13,7 @@ import NewCollection from './pages/NewCollection';
 import LabTest from './pages/LabTest';
 import NewLabTest from './pages/NewLabTest';
 import LabTestResult from './pages/LabTestResult';
+import ResultPrint from './pages/ResultPrint';
 import Consultations from './pages/Consultations';
 import Appointments from './pages/Appointments';
 import Billing from './pages/Billing';
@@ -22,10 +23,19 @@ import './App.css';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
-  
+  const [isLoggingOut, setIsLoggingOut] = React.useState(true);
+
   React.useEffect(() => {
-    logout();
+    const handleLogout = async () => {
+      await logout();
+      setIsLoggingOut(false);
+    };
+    handleLogout();
   }, [logout]);
+
+  if (isLoggingOut) {
+    return <div>Logging out...</div>;
+  }
 
   return <Navigate to="/login" replace />;
 };
@@ -113,6 +123,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <LabTestResult />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/result-print"
+            element={
+              <ProtectedRoute>
+                <ResultPrint />
               </ProtectedRoute>
             }
           />

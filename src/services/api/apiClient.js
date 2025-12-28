@@ -1,6 +1,12 @@
 /**
  * API Client with Middleware
  * Handles all HTTP requests with interceptors, error handling, and authentication
+ *
+ * ERPNext/Frappe Cookie-Based Authentication:
+ * - This client is configured to handle cookie-based authentication for ERPNext backend
+ * - All requests include credentials: 'include' to send/receive cookies
+ * - The session cookie (sid) is automatically sent with every request after login
+ * - No need to manually manage authentication tokens for ERPNext endpoints
  */
 
 import API_CONFIG from "../../config/api.config";
@@ -195,6 +201,7 @@ class ApiClient {
         method: finalConfig.method || "GET",
         headers,
         signal: controller.signal,
+        credentials: 'include', // Include cookies for ERPNext session management
       };
 
       // Add body for POST, PUT, PATCH requests
