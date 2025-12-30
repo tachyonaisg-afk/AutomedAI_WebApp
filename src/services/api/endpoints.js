@@ -39,14 +39,57 @@ const API_ENDPOINTS = {
     RESCHEDULE: (id) => `/appointments/${id}/reschedule`,
   },
 
-  // Billing
+  // Billing / Sales Invoice (ERPNext)
   BILLING: {
-    LIST: "/billing",
-    CREATE: "/billing",
-    GET_BY_ID: (id) => `/billing/${id}`,
-    UPDATE: (id) => `/billing/${id}`,
-    DELETE: (id) => `/billing/${id}`,
+    LIST: "/resource/Sales Invoice",
+    CREATE: "/resource/Sales Invoice",
+    GET_BY_ID: (id) => `/resource/Sales Invoice/${id}`,
+    UPDATE: (id) => `/resource/Sales Invoice/${id}`,
+    DELETE: (id) => `/resource/Sales Invoice/${id}`,
     GENERATE_INVOICE: (id) => `/billing/${id}/invoice`,
+  },
+
+  // Items (ERPNext)
+  ITEMS: {
+    LIST: "/resource/Item",
+    SEARCH: "/method/frappe.desk.search.search_link",
+    GET_BY_ID: (id) => `/resource/Item/${id}`,
+  },
+
+  // Healthcare Practitioner (ERPNext)
+  PRACTITIONERS: {
+    LIST: "/resource/Healthcare Practitioner",
+    SEARCH: "/method/frappe.desk.search.search_link",
+  },
+
+  // Healthcare Service Unit (ERPNext)
+  SERVICE_UNITS: {
+    LIST: "/resource/Healthcare Service Unit",
+    SEARCH: "/method/frappe.desk.search.search_link",
+  },
+
+  // Company (ERPNext)
+  COMPANY: {
+    LIST: "/resource/Company",
+    GET_BY_ID: (id) => `/resource/Company/${id}`,
+  },
+
+  // Warehouse (ERPNext)
+  WAREHOUSE: {
+    LIST: "/resource/Warehouse",
+  },
+
+  // Price List (ERPNext)
+  PRICE_LIST: {
+    LIST: "/resource/Price List",
+  },
+
+  // Sample Collection (ERPNext)
+  SAMPLE_COLLECTION: {
+    LIST: "/resource/Sample Collection",
+    GET_BY_ID: (id) => `/resource/Sample Collection/${id}`,
+    CREATE: "/resource/Sample Collection",
+    UPDATE: (id) => `/resource/Sample Collection/${id}`,
   },
 
   // Dashboard

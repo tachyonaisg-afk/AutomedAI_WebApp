@@ -8,6 +8,9 @@ import Patients from './pages/Patients';
 import PatientDetail from './pages/PatientDetail';
 import PatientRegistration from './pages/PatientRegistration';
 import PathLab from './pages/PathLab';
+import PathLabBilling from './pages/PathLabBilling';
+import PathLabResults from './pages/PathLabResults';
+import PathLabAdmin from './pages/PathLabAdmin';
 import Collection from './pages/Collection';
 import NewCollection from './pages/NewCollection';
 import LabTest from './pages/LabTest';
@@ -84,6 +87,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <PathLab />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/billing"
+            element={
+              <ProtectedRoute>
+                <PathLabBilling />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/results"
+            element={
+              <ProtectedRoute>
+                <PathLabResults />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/admin"
+            element={
+              <ProtectedRoute>
+                <PathLabAdmin />
               </ProtectedRoute>
             }
           />

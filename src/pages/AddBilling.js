@@ -1,8 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Search, X, Loader2 } from "lucide-react";
+import apiService from "../services/api/apiService";
+import API_ENDPOINTS from "../services/api/endpoints";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -36,6 +38,20 @@ const SectionTitle = styled.h2`
   border-bottom: 1px solid #e0e0e0;
 `;
 
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
@@ -46,6 +62,31 @@ const FormLabel = styled.label`
   font-size: 14px;
   font-weight: 500;
   color: #333333;
+`;
+
+const RequiredStar = styled.span`
+  color: #e53935;
+  margin-left: 2px;
+`;
+
+const FormInput = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333333;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
 `;
 
 const FormSelect = styled.select`
@@ -69,11 +110,116 @@ const FormSelect = styled.select`
   }
 `;
 
+const SearchInputWrapper = styled.div`
+  position: relative;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 10px 12px;
+  padding-right: 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333333;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+`;
+
+const SearchIcon = styled.div`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  display: flex;
+  align-items: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const SearchResults = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 100;
+  margin-top: 4px;
+`;
+
+const SearchResultItem = styled.div`
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333333;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #f5f8ff;
+  }
+`;
+
+const SearchResultEmpty = styled.div`
+  padding: 12px;
+  text-align: center;
+  color: #666666;
+  font-size: 14px;
+`;
+
+const SelectedTag = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1976d2;
+`;
+
+const ClearButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #1976d2;
+
+  &:hover {
+    color: #1565c0;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 const CheckboxGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 16px;
 `;
 
 const CheckboxLabel = styled.label`
@@ -142,10 +288,15 @@ const IconButton = styled.button`
   }
 `;
 
+const ItemsTableWrapper = styled.div`
+  overflow-x: auto;
+`;
+
 const ItemsTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 16px;
+  min-width: 900px;
 `;
 
 const TableHead = styled.thead`
@@ -161,40 +312,31 @@ const TableRow = styled.tr`
 `;
 
 const TableHeader = styled.th`
-  padding: 12px;
+  padding: 12px 8px;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
   color: #666666;
   text-transform: uppercase;
+  white-space: nowrap;
 
   &:first-child {
     padding-left: 16px;
-    width: 50px;
-  }
-
-  &:last-child {
-    text-align: right;
-    padding-right: 16px;
+    width: 40px;
   }
 `;
 
 const TableBody = styled.tbody``;
 
 const TableCell = styled.td`
-  padding: 12px;
+  padding: 8px;
   font-size: 14px;
   color: #333333;
+  vertical-align: middle;
 
   &:first-child {
     padding-left: 16px;
     color: #666666;
-  }
-
-  &:last-child {
-    text-align: right;
-    padding-right: 16px;
-    font-weight: 500;
   }
 `;
 
@@ -206,9 +348,39 @@ const ItemInput = styled.input`
   font-size: 14px;
   color: #333333;
   outline: none;
+  min-width: 60px;
 
   &:focus {
     border-color: #4a90e2;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+  }
+`;
+
+const ItemSearchWrapper = styled.div`
+  position: relative;
+  min-width: 180px;
+`;
+
+const DeleteItemButton = styled.button`
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #e53935;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #c62828;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -219,6 +391,8 @@ const ItemFooter = styled.div`
   padding: 12px 16px;
   background-color: #f8f9fa;
   border-radius: 6px;
+  flex-wrap: wrap;
+  gap: 16px;
 `;
 
 const FooterItem = styled.div`
@@ -335,30 +509,273 @@ const SubmitButton = styled.button`
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #357abd;
   }
+
+  &:disabled {
+    background-color: #a0c4e8;
+    cursor: not-allowed;
+  }
+
+  svg {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const ErrorMessage = styled.div`
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
 `;
 
 const AddBilling = () => {
   const navigate = useNavigate();
 
+  // Form state
   const [billingData, setBillingData] = useState({
-    referringPractitioner: "",
-    editPostingDate: false,
-    discountPercent: 0,
-    paymentType: "Cash",
+    company: "",
+    naming_series: "SINV-.YY.-",
+    posting_date: new Date().toISOString().split("T")[0],
+    set_posting_time: 1,
+    is_pos: 0,
+    customer: "",
+    patient: "",
+    patient_name: "",
+    currency: "INR",
+    selling_price_list: "Standard Selling",
+    update_stock: 0,
+    apply_discount_on: "Grand Total",
+    additional_discount_percentage: 0,
+    mode_of_transport: "",
+    lr_date: "",
+    gst_vehicle_type: "Regular",
+    ref_practitioner: "",
+    service_unit: "",
+    payment_type: "Cash",
   });
 
   const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Search states
+  const [patientSearch, setPatientSearch] = useState("");
+  const [patientResults, setPatientResults] = useState([]);
+  const [showPatientResults, setShowPatientResults] = useState(false);
+  const [searchingPatient, setSearchingPatient] = useState(false);
+
+  const [itemSearchIndex, setItemSearchIndex] = useState(null);
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemResults, setItemResults] = useState([]);
+  const [showItemResults, setShowItemResults] = useState(false);
+  const [searchingItem, setSearchingItem] = useState(false);
+
+  // Dropdown options
+  const [practitioners, setPractitioners] = useState([]);
+  const [serviceUnits, setServiceUnits] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
+  const [companies, setCompanies] = useState([]);
+
+  // Fetch dropdown options on mount
+  useEffect(() => {
+    fetchDropdownOptions();
+  }, []);
+
+  const fetchDropdownOptions = async () => {
+    try {
+      // Fetch practitioners
+      const practitionerRes = await apiService.get(API_ENDPOINTS.PRACTITIONERS.LIST, {
+        fields: '["name", "practitioner_name"]',
+        limit_page_length: 100,
+      });
+      if (practitionerRes.data?.data) {
+        setPractitioners(practitionerRes.data.data);
+      }
+
+      // Fetch service units
+      const serviceUnitRes = await apiService.get(API_ENDPOINTS.SERVICE_UNITS.LIST, {
+        fields: '["name"]',
+        limit_page_length: 100,
+      });
+      if (serviceUnitRes.data?.data) {
+        setServiceUnits(serviceUnitRes.data.data);
+      }
+
+      // Fetch warehouses
+      const warehouseRes = await apiService.get(API_ENDPOINTS.WAREHOUSE.LIST, {
+        fields: '["name"]',
+        limit_page_length: 100,
+      });
+      if (warehouseRes.data?.data) {
+        setWarehouses(warehouseRes.data.data);
+      }
+
+      // Fetch companies
+      const companyRes = await apiService.get(API_ENDPOINTS.COMPANY.LIST, {
+        fields: '["name", "company_name"]',
+        limit_page_length: 100,
+      });
+      if (companyRes.data?.data) {
+        setCompanies(companyRes.data.data);
+        // Set first company as default if available and no company is set
+        if (companyRes.data.data.length > 0 && !billingData.company) {
+          setBillingData(prev => ({
+            ...prev,
+            company: companyRes.data.data[0].name
+          }));
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching dropdown options:", err);
+    }
+  };
+
+  // Debounced patient search
+  const searchPatients = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setPatientResults([]);
+      setShowPatientResults(false);
+      return;
+    }
+
+    setSearchingPatient(true);
+    try {
+      const response = await apiService.get(API_ENDPOINTS.PATIENTS.SEARCH_LINK, {
+        doctype: "Patient",
+        txt: query,
+        page_length: 10,
+      });
+      if (response.data?.results || response.data?.message) {
+        setPatientResults(response.data.results || response.data.message || []);
+        setShowPatientResults(true);
+      }
+    } catch (err) {
+      console.error("Error searching patients:", err);
+    } finally {
+      setSearchingPatient(false);
+    }
+  }, []);
+
+  // Debounced item search
+  const searchItems = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setItemResults([]);
+      setShowItemResults(false);
+      return;
+    }
+
+    setSearchingItem(true);
+    try {
+      const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
+        doctype: "Item",
+        txt: query,
+        page_length: 10,
+      });
+      if (response.data?.results || response.data?.message) {
+        setItemResults(response.data.results || response.data.message || []);
+        setShowItemResults(true);
+      }
+    } catch (err) {
+      console.error("Error searching items:", err);
+    } finally {
+      setSearchingItem(false);
+    }
+  }, []);
+
+  // Debounce effect for patient search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchPatients(patientSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [patientSearch, searchPatients]);
+
+  // Debounce effect for item search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchItems(itemSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [itemSearch, searchItems]);
 
   const handleBillingChange = (e) => {
     const { name, value, type, checked } = e.target;
     setBillingData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
     }));
+  };
+
+  const handlePatientSelect = (patient) => {
+    setBillingData((prev) => ({
+      ...prev,
+      customer: patient.value || patient.name,
+      patient: patient.value || patient.name,
+      patient_name: patient.description || patient.value || patient.name,
+    }));
+    setPatientSearch("");
+    setShowPatientResults(false);
+  };
+
+  const clearPatient = () => {
+    setBillingData((prev) => ({
+      ...prev,
+      customer: "",
+      patient: "",
+      patient_name: "",
+    }));
+  };
+
+  const handleItemSelect = async (item, index) => {
+    try {
+      // Fetch item details
+      const itemCode = item.value || item.name;
+      const response = await apiService.get(API_ENDPOINTS.ITEMS.GET_BY_ID(itemCode));
+      const itemData = response.data?.data;
+
+      const updatedItems = [...items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        item_code: itemCode,
+        item_name: itemData?.item_name || item.description || itemCode,
+        description: itemData?.description || item.description || itemCode,
+        uom: itemData?.stock_uom || "Unit",
+        rate: itemData?.standard_rate || 0,
+        amount: (itemData?.standard_rate || 0) * (updatedItems[index].qty || 1),
+      };
+      setItems(updatedItems);
+    } catch (err) {
+      console.error("Error fetching item details:", err);
+      const updatedItems = [...items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        item_code: item.value || item.name,
+        item_name: item.description || item.value || item.name,
+        description: item.description || item.value || item.name,
+      };
+      setItems(updatedItems);
+    }
+
+    setItemSearch("");
+    setShowItemResults(false);
+    setItemSearchIndex(null);
   };
 
   const handleItemChange = (index, field, value) => {
@@ -366,17 +783,25 @@ const AddBilling = () => {
     updatedItems[index][field] = value;
 
     if (field === "qty" || field === "rate") {
-      updatedItems[index].amount = updatedItems[index].qty * updatedItems[index].rate;
+      const qty = parseFloat(updatedItems[index].qty) || 0;
+      const rate = parseFloat(updatedItems[index].rate) || 0;
+      updatedItems[index].amount = qty * rate;
     }
 
     setItems(updatedItems);
   };
 
   const addItem = () => {
+    const defaultWarehouse = warehouses.length > 0 ? warehouses[0].name : "Finished Goods - RKMS";
     const newItem = {
-      no: items.length + 1,
-      item: "",
-      itemName: "",
+      item_code: "",
+      item_name: "",
+      description: "",
+      warehouse: defaultWarehouse,
+      income_account: "Sales - RKMS",
+      expense_account: "Cost of Goods Sold - RKMS",
+      cost_center: "Main - RKMS",
+      uom: "Unit",
       qty: 1,
       rate: 0,
       amount: 0,
@@ -384,163 +809,509 @@ const AddBilling = () => {
     setItems([...items, newItem]);
   };
 
-  const removeItem = () => {
-    if (items.length > 1) {
-      setItems(items.slice(0, -1));
+  const removeItem = (index) => {
+    if (items.length > 0) {
+      const updatedItems = items.filter((_, i) => i !== index);
+      setItems(updatedItems);
     }
   };
 
   const calculateTotals = () => {
     const totalQty = items.reduce((sum, item) => sum + parseFloat(item.qty || 0), 0);
     const grossTotal = items.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
-    const discountAmount = (grossTotal * parseFloat(billingData.discountPercent || 0)) / 100;
+    const discountAmount = (grossTotal * parseFloat(billingData.additional_discount_percentage || 0)) / 100;
     const netTotal = grossTotal - discountAmount;
 
     return { totalQty, grossTotal, discountAmount, netTotal };
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Billing data:", billingData);
-    console.log("Items:", items);
-    console.log("Totals:", calculateTotals());
-    // TODO: Add API call to create billing record
-    alert("Billing created successfully!");
-    navigate("/billing");
+    setError("");
+
+    // Validation
+    if (!billingData.patient) {
+      setError("Please select a patient");
+      return;
+    }
+
+    if (items.length === 0) {
+      setError("Please add at least one item");
+      return;
+    }
+
+    const hasEmptyItems = items.some((item) => !item.item_code);
+    if (hasEmptyItems) {
+      setError("Please select an item for all rows");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Prepare the API payload
+      const payload = {
+        docstatus: 0,
+        doctype: "Sales Invoice",
+        naming_series: billingData.naming_series,
+        company: billingData.company,
+        posting_date: billingData.posting_date,
+        set_posting_time: billingData.set_posting_time,
+        is_pos: billingData.is_pos,
+        customer: billingData.customer,
+        patient: billingData.patient,
+        patient_name: billingData.patient_name,
+        currency: billingData.currency,
+        selling_price_list: billingData.selling_price_list,
+        update_stock: billingData.update_stock,
+        items: items.map((item) => ({
+          item_code: item.item_code,
+          item_name: item.item_name,
+          description: item.description,
+          warehouse: item.warehouse,
+          income_account: item.income_account,
+          expense_account: item.expense_account,
+          cost_center: item.cost_center,
+          uom: item.uom,
+          qty: parseFloat(item.qty) || 1,
+          rate: parseFloat(item.rate) || 0,
+        })),
+        apply_discount_on: billingData.apply_discount_on,
+        additional_discount_percentage: parseFloat(billingData.additional_discount_percentage) || 0,
+        ref_practitioner: billingData.ref_practitioner || undefined,
+        service_unit: billingData.service_unit || undefined,
+      };
+
+      // Add optional fields if they have values
+      if (billingData.mode_of_transport) {
+        payload.mode_of_transport = billingData.mode_of_transport;
+      }
+      if (billingData.lr_date) {
+        payload.lr_date = billingData.lr_date;
+      }
+      if (billingData.gst_vehicle_type) {
+        payload.gst_vehicle_type = billingData.gst_vehicle_type;
+      }
+
+      const response = await apiService.post(API_ENDPOINTS.BILLING.CREATE, payload);
+
+      if (response.data?.data) {
+        alert(`Sales Invoice ${response.data.data.name} created successfully!`);
+        navigate("/billing");
+      } else {
+        throw new Error("Failed to create invoice");
+      }
+    } catch (err) {
+      console.error("Error creating billing:", err);
+      setError(err.message || "Failed to create billing. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const totals = calculateTotals();
 
   return (
     <Layout>
       <BillingContainer>
         <Title>Add Billing</Title>
 
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+
         <form onSubmit={handleSubmit}>
+          {/* Patient & Company Information */}
           <FormSection>
-            <SectionTitle>Patient Information</SectionTitle>
-            <FormGroup>
-              <FormLabel>Referring Practitioner</FormLabel>
-              <FormSelect
-                name="referringPractitioner"
-                value={billingData.referringPractitioner}
-                onChange={handleBillingChange}
-              >
-                <option value="">Select practitioner</option>
-                <option value="Dr. Emily White">Dr. Emily White</option>
-                <option value="Dr. Smith">Dr. Smith</option>
-                <option value="Dr. Johnson">Dr. Johnson</option>
-              </FormSelect>
-            </FormGroup>
+            <SectionTitle>Patient & Company Information</SectionTitle>
+            <FormGrid>
+              <FormGroup>
+                <FormLabel>
+                  Patient<RequiredStar>*</RequiredStar>
+                </FormLabel>
+                {billingData.patient ? (
+                  <SelectedTag>
+                    <span>{billingData.patient_name || billingData.patient}</span>
+                    <ClearButton type="button" onClick={clearPatient}>
+                      <X />
+                    </ClearButton>
+                  </SelectedTag>
+                ) : (
+                  <SearchInputWrapper>
+                    <SearchInput
+                      type="text"
+                      placeholder="Search patient..."
+                      value={patientSearch}
+                      onChange={(e) => setPatientSearch(e.target.value)}
+                      onFocus={() => patientSearch.length >= 2 && setShowPatientResults(true)}
+                      onBlur={() => setTimeout(() => setShowPatientResults(false), 200)}
+                    />
+                    <SearchIcon>
+                      {searchingPatient ? <Loader2 className="spinning" /> : <Search />}
+                    </SearchIcon>
+                    {showPatientResults && (
+                      <SearchResults>
+                        {patientResults.length > 0 ? (
+                          patientResults.map((patient, index) => (
+                            <SearchResultItem
+                              key={index}
+                              onMouseDown={() => handlePatientSelect(patient)}
+                            >
+                              {patient.value || patient.name} - {patient.description || ""}
+                            </SearchResultItem>
+                          ))
+                        ) : (
+                          <SearchResultEmpty>No patients found</SearchResultEmpty>
+                        )}
+                      </SearchResults>
+                    )}
+                  </SearchInputWrapper>
+                )}
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Company</FormLabel>
+                <FormSelect
+                  name="company"
+                  value={billingData.company}
+                  onChange={handleBillingChange}
+                >
+                  <option value="">Select company</option>
+                  {companies.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.company_name || c.name}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Currency</FormLabel>
+                <FormSelect name="currency" value={billingData.currency} onChange={handleBillingChange}>
+                  <option value="INR">INR</option>
+                  <option value="USD">USD</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Posting Date</FormLabel>
+                <FormInput
+                  type="date"
+                  name="posting_date"
+                  value={billingData.posting_date}
+                  onChange={handleBillingChange}
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Selling Price List</FormLabel>
+                <FormSelect
+                  name="selling_price_list"
+                  value={billingData.selling_price_list}
+                  onChange={handleBillingChange}
+                >
+                  <option value="Standard Selling">Standard Selling</option>
+                  <option value="Wholesale">Wholesale</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Naming Series</FormLabel>
+                <FormInput
+                  type="text"
+                  name="naming_series"
+                  value={billingData.naming_series}
+                  onChange={handleBillingChange}
+                />
+              </FormGroup>
+            </FormGrid>
+
             <CheckboxGroup>
               <CheckboxLabel>
                 <Checkbox
                   type="checkbox"
-                  name="editPostingDate"
-                  checked={billingData.editPostingDate}
+                  name="set_posting_time"
+                  checked={billingData.set_posting_time === 1}
                   onChange={handleBillingChange}
                 />
                 Edit Posting Date and Time
               </CheckboxLabel>
+              <CheckboxLabel style={{ marginLeft: "24px" }}>
+                <Checkbox
+                  type="checkbox"
+                  name="update_stock"
+                  checked={billingData.update_stock === 1}
+                  onChange={handleBillingChange}
+                />
+                Update Stock
+              </CheckboxLabel>
             </CheckboxGroup>
           </FormSection>
 
-          <ItemsSection>
+          {/* Practitioner & Service Information */}
+          <FormSection style={{ marginTop: "24px" }}>
+            <SectionTitle>Practitioner & Service Information</SectionTitle>
+            <FormGrid>
+              <FormGroup>
+                <FormLabel>Referring Practitioner</FormLabel>
+                <FormSelect
+                  name="ref_practitioner"
+                  value={billingData.ref_practitioner}
+                  onChange={handleBillingChange}
+                >
+                  <option value="">Select practitioner</option>
+                  {practitioners.map((p) => (
+                    <option key={p.name} value={p.name}>
+                      {p.practitioner_name || p.name}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Service Unit</FormLabel>
+                <FormSelect
+                  name="service_unit"
+                  value={billingData.service_unit}
+                  onChange={handleBillingChange}
+                >
+                  <option value="">Select service unit</option>
+                  {serviceUnits.map((su) => (
+                    <option key={su.name} value={su.name}>
+                      {su.name}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>GST Vehicle Type</FormLabel>
+                <FormSelect
+                  name="gst_vehicle_type"
+                  value={billingData.gst_vehicle_type}
+                  onChange={handleBillingChange}
+                >
+                  <option value="Regular">Regular</option>
+                  <option value="Over Dimensional Cargo (ODC)">Over Dimensional Cargo (ODC)</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Mode of Transport</FormLabel>
+                <FormSelect
+                  name="mode_of_transport"
+                  value={billingData.mode_of_transport}
+                  onChange={handleBillingChange}
+                >
+                  <option value="">Select mode</option>
+                  <option value="Road">Road</option>
+                  <option value="Rail">Rail</option>
+                  <option value="Air">Air</option>
+                  <option value="Ship">Ship</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>LR Date</FormLabel>
+                <FormInput
+                  type="date"
+                  name="lr_date"
+                  value={billingData.lr_date}
+                  onChange={handleBillingChange}
+                />
+              </FormGroup>
+            </FormGrid>
+          </FormSection>
+
+          {/* Items Section */}
+          <ItemsSection style={{ marginTop: "24px" }}>
             <ItemsHeader>
               <ItemsTitle>Items</ItemsTitle>
               <ItemButtons>
                 <IconButton type="button" onClick={addItem}>
                   <Plus />
                 </IconButton>
-                <IconButton type="button" onClick={removeItem}>
-                  <Minus />
-                </IconButton>
               </ItemButtons>
             </ItemsHeader>
 
-            <ItemsTable>
-              <TableHead>
-                <TableRow>
-                  <TableHeader>No.</TableHeader>
-                  <TableHeader>Item</TableHeader>
-                  <TableHeader>Item Name</TableHeader>
-                  <TableHeader>Qty</TableHeader>
-                  <TableHeader>Rate</TableHeader>
-                  <TableHeader>Amount</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {items.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.no}</TableCell>
-                    <TableCell>
-                      <ItemInput
-                        type="text"
-                        value={item.item}
-                        onChange={(e) => handleItemChange(index, 'item', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <ItemInput
-                        type="text"
-                        value={item.itemName}
-                        onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <ItemInput
-                        type="number"
-                        value={item.qty}
-                        onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <ItemInput
-                        type="number"
-                        step="0.01"
-                        value={item.rate}
-                        onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
-                      />
-                    </TableCell>
-                    <TableCell>{item.amount.toFixed(2)}</TableCell>
+            <ItemsTableWrapper>
+              <ItemsTable>
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>#</TableHeader>
+                    <TableHeader>Item Code</TableHeader>
+                    <TableHeader>Item Name</TableHeader>
+                    <TableHeader>Warehouse</TableHeader>
+                    <TableHeader>UOM</TableHeader>
+                    <TableHeader>Qty</TableHeader>
+                    <TableHeader>Rate</TableHeader>
+                    <TableHeader>Amount</TableHeader>
+                    <TableHeader></TableHeader>
                   </TableRow>
-                ))}
-              </TableBody>
-            </ItemsTable>
+                </TableHead>
+                <TableBody>
+                  {items.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} style={{ textAlign: "center", padding: "24px", color: "#666" }}>
+                        No items added. Click + to add items.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    items.map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{index + 1}</TableCell>
+                        <TableCell>
+                          <ItemSearchWrapper>
+                            {item.item_code ? (
+                              <ItemInput type="text" value={item.item_code} disabled />
+                            ) : (
+                              <>
+                                <ItemInput
+                                  type="text"
+                                  placeholder="Search item..."
+                                  value={itemSearchIndex === index ? itemSearch : ""}
+                                  onChange={(e) => {
+                                    setItemSearchIndex(index);
+                                    setItemSearch(e.target.value);
+                                  }}
+                                  onFocus={() => {
+                                    setItemSearchIndex(index);
+                                    if (itemSearch.length >= 2) setShowItemResults(true);
+                                  }}
+                                  onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                />
+                                {showItemResults && itemSearchIndex === index && (
+                                  <SearchResults>
+                                    {itemResults.length > 0 ? (
+                                      itemResults.map((itemResult, idx) => (
+                                        <SearchResultItem
+                                          key={idx}
+                                          onMouseDown={() => handleItemSelect(itemResult, index)}
+                                        >
+                                          {itemResult.value || itemResult.name} - {itemResult.description || ""}
+                                        </SearchResultItem>
+                                      ))
+                                    ) : (
+                                      <SearchResultEmpty>
+                                        {searchingItem ? "Searching..." : "No items found"}
+                                      </SearchResultEmpty>
+                                    )}
+                                  </SearchResults>
+                                )}
+                              </>
+                            )}
+                          </ItemSearchWrapper>
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="text"
+                            value={item.item_name}
+                            onChange={(e) => handleItemChange(index, "item_name", e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FormSelect
+                            value={item.warehouse}
+                            onChange={(e) => handleItemChange(index, "warehouse", e.target.value)}
+                            style={{ padding: "6px 8px", fontSize: "13px", minWidth: "120px" }}
+                          >
+                            {warehouses.map((w) => (
+                              <option key={w.name} value={w.name}>
+                                {w.name}
+                              </option>
+                            ))}
+                            <option value="Finished Goods - RKMS">Finished Goods - RKMS</option>
+                          </FormSelect>
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="text"
+                            value={item.uom}
+                            onChange={(e) => handleItemChange(index, "uom", e.target.value)}
+                            style={{ width: "60px" }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="number"
+                            value={item.qty}
+                            onChange={(e) => handleItemChange(index, "qty", e.target.value)}
+                            style={{ width: "60px" }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <ItemInput
+                            type="number"
+                            step="0.01"
+                            value={item.rate}
+                            onChange={(e) => handleItemChange(index, "rate", e.target.value)}
+                            style={{ width: "80px" }}
+                          />
+                        </TableCell>
+                        <TableCell style={{ fontWeight: "600" }}>
+                          {(item.amount || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <DeleteItemButton type="button" onClick={() => removeItem(index)}>
+                            <X />
+                          </DeleteItemButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </ItemsTable>
+            </ItemsTableWrapper>
 
             <ItemFooter>
+              <FooterItem>
+                <FooterLabel>Apply Discount On</FooterLabel>
+                <FormSelect
+                  name="apply_discount_on"
+                  value={billingData.apply_discount_on}
+                  onChange={handleBillingChange}
+                  style={{ padding: "6px 8px", fontSize: "13px" }}
+                >
+                  <option value="Grand Total">Grand Total</option>
+                  <option value="Net Total">Net Total</option>
+                </FormSelect>
+              </FooterItem>
               <FooterItem>
                 <FooterLabel>Discount %</FooterLabel>
                 <DiscountInput
                   type="number"
-                  name="discountPercent"
-                  value={billingData.discountPercent}
+                  name="additional_discount_percentage"
+                  value={billingData.additional_discount_percentage}
                   onChange={handleBillingChange}
+                  step="0.01"
                 />
               </FooterItem>
               <FooterItem>
                 <FooterLabel>Total Qty:</FooterLabel>
-                <FooterValue>{calculateTotals().totalQty}</FooterValue>
+                <FooterValue>{totals.totalQty}</FooterValue>
               </FooterItem>
               <FooterItem>
                 <FooterLabel>Total:</FooterLabel>
-                <FooterValue>{calculateTotals().grossTotal.toFixed(2)}</FooterValue>
+                <FooterValue>{totals.grossTotal.toFixed(2)}</FooterValue>
               </FooterItem>
             </ItemFooter>
           </ItemsSection>
 
-          <BottomSection>
+          {/* Bottom Section - Calculations & Payment */}
+          <BottomSection style={{ marginTop: "24px" }}>
             <CalculationCard>
               <CardTitle>Calculation</CardTitle>
               <CalculationRow>
                 <CalculationLabel>Gross Total</CalculationLabel>
-                <CalculationValue>{calculateTotals().grossTotal.toFixed(2)}</CalculationValue>
+                <CalculationValue>{totals.grossTotal.toFixed(2)}</CalculationValue>
               </CalculationRow>
               <CalculationRow>
-                <CalculationLabel>Discount Amount</CalculationLabel>
-                <CalculationValue>{calculateTotals().discountAmount.toFixed(2)}</CalculationValue>
+                <CalculationLabel>Discount Amount ({billingData.additional_discount_percentage}%)</CalculationLabel>
+                <CalculationValue>{totals.discountAmount.toFixed(2)}</CalculationValue>
               </CalculationRow>
               <CalculationRow>
                 <CalculationLabel bold>Net Total (INR)</CalculationLabel>
-                <CalculationValue bold highlight>{calculateTotals().netTotal.toFixed(2)}</CalculationValue>
+                <CalculationValue bold highlight>
+                  {totals.netTotal.toFixed(2)}
+                </CalculationValue>
               </CalculationRow>
             </CalculationCard>
 
@@ -549,22 +1320,28 @@ const AddBilling = () => {
               <FormGroup>
                 <FormLabel>Payment Type</FormLabel>
                 <FormSelect
-                  name="paymentType"
-                  value={billingData.paymentType}
+                  name="payment_type"
+                  value={billingData.payment_type}
                   onChange={handleBillingChange}
                 >
                   <option value="Cash">Cash</option>
                   <option value="Card">Card</option>
                   <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
                   <option value="Insurance">Insurance</option>
                 </FormSelect>
               </FormGroup>
             </CalculationCard>
           </BottomSection>
 
-          <ActionButtons>
-            <BackButton type="button" onClick={() => navigate("/billing")}>Back</BackButton>
-            <SubmitButton type="submit">Create Billing</SubmitButton>
+          <ActionButtons style={{ marginTop: "24px" }}>
+            <BackButton type="button" onClick={() => navigate("/billing")}>
+              Back
+            </BackButton>
+            <SubmitButton type="submit" disabled={loading}>
+              {loading && <Loader2 size={18} />}
+              {loading ? "Creating..." : "Create Billing"}
+            </SubmitButton>
           </ActionButtons>
         </form>
       </BillingContainer>

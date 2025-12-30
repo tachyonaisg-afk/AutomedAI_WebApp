@@ -813,7 +813,7 @@ const PatientRegistration = () => {
         middle_name: formData.middleName,
         last_name: formData.lastName,
         uid: formData.uid,
-        gender: formData.gender,
+        Gender: formData.gender,
         mobile: formData.mobile,
         dob: formData.dateOfBirth,
         custom_company: formData.company,

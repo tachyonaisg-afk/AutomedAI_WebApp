@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Filter, Plus, RefreshCw } from "lucide-react";
 import apiService from "../services/api/apiService";
+import API_ENDPOINTS from "../services/api/endpoints";
 
 const CollectionContainer = styled.div`
   display: flex;
@@ -215,7 +216,6 @@ const Collection = () => {
       setLoading(true);
       setError(null);
 
-      // API endpoint with query parameters
       const fields = JSON.stringify([
         "creation",
         "modified",
@@ -235,31 +235,37 @@ const Collection = () => {
         "_seen",
       ]);
 
-      const response = await apiService.get("/resource/Sample Collection", {
+      const response = await apiService.get(API_ENDPOINTS.SAMPLE_COLLECTION.LIST, {
         limit_start: 0,
         limit_page_length: 1200,
-        // fields: fields,
+        fields: fields,
       });
 
-      // Transform API response to match table format
-      const transformedData = response.data.data.map((item) => ({
-        patient_id: item.patient || "N/A",
-        patient_name: item.patient_name || "N/A",
-        gender: item.patient_sex || "N/A",
-        referring_practitioner: item.referring_practitioner || "N/A",
-        date: item.creation ? new Date(item.creation).toLocaleDateString() : "N/A",
-        status: item.status || "Pending",
-        sample: item.sample || "N/A",
-        quantity_uom: item.sample_qty && item.sample_uom
-          ? `${item.sample_qty} ${item.sample_uom}`
-          : "N/A",
-        collection_datetime: item.creation
-          ? new Date(item.creation).toLocaleString()
-          : "N/A",
-        collected_by: item.collected_by || "N/A",
-      }));
+      if (response.data?.data) {
+        // Transform API response to match table format
+        const transformedData = response.data.data.map((item, index) => ({
+          id: index + 1,
+          patient_id: item.patient || "-",
+          patient_name: item.patient_name || "-",
+          gender: item.patient_sex || "-",
+          age: item.patient_age || "-",
+          referring_practitioner: item.referring_practitioner || "-",
+          date: item.creation ? new Date(item.creation).toLocaleDateString("en-IN") : "-",
+          status: item.status || "Pending",
+          sample: item.sample || "-",
+          quantity_uom: item.sample_qty && item.sample_uom
+            ? `${item.sample_qty} ${item.sample_uom}`
+            : "-",
+          collection_datetime: item.creation
+            ? new Date(item.creation).toLocaleString("en-IN")
+            : "-",
+          collected_by: item.collected_by ? item.collected_by.split("@")[0] : "-",
+        }));
 
-      setCollectionsData(transformedData);
+        setCollectionsData(transformedData);
+      } else {
+        setCollectionsData([]);
+      }
     } catch (err) {
       console.error("Error fetching collections:", err);
       setError(err.message || "Failed to load collections. Please try again.");

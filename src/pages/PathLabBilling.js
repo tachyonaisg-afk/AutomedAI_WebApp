@@ -1,7 +1,7 @@
 import React from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { LayoutDashboard } from "lucide-react";
+import { FileText } from "lucide-react";
 
 const Container = styled.div`
   display: flex;
@@ -33,7 +33,7 @@ const IconWrapper = styled.div`
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background-color: #eff6ff;
+  background-color: #e3f2fd;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,20 +52,20 @@ const Message = styled.p`
   margin: 0;
 `;
 
-const PathLab = () => {
+const PathLabBilling = () => {
   return (
     <Layout>
       <Container>
-        <Title>PathLab Dashboard</Title>
+        <Title>PathLab Billing</Title>
         <ContentCard>
           <IconWrapper>
-            <LayoutDashboard />
+            <FileText />
           </IconWrapper>
-          <Message>PathLab Dashboard coming soon.</Message>
+          <Message>PathLab Billing module coming soon.</Message>
         </ContentCard>
       </Container>
     </Layout>
   );
 };
 
-export default PathLab;
+export default PathLabBilling;

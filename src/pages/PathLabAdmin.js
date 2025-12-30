@@ -1,7 +1,7 @@
 import React from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { LayoutDashboard } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 const Container = styled.div`
   display: flex;
@@ -33,11 +33,11 @@ const IconWrapper = styled.div`
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background-color: #eff6ff;
+  background-color: #fff3e0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4a90e2;
+  color: #ff9800;
 
   svg {
     width: 32px;
@@ -52,20 +52,20 @@ const Message = styled.p`
   margin: 0;
 `;
 
-const PathLab = () => {
+const PathLabAdmin = () => {
   return (
     <Layout>
       <Container>
-        <Title>PathLab Dashboard</Title>
+        <Title>PathLab Admin</Title>
         <ContentCard>
           <IconWrapper>
-            <LayoutDashboard />
+            <ShieldCheck />
           </IconWrapper>
-          <Message>PathLab Dashboard coming soon.</Message>
+          <Message>PathLab Admin settings coming soon.</Message>
         </ContentCard>
       </Container>
     </Layout>
   );
 };
 
-export default PathLab;
+export default PathLabAdmin;
