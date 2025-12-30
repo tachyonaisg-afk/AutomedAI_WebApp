@@ -17,6 +17,7 @@ import ResultPrint from './pages/ResultPrint';
 import Consultations from './pages/Consultations';
 import Appointments from './pages/Appointments';
 import Billing from './pages/Billing';
+import AddBilling from './pages/AddBilling';
 import ClinicDetails from './pages/ClinicDetails';
 import Settings from './pages/Settings';
 import './App.css';
@@ -155,6 +156,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/billing/add"
+            element={
+              <ProtectedRoute>
+                <AddBilling />
               </ProtectedRoute>
             }
           />

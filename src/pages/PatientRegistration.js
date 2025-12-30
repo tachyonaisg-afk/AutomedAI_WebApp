@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -64,10 +64,10 @@ const ProgressBarFill = styled.div`
   border-radius: 4px;
   transition: width 0.3s ease;
   width: ${(props) => {
-    if (props.currentStep === 1) return "25%";
-    if (props.currentStep === 2) return "50%";
-    if (props.currentStep === 3) return "75%";
-    if (props.currentStep === 4) return "100%";
+    if (props.currentStep === 1) return "33.33%";
+    if (props.currentStep === 2) return "66.66%";
+    if (props.currentStep === 3) return "100%";
+    // if (props.currentStep === 4) return "100%";
     return "0%";
   }};
 `;
@@ -632,6 +632,7 @@ const PatientRegistration = () => {
     gender: "",
     mobile: "",
     company: "",
+    bloodGroup: "",
     allergies: "",
     existingConditions: "",
     visitType: "walk-in",
@@ -641,11 +642,16 @@ const PatientRegistration = () => {
   const [medicalHistory, setMedicalHistory] = useState({
     occupation: "",
     maritalStatus: "",
-    allergies: ["Pollen", "Penicillin"],
-    preExistingConditions: ["Hypertension"],
+    allergies: "",
+    preExistingConditions: "",
     regularMedication: "",
     surgeryHistory: "",
     riskFactors: ["Alcohol Consumption"],
+    tobaccoPastUse: "",
+    tobaccoCurrentUse: "",
+    alcoholPastUse: "",
+    alcoholCurrentUse: "",
+    otherRiskFactors: "",
   });
 
   const [billingData, setBillingData] = useState({
@@ -655,10 +661,50 @@ const PatientRegistration = () => {
     paymentType: "Cash",
   });
 
-  const [items, setItems] = useState([
-    { no: 1, item: "CONS-GEN", itemName: "General Consultation", qty: 1, rate: 800.0, amount: 800.0 },
-    { no: 2, item: "LAB-CBC", itemName: "Complete Blood Count", qty: 1, rate: 350.0, amount: 350.0 },
-  ]);
+  const [items, setItems] = useState([]);
+
+  const [genderOptions, setGenderOptions] = useState([]);
+  const [companyOptions, setCompanyOptions] = useState([]);
+
+  // Fetch gender and company options from API
+  useEffect(() => {
+    const fetchGenderOptions = async () => {
+      try {
+        const response = await fetch('https://hms.automedai.in/api/resource/Gender', {
+          headers: {
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (data && data.data) {
+          setGenderOptions(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching gender options:', error);
+      }
+    };
+
+    const fetchCompanyOptions = async () => {
+      try {
+        const response = await fetch('https://hms.automedai.in/api/resource/Company', {
+          headers: {
+            'Accept': 'application/json',
+          },
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (data && data.data) {
+          setCompanyOptions(data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching company options:', error);
+      }
+    };
+
+    fetchGenderOptions();
+    fetchCompanyOptions();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -748,7 +794,7 @@ const PatientRegistration = () => {
   };
 
   const handleNextStep = () => {
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -759,18 +805,72 @@ const PatientRegistration = () => {
     }
   };
 
+  const createPatient = async () => {
+    try {
+      const payload = {
+        doctype: "Patient",
+        first_name: formData.firstName,
+        middle_name: formData.middleName,
+        last_name: formData.lastName,
+        uid: formData.uid,
+        gender: formData.gender,
+        mobile: formData.mobile,
+        dob: formData.dateOfBirth,
+        custom_company: formData.company,
+        blood_group: formData.bloodGroup,
+        age: 0, // Ignoring as requested
+        medical_history: formData.existingConditions,
+        medication: medicalHistory.regularMedication,
+        surgical_history: medicalHistory.surgeryHistory,
+        surrounding_factors: "", // Keep blank as requested
+        tobacco_past_use: medicalHistory.tobaccoPastUse,
+        tobacco_current_use: medicalHistory.tobaccoCurrentUse,
+        alcohol_past_use: medicalHistory.alcoholPastUse,
+        alcohol_current_use: medicalHistory.alcoholCurrentUse,
+        other_risk_factors: medicalHistory.otherRiskFactors,
+        marital_status: medicalHistory.maritalStatus,
+      };
+
+      console.log("Creating patient with payload:", payload);
+
+      const response = await fetch('https://hms.automedai.in/api/resource/Patient', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Patient created successfully:", data);
+        alert("Patient registered successfully!");
+        navigate("/patients");
+      } else {
+        console.error("Error creating patient:", data);
+        alert(`Error creating patient: ${data.message || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error("Error creating patient:", error);
+      alert("Error creating patient. Please try again.");
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (currentStep < 4) {
+    if (currentStep < 3) {
       handleNextStep();
     } else {
-      // Final submission
+      // Final submission (Step 3 is now the last step)
       console.log("Form data:", formData);
       console.log("Medical History:", medicalHistory);
       console.log("Billing data:", billingData);
       console.log("Items:", items);
       console.log("Final submission");
-      navigate("/patients");
+      createPatient();
     }
   };
 
@@ -790,9 +890,9 @@ const PatientRegistration = () => {
             <ProgressStep>
               <StepLabel active={currentStep >= 3}>Step 3: Billing</StepLabel>
             </ProgressStep>
-            <ProgressStep>
+            {/* <ProgressStep>
               <StepLabel active={currentStep >= 4}>Step 4: Pre-Screening</StepLabel>
-            </ProgressStep>
+            </ProgressStep> */}
           </ProgressStepsContainer>
           <ProgressBarContainer>
             <ProgressBarFill currentStep={currentStep} />
@@ -807,7 +907,19 @@ const PatientRegistration = () => {
             <FormGrid>
               <FormGroup>
                 <FormLabel>First Name</FormLabel>
-                <FormInput type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} required />
+                <FormInput
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                    handleInputChange(e);
+                  }}
+                  pattern="[a-zA-Z\s]+"
+                  placeholder="Enter first name"
+                  required
+                />
               </FormGroup>
 
               <FormGroup>
@@ -817,7 +929,19 @@ const PatientRegistration = () => {
 
               <FormGroup>
                 <FormLabel>Last Name</FormLabel>
-                <FormInput type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} required />
+                <FormInput
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  onInput={(e) => {
+                    e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                    handleInputChange(e);
+                  }}
+                  pattern="[a-zA-Z\s]+"
+                  placeholder="Enter last name"
+                  required
+                />
               </FormGroup>
 
               <FormGroup>
@@ -834,9 +958,11 @@ const PatientRegistration = () => {
                 <FormLabel>Gender</FormLabel>
                 <FormSelect name="gender" value={formData.gender} onChange={handleInputChange}>
                   <option value="">Select</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
+                  {genderOptions.map((option) => (
+                    <option key={option.name} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
                 </FormSelect>
               </FormGroup>
 
@@ -863,9 +989,26 @@ const PatientRegistration = () => {
                 <FormLabel>Company</FormLabel>
                 <FormSelect name="company" value={formData.company} onChange={handleInputChange}>
                   <option value="">Select company</option>
-                  <option value="company1">Company 1</option>
-                  <option value="company2">Company 2</option>
-                  <option value="company3">Company 3</option>
+                  {companyOptions.map((option) => (
+                    <option key={option.name} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Blood Group</FormLabel>
+                <FormSelect name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
+                  <option value="">Select blood group</option>
+                  <option value="A Positive">A Positive</option>
+                  <option value="A Negative">A Negative</option>
+                  <option value="B Positive">B Positive</option>
+                  <option value="B Negative">B Negative</option>
+                  <option value="AB Positive">AB Positive</option>
+                  <option value="AB Negative">AB Negative</option>
+                  <option value="O Positive">O Positive</option>
+                  <option value="O Negative">O Negative</option>
                 </FormSelect>
               </FormGroup>
             </FormGrid>
@@ -955,52 +1098,22 @@ const PatientRegistration = () => {
                 <FormGrid>
                   <FormGroup>
                     <FormLabel>Allergies</FormLabel>
-                    <TagContainer>
-                      {medicalHistory.allergies.map((allergy, index) => (
-                        <Tag key={index}>
-                          {allergy}
-                          <TagRemove type="button" onClick={() => removeTag("allergies", allergy)}>
-                            ×
-                          </TagRemove>
-                        </Tag>
-                      ))}
-                      <TagInput
-                        type="text"
-                        placeholder="Add allergy..."
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addTag("allergies", e.target.value);
-                            e.target.value = "";
-                          }
-                        }}
-                      />
-                    </TagContainer>
+                    <TextArea
+                      name="allergies"
+                      value={medicalHistory.allergies}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="Enter any allergies..."
+                    />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Pre-existing Conditions</FormLabel>
-                    <TagContainer>
-                      {medicalHistory.preExistingConditions.map((condition, index) => (
-                        <Tag key={index}>
-                          {condition}
-                          <TagRemove type="button" onClick={() => removeTag("preExistingConditions", condition)}>
-                            ×
-                          </TagRemove>
-                        </Tag>
-                      ))}
-                      <TagInput
-                        type="text"
-                        placeholder="Add condition..."
-                        onKeyPress={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            addTag("preExistingConditions", e.target.value);
-                            e.target.value = "";
-                          }
-                        }}
-                      />
-                    </TagContainer>
+                    <TextArea
+                      name="preExistingConditions"
+                      value={medicalHistory.preExistingConditions}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="Enter any pre-existing conditions..."
+                    />
                   </FormGroup>
                 </FormGrid>
               </FormSection>
@@ -1031,6 +1144,55 @@ const PatientRegistration = () => {
               </FormSection>
 
               <FormSection>
+                <SectionTitle>Substance Use History</SectionTitle>
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>Tobacco Use (Past)</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="tobaccoPastUse"
+                      value={medicalHistory.tobaccoPastUse}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="e.g., Yes - 10 cigarettes/day for 5 years"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Tobacco Use (Current)</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="tobaccoCurrentUse"
+                      value={medicalHistory.tobaccoCurrentUse}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="e.g., No"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Alcohol Use (Past)</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="alcoholPastUse"
+                      value={medicalHistory.alcoholPastUse}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="e.g., Occasional"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Alcohol Use (Current)</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="alcoholCurrentUse"
+                      value={medicalHistory.alcoholCurrentUse}
+                      onChange={handleMedicalHistoryChange}
+                      placeholder="e.g., No"
+                    />
+                  </FormGroup>
+                </FormGrid>
+              </FormSection>
+
+              <FormSection>
                 <SectionTitle>Lifestyle & Risk Factors</SectionTitle>
                 <FormGroup fullWidth>
                   <FormLabel>Select all applicable risk factors</FormLabel>
@@ -1046,6 +1208,16 @@ const PatientRegistration = () => {
                       </RiskFactorOption>
                     ))}
                   </RiskFactorsGrid>
+                </FormGroup>
+
+                <FormGroup fullWidth>
+                  <FormLabel>Other Risk Factors</FormLabel>
+                  <TextArea
+                    name="otherRiskFactors"
+                    value={medicalHistory.otherRiskFactors}
+                    onChange={handleMedicalHistoryChange}
+                    placeholder="e.g., Stress, Family history of hypertension"
+                  />
                 </FormGroup>
               </FormSection>
             </>
@@ -1202,7 +1374,8 @@ const PatientRegistration = () => {
             </>
           )}
 
-          {currentStep === 4 && (
+          {/* Step 4: Pre-Screening - Commented out */}
+          {/* {currentStep === 4 && (
             <>
               <FormSection>
                 <SectionTitle>Pre-screening</SectionTitle>
@@ -1375,7 +1548,7 @@ const PatientRegistration = () => {
                 </FormGroup>
               </FormSection>
             </>
-          )}
+          )} */}
 
           {currentStep === 1 && (
             <ActionButtons>
@@ -1394,16 +1567,16 @@ const PatientRegistration = () => {
           {currentStep === 3 && (
             <ActionButtons>
               <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
-              <NextButton type="submit">Next</NextButton>
+              <NextButton type="submit">Submit and Send to Doctor</NextButton>
             </ActionButtons>
           )}
 
-          {currentStep === 4 && (
+          {/* {currentStep === 4 && (
             <ActionButtons>
               <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
               <NextButton type="submit">Submit and Send to Doctor</NextButton>
             </ActionButtons>
-          )}
+          )} */}
         </form>
       </RegistrationContainer>
     </Layout>

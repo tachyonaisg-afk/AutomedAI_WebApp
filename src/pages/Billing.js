@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Download, DollarSign, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle } from "lucide-react";
+import { Download, DollarSign, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -34,7 +35,12 @@ const Subtitle = styled.p`
   margin: 0;
 `;
 
-const ExportButton = styled.button`
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const AddButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -50,6 +56,30 @@ const ExportButton = styled.button`
 
   &:hover {
     background-color: #357abd;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const ExportButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  color: #4a90e2;
+  border: 1px solid #4a90e2;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #f0f7ff;
   }
 
   svg {
@@ -274,6 +304,8 @@ const ActionLabel = styled.span`
 `;
 
 const Billing = () => {
+  const navigate = useNavigate();
+
   const summaryData = [
     {
       label: "Total Revenue",
@@ -335,10 +367,16 @@ const Billing = () => {
             <Title>Billing</Title>
             <Subtitle>Manage invoices, payments, and financial records.</Subtitle>
           </TitleSection>
-          <ExportButton>
-            <Download />
-            Export Report
-          </ExportButton>
+          <ButtonGroup>
+            <AddButton onClick={() => navigate("/billing/add")}>
+              <Plus />
+              Add Billing
+            </AddButton>
+            <ExportButton>
+              <Download />
+              Export Report
+            </ExportButton>
+          </ButtonGroup>
         </HeaderSection>
 
         <SummaryCards>

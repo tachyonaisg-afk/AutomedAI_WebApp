@@ -395,8 +395,8 @@ const AnimatedNumber = ({ value }) => {
 
     const duration = 800;
     const start = performance.now();
-    const formatter = String(value).trim().startsWith("$")
-      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+    const formatter = String(value).trim().startsWith("₹")
+      ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })
       : new Intl.NumberFormat("en-US");
 
     const step = (now) => {
@@ -440,7 +440,7 @@ const Dashboard = () => {
     },
     {
       title: "Fees Collected",
-      value: "$8,250",
+      value: "₹8,250",
       color: "default",
       icon: DollarSign,
       accentColor: "#10b981",
