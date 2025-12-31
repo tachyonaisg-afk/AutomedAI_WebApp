@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Download, DollarSign, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
@@ -305,6 +305,10 @@ const ActionLabel = styled.span`
 
 const Billing = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Determine base path for navigation (handles both /billing and /opd/billing)
+  const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 
   const summaryData = [
     {
@@ -368,7 +372,7 @@ const Billing = () => {
             <Subtitle>Manage invoices, payments, and financial records.</Subtitle>
           </TitleSection>
           <ButtonGroup>
-            <AddButton onClick={() => navigate("/billing/add")}>
+            <AddButton onClick={() => navigate(`${basePath}/add`)}>
               <Plus />
               Add Billing
             </AddButton>

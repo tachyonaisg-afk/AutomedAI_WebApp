@@ -16,7 +16,10 @@ import {
   TestTubes,
   ClipboardList,
   FileCheck,
-  ShieldCheck
+  ShieldCheck,
+  Stethoscope,
+  UserPlus,
+  Video
 } from "lucide-react";
 
 const SidebarContainer = styled.div`
@@ -250,6 +253,15 @@ const SubNavLabel = styled.span`
 
 const Sidebar = () => {
   const location = useLocation();
+
+  // OPD dropdown state
+  const isOPDActive = location.pathname.startsWith("/opd");
+  const [isOPDOpen, setIsOPDOpen] = useState(isOPDActive);
+  const [opdDropdownHeight, setOPDDropdownHeight] = useState(isOPDActive ? "auto" : 0);
+  const opdDropdownRef = useRef(null);
+  const isOPDInitialMount = useRef(true);
+
+  // PathLab dropdown state
   const isPathLabActive = location.pathname.startsWith("/pathlab");
   const [isPathLabOpen, setIsPathLabOpen] = useState(isPathLabActive);
   const [dropdownHeight, setDropdownHeight] = useState(isPathLabActive ? "auto" : 0);
@@ -259,6 +271,16 @@ const Sidebar = () => {
   const menuItems = [
     { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/patients", label: "Patients", icon: Users },
+  ];
+
+  // OPD submenu items
+  const opdSubItems = [
+    { path: "/opd", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/opd/patient-registration", label: "Patient Registration", icon: UserPlus },
+    { path: "/opd/billing", label: "Billing", icon: FileText },
+    { path: "/opd/appointments", label: "Appointments", icon: Calendar },
+    { path: "/opd/consultation", label: "Consultation", icon: MessageSquare },
+    { path: "/opd/telemedicine", label: "Telemedicine", icon: Video },
   ];
 
   const pathLabSubItems = [
@@ -273,7 +295,6 @@ const Sidebar = () => {
   const menuItemsAfterPathLab = [
     { path: "/consultations", label: "Consultations", icon: MessageSquare },
     { path: "/appointments", label: "Appointments", icon: Calendar },
-    { path: "/billing", label: "Billing", icon: FileText },
     { path: "/clinic-details", label: "Clinic Details", icon: Building2 },
   ];
 
@@ -282,7 +303,27 @@ const Sidebar = () => {
     { path: "/logout", label: "Logout", icon: LogOut },
   ];
 
-  // Calculate dropdown height for smooth animation
+  // Calculate OPD dropdown height for smooth animation
+  useEffect(() => {
+    if (opdDropdownRef.current) {
+      if (isOPDOpen) {
+        const height = opdDropdownRef.current.scrollHeight;
+        setOPDDropdownHeight(height);
+      } else {
+        setOPDDropdownHeight(0);
+      }
+    }
+  }, [isOPDOpen]);
+
+  // Set initial height on mount if OPD is active
+  useEffect(() => {
+    if (isOPDInitialMount.current && opdDropdownRef.current && isOPDActive) {
+      setOPDDropdownHeight(opdDropdownRef.current.scrollHeight);
+      isOPDInitialMount.current = false;
+    }
+  }, [isOPDActive]);
+
+  // Calculate PathLab dropdown height for smooth animation
   useEffect(() => {
     if (dropdownRef.current) {
       if (isPathLabOpen) {
@@ -331,6 +372,40 @@ const Sidebar = () => {
 
       <SidebarNav>
         {menuItems.map(renderNavItem)}
+
+        {/* OPD Dropdown */}
+        <DropdownWrapper>
+          <DropdownHeader
+            className={isOPDActive ? "active" : ""}
+            onClick={() => setIsOPDOpen(!isOPDOpen)}
+          >
+            <Stethoscope />
+            <NavLabel>OPD</NavLabel>
+            <DropdownArrow $isOpen={isOPDOpen}>
+              <ChevronDown />
+            </DropdownArrow>
+          </DropdownHeader>
+
+          <DropdownContent $height={opdDropdownHeight}>
+            <DropdownInner ref={opdDropdownRef}>
+              {opdSubItems.map((item) => {
+                const IconComponent = item.icon;
+                const isActive = location.pathname === item.path;
+
+                return (
+                  <SubNavItem
+                    key={item.path}
+                    to={item.path}
+                    className={isActive ? "active" : ""}
+                  >
+                    <IconComponent />
+                    <SubNavLabel>{item.label}</SubNavLabel>
+                  </SubNavItem>
+                );
+              })}
+            </DropdownInner>
+          </DropdownContent>
+        </DropdownWrapper>
 
         {/* PathLab Dropdown */}
         <DropdownWrapper>

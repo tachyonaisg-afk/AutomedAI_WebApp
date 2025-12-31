@@ -23,6 +23,7 @@ import Billing from './pages/Billing';
 import AddBilling from './pages/AddBilling';
 import ClinicDetails from './pages/ClinicDetails';
 import Settings from './pages/Settings';
+import ComingSoon from './pages/ComingSoon';
 import './App.css';
 
 const LogoutHandler = () => {
@@ -82,6 +83,64 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* OPD Routes */}
+          <Route
+            path="/opd"
+            element={
+              <ProtectedRoute>
+                <ComingSoon />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/patient-registration"
+            element={
+              <ProtectedRoute>
+                <PatientRegistration />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/billing"
+            element={
+              <ProtectedRoute>
+                <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/billing/add"
+            element={
+              <ProtectedRoute>
+                <AddBilling />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/appointments"
+            element={
+              <ProtectedRoute>
+                <ComingSoon />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/consultation"
+            element={
+              <ProtectedRoute>
+                <ComingSoon />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/telemedicine"
+            element={
+              <ProtectedRoute>
+                <ComingSoon />
+              </ProtectedRoute>
+            }
+          />
+          {/* PathLab Routes */}
           <Route
             path="/pathlab"
             element={

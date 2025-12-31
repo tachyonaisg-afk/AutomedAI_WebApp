@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Plus, Minus, Search, X, Loader2 } from "lucide-react";
@@ -554,6 +554,10 @@ const ErrorMessage = styled.div`
 
 const AddBilling = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Determine base path for navigation (handles both /billing and /opd/billing)
+  const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 
   // Form state
   const [billingData, setBillingData] = useState({
@@ -957,7 +961,7 @@ const AddBilling = () => {
 
       if (response.data?.data) {
         alert(`Sales Invoice ${response.data.data.name} created successfully!`);
-        navigate("/billing");
+        navigate(basePath);
       } else {
         throw new Error("Failed to create invoice");
       }
@@ -1415,7 +1419,7 @@ const AddBilling = () => {
           </BottomSection>
 
           <ActionButtons style={{ marginTop: "24px" }}>
-            <BackButton type="button" onClick={() => navigate("/billing")}>
+            <BackButton type="button" onClick={() => navigate(basePath)}>
               Back
             </BackButton>
             <SubmitButton type="submit" disabled={loading}>
