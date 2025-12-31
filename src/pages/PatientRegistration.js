@@ -670,35 +670,35 @@ const PatientRegistration = () => {
   useEffect(() => {
     const fetchGenderOptions = async () => {
       try {
-        const response = await fetch('https://hms.automedai.in/api/resource/Gender', {
+        const response = await fetch("https://hms.automedai.in/api/resource/Gender", {
           headers: {
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
-          credentials: 'include',
+          credentials: "include",
         });
         const data = await response.json();
         if (data && data.data) {
           setGenderOptions(data.data);
         }
       } catch (error) {
-        console.error('Error fetching gender options:', error);
+        console.error("Error fetching gender options:", error);
       }
     };
 
     const fetchCompanyOptions = async () => {
       try {
-        const response = await fetch('https://hms.automedai.in/api/resource/Company', {
+        const response = await fetch("https://hms.automedai.in/api/resource/Company", {
           headers: {
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
-          credentials: 'include',
+          credentials: "include",
         });
         const data = await response.json();
         if (data && data.data) {
           setCompanyOptions(data.data);
         }
       } catch (error) {
-        console.error('Error fetching company options:', error);
+        console.error("Error fetching company options:", error);
       }
     };
 
@@ -749,9 +749,7 @@ const PatientRegistration = () => {
   const toggleRiskFactor = (factor) => {
     setMedicalHistory((prev) => ({
       ...prev,
-      riskFactors: prev.riskFactors.includes(factor)
-        ? prev.riskFactors.filter((f) => f !== factor)
-        : [...prev.riskFactors, factor],
+      riskFactors: prev.riskFactors.includes(factor) ? prev.riskFactors.filter((f) => f !== factor) : [...prev.riskFactors, factor],
     }));
   };
 
@@ -814,6 +812,7 @@ const PatientRegistration = () => {
         last_name: formData.lastName,
         uid: formData.uid,
         Gender: formData.gender,
+        sex: formData.gender,
         mobile: formData.mobile,
         dob: formData.dateOfBirth,
         custom_company: formData.company,
@@ -833,13 +832,13 @@ const PatientRegistration = () => {
 
       console.log("Creating patient with payload:", payload);
 
-      const response = await fetch('https://hms.automedai.in/api/resource/Patient', {
-        method: 'POST',
+      const response = await fetch("https://hms.automedai.in/api/resource/Patient", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -851,7 +850,7 @@ const PatientRegistration = () => {
         navigate("/patients");
       } else {
         console.error("Error creating patient:", data);
-        alert(`Error creating patient: ${data.message || 'Unknown error'}`);
+        alert(`Error creating patient: ${data.message || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error creating patient:", error);
@@ -904,159 +903,159 @@ const PatientRegistration = () => {
             <>
               <FormSection>
                 <SectionTitle>Personal Information</SectionTitle>
-            <FormGrid>
-              <FormGroup>
-                <FormLabel>First Name</FormLabel>
-                <FormInput
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  onInput={(e) => {
-                    e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-                    handleInputChange(e);
-                  }}
-                  pattern="[a-zA-Z\s]+"
-                  placeholder="Enter first name"
-                  required
-                />
-              </FormGroup>
+                <FormGrid>
+                  <FormGroup>
+                    <FormLabel>First Name</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      onInput={(e) => {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                        handleInputChange(e);
+                      }}
+                      pattern="[a-zA-Z\s]+"
+                      placeholder="Enter first name"
+                      required
+                    />
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Middle Name (Optional)</FormLabel>
-                <FormInput type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} />
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Middle Name (Optional)</FormLabel>
+                    <FormInput type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} />
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Last Name</FormLabel>
-                <FormInput
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  onInput={(e) => {
-                    e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
-                    handleInputChange(e);
-                  }}
-                  pattern="[a-zA-Z\s]+"
-                  placeholder="Enter last name"
-                  required
-                />
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      onInput={(e) => {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                        handleInputChange(e);
+                      }}
+                      pattern="[a-zA-Z\s]+"
+                      placeholder="Enter last name"
+                      required
+                    />
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Identification Number (UID)</FormLabel>
-                <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} />
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Identification Number (UID)</FormLabel>
+                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} />
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Date of Birth</FormLabel>
-                <FormInput type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} />
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Date of Birth</FormLabel>
+                    <FormInput type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} />
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Gender</FormLabel>
-                <FormSelect name="gender" value={formData.gender} onChange={handleInputChange}>
-                  <option value="">Select</option>
-                  {genderOptions.map((option) => (
-                    <option key={option.name} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </FormSelect>
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Gender</FormLabel>
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange}>
+                      <option value="">Select</option>
+                      {genderOptions.map((option) => (
+                        <option key={option.name} value={option.name}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Mobile</FormLabel>
-                <FormInput
-                  type="tel"
-                  name="mobile"
-                  value={formData.mobile}
-                  onChange={handleInputChange}
-                  onInput={(e) => {
-                    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
-                    handleInputChange(e);
-                  }}
-                  maxLength={10}
-                  pattern="[0-9]{10}"
-                  placeholder="Enter 10-digit mobile number"
-                  required
-                />
-                <HelperText>Existing patient data will be fetched automatically.</HelperText>
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Mobile</FormLabel>
+                    <FormInput
+                      type="tel"
+                      name="mobile"
+                      value={formData.mobile}
+                      onChange={handleInputChange}
+                      onInput={(e) => {
+                        e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                        handleInputChange(e);
+                      }}
+                      maxLength={10}
+                      pattern="[0-9]{10}"
+                      placeholder="Enter 10-digit mobile number"
+                      required
+                    />
+                    <HelperText>Existing patient data will be fetched automatically.</HelperText>
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Company</FormLabel>
-                <FormSelect name="company" value={formData.company} onChange={handleInputChange}>
-                  <option value="">Select company</option>
-                  {companyOptions.map((option) => (
-                    <option key={option.name} value={option.name}>
-                      {option.name}
-                    </option>
-                  ))}
-                </FormSelect>
-              </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Company</FormLabel>
+                    <FormSelect name="company" value={formData.company} onChange={handleInputChange}>
+                      <option value="">Select company</option>
+                      {companyOptions.map((option) => (
+                        <option key={option.name} value={option.name}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </FormSelect>
+                  </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Blood Group</FormLabel>
-                <FormSelect name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
-                  <option value="">Select blood group</option>
-                  <option value="A Positive">A Positive</option>
-                  <option value="A Negative">A Negative</option>
-                  <option value="B Positive">B Positive</option>
-                  <option value="B Negative">B Negative</option>
-                  <option value="AB Positive">AB Positive</option>
-                  <option value="AB Negative">AB Negative</option>
-                  <option value="O Positive">O Positive</option>
-                  <option value="O Negative">O Negative</option>
-                </FormSelect>
-              </FormGroup>
-            </FormGrid>
-          </FormSection>
+                  <FormGroup>
+                    <FormLabel>Blood Group</FormLabel>
+                    <FormSelect name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
+                      <option value="">Select blood group</option>
+                      <option value="A Positive">A Positive</option>
+                      <option value="A Negative">A Negative</option>
+                      <option value="B Positive">B Positive</option>
+                      <option value="B Negative">B Negative</option>
+                      <option value="AB Positive">AB Positive</option>
+                      <option value="AB Negative">AB Negative</option>
+                      <option value="O Positive">O Positive</option>
+                      <option value="O Negative">O Negative</option>
+                    </FormSelect>
+                  </FormGroup>
+                </FormGrid>
+              </FormSection>
 
-          <FormSection>
-            <SectionTitle>Medical Info</SectionTitle>
-            <FormGroup fullWidth>
-              <FormLabel>Allergies</FormLabel>
-              <TextArea name="allergies" value={formData.allergies} onChange={handleInputChange} placeholder="Enter any known allergies..." />
-            </FormGroup>
+              <FormSection>
+                <SectionTitle>Medical Info</SectionTitle>
+                <FormGroup fullWidth>
+                  <FormLabel>Allergies</FormLabel>
+                  <TextArea name="allergies" value={formData.allergies} onChange={handleInputChange} placeholder="Enter any known allergies..." />
+                </FormGroup>
 
-            <FormGroup fullWidth>
-              <FormLabel>Existing Conditions</FormLabel>
-              <TextArea name="existingConditions" value={formData.existingConditions} onChange={handleInputChange} placeholder="Enter any existing medical conditions..." />
-            </FormGroup>
-          </FormSection>
+                <FormGroup fullWidth>
+                  <FormLabel>Existing Conditions</FormLabel>
+                  <TextArea name="existingConditions" value={formData.existingConditions} onChange={handleInputChange} placeholder="Enter any existing medical conditions..." />
+                </FormGroup>
+              </FormSection>
 
-          <FormSection>
-            <SectionTitle>Visit Details</SectionTitle>
-            <FormGroup>
-              <FormLabel>Visit Type</FormLabel>
-              <RadioGroup>
-                <RadioOption>
-                  <RadioInput type="radio" name="visitType" value="walk-in" checked={formData.visitType === "walk-in"} onChange={handleInputChange} />
-                  <span>Walk-in</span>
-                </RadioOption>
-                <RadioOption>
-                  <RadioInput type="radio" name="visitType" value="telemedicine" checked={formData.visitType === "telemedicine"} onChange={handleInputChange} />
-                  <span>Telemedicine</span>
-                </RadioOption>
-                <RadioOption>
-                  <RadioInput type="radio" name="visitType" value="referral" checked={formData.visitType === "referral"} onChange={handleInputChange} />
-                  <span>Referral</span>
-                </RadioOption>
-              </RadioGroup>
-            </FormGroup>
+              <FormSection>
+                <SectionTitle>Visit Details</SectionTitle>
+                <FormGroup>
+                  <FormLabel>Visit Type</FormLabel>
+                  <RadioGroup>
+                    <RadioOption>
+                      <RadioInput type="radio" name="visitType" value="walk-in" checked={formData.visitType === "walk-in"} onChange={handleInputChange} />
+                      <span>Walk-in</span>
+                    </RadioOption>
+                    <RadioOption>
+                      <RadioInput type="radio" name="visitType" value="telemedicine" checked={formData.visitType === "telemedicine"} onChange={handleInputChange} />
+                      <span>Telemedicine</span>
+                    </RadioOption>
+                    <RadioOption>
+                      <RadioInput type="radio" name="visitType" value="referral" checked={formData.visitType === "referral"} onChange={handleInputChange} />
+                      <span>Referral</span>
+                    </RadioOption>
+                  </RadioGroup>
+                </FormGroup>
 
-            <FormGroup>
-              <FormLabel>Assigned Doctor</FormLabel>
-              <FormSelect name="assignedDoctor" value={formData.assignedDoctor} onChange={handleInputChange}>
-                <option value="">Select a doctor</option>
-                <option value="dr1">Dr. Smith</option>
-                <option value="dr2">Dr. Johnson</option>
-                <option value="dr3">Dr. Williams</option>
-              </FormSelect>
-            </FormGroup>
-          </FormSection>
+                <FormGroup>
+                  <FormLabel>Assigned Doctor</FormLabel>
+                  <FormSelect name="assignedDoctor" value={formData.assignedDoctor} onChange={handleInputChange}>
+                    <option value="">Select a doctor</option>
+                    <option value="dr1">Dr. Smith</option>
+                    <option value="dr2">Dr. Johnson</option>
+                    <option value="dr3">Dr. Williams</option>
+                  </FormSelect>
+                </FormGroup>
+              </FormSection>
             </>
           )}
 
@@ -1067,22 +1066,12 @@ const PatientRegistration = () => {
                 <FormGrid>
                   <FormGroup>
                     <FormLabel>Occupation</FormLabel>
-                    <FormInput
-                      type="text"
-                      name="occupation"
-                      value={medicalHistory.occupation}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="Software Engineer"
-                    />
+                    <FormInput type="text" name="occupation" value={medicalHistory.occupation} onChange={handleMedicalHistoryChange} placeholder="Software Engineer" />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Marital Status</FormLabel>
-                    <FormSelect
-                      name="maritalStatus"
-                      value={medicalHistory.maritalStatus}
-                      onChange={handleMedicalHistoryChange}
-                    >
+                    <FormSelect name="maritalStatus" value={medicalHistory.maritalStatus} onChange={handleMedicalHistoryChange}>
                       <option value="">Select status</option>
                       <option value="Single">Single</option>
                       <option value="Married">Married</option>
@@ -1098,12 +1087,7 @@ const PatientRegistration = () => {
                 <FormGrid>
                   <FormGroup>
                     <FormLabel>Allergies</FormLabel>
-                    <TextArea
-                      name="allergies"
-                      value={medicalHistory.allergies}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="Enter any allergies..."
-                    />
+                    <TextArea name="allergies" value={medicalHistory.allergies} onChange={handleMedicalHistoryChange} placeholder="Enter any allergies..." />
                   </FormGroup>
 
                   <FormGroup>
@@ -1133,12 +1117,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Surgery History</FormLabel>
-                    <TextArea
-                      name="surgeryHistory"
-                      value={medicalHistory.surgeryHistory}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="Appendectomy - 2015"
-                    />
+                    <TextArea name="surgeryHistory" value={medicalHistory.surgeryHistory} onChange={handleMedicalHistoryChange} placeholder="Appendectomy - 2015" />
                   </FormGroup>
                 </FormGrid>
               </FormSection>
@@ -1159,35 +1138,17 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Tobacco Use (Current)</FormLabel>
-                    <FormInput
-                      type="text"
-                      name="tobaccoCurrentUse"
-                      value={medicalHistory.tobaccoCurrentUse}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="e.g., No"
-                    />
+                    <FormInput type="text" name="tobaccoCurrentUse" value={medicalHistory.tobaccoCurrentUse} onChange={handleMedicalHistoryChange} placeholder="e.g., No" />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Alcohol Use (Past)</FormLabel>
-                    <FormInput
-                      type="text"
-                      name="alcoholPastUse"
-                      value={medicalHistory.alcoholPastUse}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="e.g., Occasional"
-                    />
+                    <FormInput type="text" name="alcoholPastUse" value={medicalHistory.alcoholPastUse} onChange={handleMedicalHistoryChange} placeholder="e.g., Occasional" />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Alcohol Use (Current)</FormLabel>
-                    <FormInput
-                      type="text"
-                      name="alcoholCurrentUse"
-                      value={medicalHistory.alcoholCurrentUse}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="e.g., No"
-                    />
+                    <FormInput type="text" name="alcoholCurrentUse" value={medicalHistory.alcoholCurrentUse} onChange={handleMedicalHistoryChange} placeholder="e.g., No" />
                   </FormGroup>
                 </FormGrid>
               </FormSection>
@@ -1199,11 +1160,7 @@ const PatientRegistration = () => {
                   <RiskFactorsGrid>
                     {["Tobacco Use", "Alcohol Consumption", "Occupational Hazard", "Environmental Exposure", "Others"].map((factor) => (
                       <RiskFactorOption key={factor} selected={medicalHistory.riskFactors.includes(factor)}>
-                        <RiskFactorCheckbox
-                          type="checkbox"
-                          checked={medicalHistory.riskFactors.includes(factor)}
-                          onChange={() => toggleRiskFactor(factor)}
-                        />
+                        <RiskFactorCheckbox type="checkbox" checked={medicalHistory.riskFactors.includes(factor)} onChange={() => toggleRiskFactor(factor)} />
                         <RiskFactorLabel>{factor}</RiskFactorLabel>
                       </RiskFactorOption>
                     ))}
@@ -1229,11 +1186,7 @@ const PatientRegistration = () => {
                 <SectionTitle>Patient Information</SectionTitle>
                 <FormGroup>
                   <FormLabel>Referring Practitioner</FormLabel>
-                  <FormSelect
-                    name="referringPractitioner"
-                    value={billingData.referringPractitioner}
-                    onChange={handleBillingChange}
-                  >
+                  <FormSelect name="referringPractitioner" value={billingData.referringPractitioner} onChange={handleBillingChange}>
                     <option value="">Select practitioner</option>
                     <option value="Dr. Emily White">Dr. Emily White</option>
                     <option value="Dr. Smith">Dr. Smith</option>
@@ -1242,12 +1195,7 @@ const PatientRegistration = () => {
                 </FormGroup>
                 <CheckboxGroup>
                   <CheckboxLabel>
-                    <Checkbox
-                      type="checkbox"
-                      name="editPostingDate"
-                      checked={billingData.editPostingDate}
-                      onChange={handleBillingChange}
-                    />
+                    <Checkbox type="checkbox" name="editPostingDate" checked={billingData.editPostingDate} onChange={handleBillingChange} />
                     Edit Posting Date and Time
                   </CheckboxLabel>
                 </CheckboxGroup>
@@ -1282,33 +1230,16 @@ const PatientRegistration = () => {
                       <TableRow key={index}>
                         <TableCell>{item.no}</TableCell>
                         <TableCell>
-                          <ItemInput
-                            type="text"
-                            value={item.item}
-                            onChange={(e) => handleItemChange(index, 'item', e.target.value)}
-                          />
+                          <ItemInput type="text" value={item.item} onChange={(e) => handleItemChange(index, "item", e.target.value)} />
                         </TableCell>
                         <TableCell>
-                          <ItemInput
-                            type="text"
-                            value={item.itemName}
-                            onChange={(e) => handleItemChange(index, 'itemName', e.target.value)}
-                          />
+                          <ItemInput type="text" value={item.itemName} onChange={(e) => handleItemChange(index, "itemName", e.target.value)} />
                         </TableCell>
                         <TableCell>
-                          <ItemInput
-                            type="number"
-                            value={item.qty}
-                            onChange={(e) => handleItemChange(index, 'qty', e.target.value)}
-                          />
+                          <ItemInput type="number" value={item.qty} onChange={(e) => handleItemChange(index, "qty", e.target.value)} />
                         </TableCell>
                         <TableCell>
-                          <ItemInput
-                            type="number"
-                            step="0.01"
-                            value={item.rate}
-                            onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
-                          />
+                          <ItemInput type="number" step="0.01" value={item.rate} onChange={(e) => handleItemChange(index, "rate", e.target.value)} />
                         </TableCell>
                         <TableCell>{item.amount.toFixed(2)}</TableCell>
                       </TableRow>
@@ -1319,12 +1250,7 @@ const PatientRegistration = () => {
                 <ItemFooter>
                   <FooterItem>
                     <FooterLabel>Discount %</FooterLabel>
-                    <DiscountInput
-                      type="number"
-                      name="discountPercent"
-                      value={billingData.discountPercent}
-                      onChange={handleBillingChange}
-                    />
+                    <DiscountInput type="number" name="discountPercent" value={billingData.discountPercent} onChange={handleBillingChange} />
                   </FooterItem>
                   <FooterItem>
                     <FooterLabel>Total Qty:</FooterLabel>
@@ -1350,7 +1276,9 @@ const PatientRegistration = () => {
                   </CalculationRow>
                   <CalculationRow>
                     <CalculationLabel bold>Net Total (INR)</CalculationLabel>
-                    <CalculationValue bold highlight>{calculateTotals().netTotal.toFixed(2)}</CalculationValue>
+                    <CalculationValue bold highlight>
+                      {calculateTotals().netTotal.toFixed(2)}
+                    </CalculationValue>
                   </CalculationRow>
                 </CalculationCard>
 
@@ -1358,11 +1286,7 @@ const PatientRegistration = () => {
                   <CardTitle>Payment</CardTitle>
                   <FormGroup>
                     <FormLabel>Payment Type</FormLabel>
-                    <FormSelect
-                      name="paymentType"
-                      value={billingData.paymentType}
-                      onChange={handleBillingChange}
-                    >
+                    <FormSelect name="paymentType" value={billingData.paymentType} onChange={handleBillingChange}>
                       <option value="Cash">Cash</option>
                       <option value="Card">Card</option>
                       <option value="UPI">UPI</option>
@@ -1552,21 +1476,27 @@ const PatientRegistration = () => {
 
           {currentStep === 1 && (
             <ActionButtons>
-              <BackButton type="button" onClick={() => navigate("/patients")}>Back</BackButton>
+              <BackButton type="button" onClick={() => navigate("/patients")}>
+                Back
+              </BackButton>
               <NextButton type="submit">Next</NextButton>
             </ActionButtons>
           )}
 
           {currentStep === 2 && (
             <ActionButtons>
-              <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
+              <BackButton type="button" onClick={handlePreviousStep}>
+                Back
+              </BackButton>
               <NextButton type="submit">Next</NextButton>
             </ActionButtons>
           )}
 
           {currentStep === 3 && (
             <ActionButtons>
-              <BackButton type="button" onClick={handlePreviousStep}>Back</BackButton>
+              <BackButton type="button" onClick={handlePreviousStep}>
+                Back
+              </BackButton>
               <NextButton type="submit">Submit and Send to Doctor</NextButton>
             </ActionButtons>
           )}

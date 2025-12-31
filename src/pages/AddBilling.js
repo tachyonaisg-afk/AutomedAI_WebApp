@@ -158,7 +158,7 @@ const SearchResults = styled.div`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   max-height: 200px;
   overflow-y: auto;
-  z-index: 100;
+  z-index: 9999;
   margin-top: 4px;
 `;
 
@@ -243,6 +243,7 @@ const ItemsSection = styled.div`
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 24px;
+  position: relative;
 `;
 
 const ItemsHeader = styled.div`
@@ -289,14 +290,16 @@ const IconButton = styled.button`
 `;
 
 const ItemsTableWrapper = styled.div`
-  overflow-x: auto;
+  overflow: visible;
+  position: relative;
+  min-width: 100%;
 `;
 
 const ItemsTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 16px;
-  min-width: 900px;
+  table-layout: fixed;
 `;
 
 const TableHead = styled.thead`
@@ -305,6 +308,7 @@ const TableHead = styled.thead`
 
 const TableRow = styled.tr`
   border-bottom: 1px solid #e0e0e0;
+  position: relative;
 
   &:last-child {
     border-bottom: none;
@@ -333,6 +337,8 @@ const TableCell = styled.td`
   font-size: 14px;
   color: #333333;
   vertical-align: middle;
+  position: relative;
+  overflow: visible;
 
   &:first-child {
     padding-left: 16px;
@@ -362,6 +368,7 @@ const ItemInput = styled.input`
 const ItemSearchWrapper = styled.div`
   position: relative;
   min-width: 180px;
+  z-index: 10;
 `;
 
 const DeleteItemButton = styled.button`
@@ -592,6 +599,7 @@ const AddBilling = () => {
   const [serviceUnits, setServiceUnits] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [priceLists, setPriceLists] = useState([]);
 
   // Fetch dropdown options on mount
   useEffect(() => {
@@ -641,6 +649,33 @@ const AddBilling = () => {
             company: companyRes.data.data[0].name
           }));
         }
+      }
+
+      // Fetch price lists (selling only)
+      try {
+        const priceListRes = await apiService.get(API_ENDPOINTS.PRICE_LIST.LIST, {
+          fields: '["name", "price_list_name", "selling"]',
+          limit_page_length: 100,
+        });
+        if (priceListRes.data?.data) {
+          // Filter to only selling price lists
+          const sellingPriceLists = priceListRes.data.data.filter(p => p.selling === 1);
+          setPriceLists(sellingPriceLists.length > 0 ? sellingPriceLists : priceListRes.data.data);
+
+          // Set first price list as default if current value doesn't exist
+          const availableLists = sellingPriceLists.length > 0 ? sellingPriceLists : priceListRes.data.data;
+          if (availableLists.length > 0) {
+            setBillingData(prev => ({
+              ...prev,
+              selling_price_list: prev.selling_price_list && availableLists.some(p => p.name === prev.selling_price_list)
+                ? prev.selling_price_list
+                : availableLists[0].name
+            }));
+          }
+        }
+      } catch (priceListErr) {
+        console.error("Error fetching price lists:", priceListErr);
+        // Keep default "Standard Selling" if fetch fails
       }
     } catch (err) {
       console.error("Error fetching dropdown options:", err);
@@ -723,13 +758,34 @@ const AddBilling = () => {
     }));
   };
 
-  const handlePatientSelect = (patient) => {
-    setBillingData((prev) => ({
-      ...prev,
-      customer: patient.value || patient.name,
-      patient: patient.value || patient.name,
-      patient_name: patient.description || patient.value || patient.name,
-    }));
+  const handlePatientSelect = async (patient) => {
+    const patientId = patient.value || patient.name;
+
+    // Fetch patient details to get the patient_name and linked customer
+    try {
+      const response = await apiService.get(API_ENDPOINTS.PATIENTS.GET_BY_ID(patientId));
+      const patientData = response.data?.data;
+      const patientName = patientData?.patient_name || patient.description || patientId;
+
+      setBillingData((prev) => ({
+        ...prev,
+        // Customer should be the linked customer or patient name
+        customer: patientData?.customer || patientName,
+        // Patient field uses patient name, not ID
+        patient: patientName,
+        patient_name: patientName,
+      }));
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+      const patientName = patient.description || patientId;
+      setBillingData((prev) => ({
+        ...prev,
+        customer: patientName,
+        patient: patientName,
+        patient_name: patientName,
+      }));
+    }
+
     setPatientSearch("");
     setShowPatientResults(false);
   };
@@ -751,14 +807,17 @@ const AddBilling = () => {
       const itemData = response.data?.data;
 
       const updatedItems = [...items];
+      const qty = updatedItems[index].qty || 1;
+      const rate = itemData?.standard_rate || itemData?.valuation_rate || 0;
+
       updatedItems[index] = {
         ...updatedItems[index],
         item_code: itemCode,
         item_name: itemData?.item_name || item.description || itemCode,
         description: itemData?.description || item.description || itemCode,
-        uom: itemData?.stock_uom || "Unit",
-        rate: itemData?.standard_rate || 0,
-        amount: (itemData?.standard_rate || 0) * (updatedItems[index].qty || 1),
+        uom: itemData?.stock_uom || itemData?.sales_uom || "Unit",
+        rate: rate,
+        amount: rate * qty,
       };
       setItems(updatedItems);
     } catch (err) {
@@ -769,6 +828,7 @@ const AddBilling = () => {
         item_code: item.value || item.name,
         item_name: item.description || item.value || item.name,
         description: item.description || item.value || item.name,
+        uom: "Unit",
       };
       setItems(updatedItems);
     }
@@ -792,15 +852,12 @@ const AddBilling = () => {
   };
 
   const addItem = () => {
-    const defaultWarehouse = warehouses.length > 0 ? warehouses[0].name : "Finished Goods - RKMS";
+    const defaultWarehouse = warehouses.length > 0 ? warehouses[0].name : "";
     const newItem = {
       item_code: "",
       item_name: "",
       description: "",
       warehouse: defaultWarehouse,
-      income_account: "Sales - RKMS",
-      expense_account: "Cost of Goods Sold - RKMS",
-      cost_center: "Main - RKMS",
       uom: "Unit",
       qty: 1,
       rate: 0,
@@ -849,7 +906,7 @@ const AddBilling = () => {
     setLoading(true);
 
     try {
-      // Prepare the API payload
+      // Prepare the API payload matching ERPNext Sales Invoice structure
       const payload = {
         docstatus: 0,
         doctype: "Sales Invoice",
@@ -867,22 +924,23 @@ const AddBilling = () => {
         items: items.map((item) => ({
           item_code: item.item_code,
           item_name: item.item_name,
-          description: item.description,
+          description: item.description || item.item_name,
           warehouse: item.warehouse,
-          income_account: item.income_account,
-          expense_account: item.expense_account,
-          cost_center: item.cost_center,
-          uom: item.uom,
+          uom: item.uom || "Unit",
           qty: parseFloat(item.qty) || 1,
           rate: parseFloat(item.rate) || 0,
         })),
         apply_discount_on: billingData.apply_discount_on,
         additional_discount_percentage: parseFloat(billingData.additional_discount_percentage) || 0,
-        ref_practitioner: billingData.ref_practitioner || undefined,
-        service_unit: billingData.service_unit || undefined,
       };
 
       // Add optional fields if they have values
+      if (billingData.ref_practitioner) {
+        payload.ref_practitioner = billingData.ref_practitioner;
+      }
+      if (billingData.service_unit) {
+        payload.service_unit = billingData.service_unit;
+      }
       if (billingData.mode_of_transport) {
         payload.mode_of_transport = billingData.mode_of_transport;
       }
@@ -892,6 +950,8 @@ const AddBilling = () => {
       if (billingData.gst_vehicle_type) {
         payload.gst_vehicle_type = billingData.gst_vehicle_type;
       }
+
+      console.log("Creating Sales Invoice with payload:", payload);
 
       const response = await apiService.post(API_ENDPOINTS.BILLING.CREATE, payload);
 
@@ -903,7 +963,23 @@ const AddBilling = () => {
       }
     } catch (err) {
       console.error("Error creating billing:", err);
-      setError(err.message || "Failed to create billing. Please try again.");
+      // Extract detailed error message from ERPNext response
+      let errorMessage = "Failed to create billing. Please try again.";
+      if (err.response?.data?.exc_type) {
+        errorMessage = `${err.response.data.exc_type}: ${err.response.data._server_messages || err.response.data.message || err.message}`;
+      } else if (err.response?.data?._server_messages) {
+        try {
+          const serverMessages = JSON.parse(err.response.data._server_messages);
+          errorMessage = serverMessages.map(m => JSON.parse(m).message).join(", ");
+        } catch {
+          errorMessage = err.response.data._server_messages;
+        }
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1008,8 +1084,12 @@ const AddBilling = () => {
                   value={billingData.selling_price_list}
                   onChange={handleBillingChange}
                 >
-                  <option value="Standard Selling">Standard Selling</option>
-                  <option value="Wholesale">Wholesale</option>
+                  <option value="">Select price list</option>
+                  {priceLists.map((pl) => (
+                    <option key={pl.name} value={pl.name}>
+                      {pl.price_list_name || pl.name}
+                    </option>
+                  ))}
                 </FormSelect>
               </FormGroup>
 
