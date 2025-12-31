@@ -876,7 +876,7 @@ const PatientRegistration = () => {
   return (
     <Layout>
       <RegistrationContainer>
-        <Title>Patient Registration</Title>
+        <Title>Patient Registration :</Title>
 
         <ProgressIndicator>
           <ProgressStepsContainer>
