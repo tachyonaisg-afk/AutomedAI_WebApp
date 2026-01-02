@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Calendar, Plus, Minus } from "lucide-react";
+import { Plus, Minus, CreditCard, Camera } from "lucide-react";
+import AadhaarScanner from "../components/shared/AadhaarScanner";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -153,25 +154,6 @@ const FormSelect = styled.select`
   }
 `;
 
-const DateInputWrapper = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-
-  input {
-    padding-right: 40px;
-  }
-
-  svg {
-    position: absolute;
-    right: 12px;
-    width: 18px;
-    height: 18px;
-    color: #999999;
-    pointer-events: none;
-  }
-`;
-
 const HelperText = styled.p`
   font-size: 12px;
   color: #999999;
@@ -226,21 +208,6 @@ const ActionButtons = styled.div`
   justify-content: flex-end;
   gap: 16px;
   margin-top: 8px;
-`;
-
-const SaveLink = styled.button`
-  background: none;
-  border: none;
-  color: #4a90e2;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 12px 0;
-  text-decoration: underline;
-
-  &:hover {
-    color: #357abd;
-  }
 `;
 
 const NextButton = styled.button`
@@ -510,76 +477,6 @@ const CalculationValue = styled.span`
   font-weight: ${(props) => (props.bold ? "600" : "500")};
 `;
 
-const SubmitButton = styled.button`
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 32px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  width: 100%;
-
-  &:hover {
-    background-color: #357abd;
-  }
-`;
-
-const TagContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  min-height: 48px;
-  align-items: center;
-`;
-
-const Tag = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #e3f2fd;
-  color: #1976d2;
-  padding: 4px 12px;
-  border-radius: 16px;
-  font-size: 14px;
-  font-weight: 500;
-`;
-
-const TagRemove = styled.button`
-  background: none;
-  border: none;
-  color: #1976d2;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-  padding: 0;
-  display: flex;
-  align-items: center;
-
-  &:hover {
-    color: #1565c0;
-  }
-`;
-
-const TagInput = styled.input`
-  flex: 1;
-  min-width: 150px;
-  border: none;
-  outline: none;
-  font-size: 14px;
-  color: #333333;
-  padding: 4px;
-
-  &::placeholder {
-    color: #999999;
-  }
-`;
-
 const RiskFactorsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -620,9 +517,64 @@ const RiskFactorLabel = styled.span`
   color: #333333;
 `;
 
+const AadhaarScanButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.4);
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const AadhaarSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background-color: #f0f7ff;
+  border: 1px dashed #4a90e2;
+  border-radius: 8px;
+  margin-bottom: 20px;
+`;
+
+const AadhaarInfo = styled.div`
+  flex: 1;
+`;
+
+const AadhaarTitle = styled.h4`
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+`;
+
+const AadhaarDescription = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+`;
+
 const PatientRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -633,6 +585,7 @@ const PatientRegistration = () => {
     mobile: "",
     company: "",
     bloodGroup: "",
+    address: "",
     allergies: "",
     existingConditions: "",
     visitType: "walk-in",
@@ -714,6 +667,39 @@ const PatientRegistration = () => {
     }));
   };
 
+  const handleAadhaarDataExtracted = (data) => {
+    // Match gender value with available options from API
+    let matchedGender = "";
+    if (data.gender && genderOptions.length > 0) {
+      // Try exact match first
+      const exactMatch = genderOptions.find(
+        (opt) => opt.name.toLowerCase() === data.gender.toLowerCase()
+      );
+      if (exactMatch) {
+        matchedGender = exactMatch.name;
+      } else {
+        // Try partial match (e.g., "M" matches "Male")
+        const partialMatch = genderOptions.find(
+          (opt) => opt.name.toLowerCase().startsWith(data.gender.toLowerCase().charAt(0))
+        );
+        if (partialMatch) {
+          matchedGender = partialMatch.name;
+        }
+      }
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      firstName: data.firstName || prev.firstName,
+      middleName: data.middleName || prev.middleName,
+      lastName: data.lastName || prev.lastName,
+      uid: data.uid || prev.uid,
+      dateOfBirth: data.dateOfBirth || prev.dateOfBirth,
+      gender: matchedGender || data.gender || prev.gender,
+      address: data.address || prev.address,
+    }));
+  };
+
   const handleBillingChange = (e) => {
     const { name, value, type, checked } = e.target;
     setBillingData((prev) => ({
@@ -727,22 +713,6 @@ const PatientRegistration = () => {
     setMedicalHistory((prev) => ({
       ...prev,
       [name]: value,
-    }));
-  };
-
-  const addTag = (field, value) => {
-    if (value.trim() && !medicalHistory[field].includes(value.trim())) {
-      setMedicalHistory((prev) => ({
-        ...prev,
-        [field]: [...prev[field], value.trim()],
-      }));
-    }
-  };
-
-  const removeTag = (field, tagToRemove) => {
-    setMedicalHistory((prev) => ({
-      ...prev,
-      [field]: prev[field].filter((tag) => tag !== tagToRemove),
     }));
   };
 
@@ -817,6 +787,7 @@ const PatientRegistration = () => {
         dob: formData.dateOfBirth,
         custom_company: formData.company,
         blood_group: formData.bloodGroup,
+        patient_address: formData.address,
         age: 0, // Ignoring as requested
         medical_history: formData.existingConditions,
         medication: medicalHistory.regularMedication,
@@ -901,6 +872,20 @@ const PatientRegistration = () => {
         <form onSubmit={handleSubmit}>
           {currentStep === 1 && (
             <>
+              <AadhaarSection>
+                <CreditCard size={32} color="#4a90e2" />
+                <AadhaarInfo>
+                  <AadhaarTitle>Quick Registration with Aadhaar</AadhaarTitle>
+                  <AadhaarDescription>
+                    Scan Aadhaar QR code or upload Aadhaar card image to auto-fill patient details
+                  </AadhaarDescription>
+                </AadhaarInfo>
+                <AadhaarScanButton type="button" onClick={() => setIsAadhaarScannerOpen(true)}>
+                  <Camera />
+                  Scan Aadhaar
+                </AadhaarScanButton>
+              </AadhaarSection>
+
               <FormSection>
                 <SectionTitle>Personal Information</SectionTitle>
                 <FormGrid>
@@ -1009,6 +994,17 @@ const PatientRegistration = () => {
                       <option value="O Positive">O Positive</option>
                       <option value="O Negative">O Negative</option>
                     </FormSelect>
+                  </FormGroup>
+
+                  <FormGroup fullWidth>
+                    <FormLabel>Address</FormLabel>
+                    <TextArea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder="Enter full address..."
+                      style={{ minHeight: "80px" }}
+                    />
                   </FormGroup>
                 </FormGrid>
               </FormSection>
@@ -1508,6 +1504,12 @@ const PatientRegistration = () => {
             </ActionButtons>
           )} */}
         </form>
+
+        <AadhaarScanner
+          isOpen={isAadhaarScannerOpen}
+          onClose={() => setIsAadhaarScannerOpen(false)}
+          onDataExtracted={handleAadhaarDataExtracted}
+        />
       </RegistrationContainer>
     </Layout>
   );
