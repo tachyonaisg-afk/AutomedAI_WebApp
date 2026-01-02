@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Download, DollarSign, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
+import { Download, IndianRupee, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -313,16 +313,16 @@ const Billing = () => {
   const summaryData = [
     {
       label: "Total Revenue",
-      value: "$45,250",
+      value: "₹45,250",
       change: "+12.5%",
       positive: true,
-      icon: DollarSign,
+      icon: IndianRupee,
       bgColor: "#e8f5e9",
       color: "#2e7d32",
     },
     {
       label: "Pending Payments",
-      value: "$8,500",
+      value: "₹8,500",
       change: "+5.2%",
       positive: false,
       icon: Clock,
@@ -331,7 +331,7 @@ const Billing = () => {
     },
     {
       label: "Paid This Month",
-      value: "$36,750",
+      value: "₹36,750",
       change: "+18.3%",
       positive: true,
       icon: CheckCircle,
@@ -340,7 +340,7 @@ const Billing = () => {
     },
     {
       label: "Overdue",
-      value: "$2,100",
+      value: "₹2,100",
       change: "-8.1%",
       positive: true,
       icon: XCircle,
@@ -350,11 +350,11 @@ const Billing = () => {
   ];
 
   const recentInvoices = [
-    { id: "INV-001", patient: "John Doe", amount: "$150.00", status: "paid" },
-    { id: "INV-002", patient: "Jane Smith", amount: "$85.50", status: "paid" },
-    { id: "INV-003", patient: "Michael Johnson", amount: "$200.00", status: "pending" },
-    { id: "INV-004", patient: "Emily Davis", amount: "$150.00", status: "paid" },
-    { id: "INV-005", patient: "Robert Brown", amount: "$100.00", status: "overdue" },
+    { id: "INV-001", patient: "John Doe", amount: "₹150.00", status: "paid" },
+    { id: "INV-002", patient: "Jane Smith", amount: "₹85.50", status: "paid" },
+    { id: "INV-003", patient: "Michael Johnson", amount: "₹200.00", status: "pending" },
+    { id: "INV-004", patient: "Emily Davis", amount: "₹150.00", status: "paid" },
+    { id: "INV-005", patient: "Robert Brown", amount: "₹100.00", status: "overdue" },
   ];
 
   const quickActions = [

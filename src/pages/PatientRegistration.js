@@ -599,7 +599,7 @@ const PatientRegistration = () => {
     preExistingConditions: "",
     regularMedication: "",
     surgeryHistory: "",
-    riskFactors: ["Alcohol Consumption"],
+    riskFactors: [],
     tobaccoPastUse: "",
     tobaccoCurrentUse: "",
     alcoholPastUse: "",
@@ -908,7 +908,18 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Middle Name (Optional)</FormLabel>
-                    <FormInput type="text" name="middleName" value={formData.middleName} onChange={handleInputChange} />
+                    <FormInput
+                      type="text"
+                      name="middleName"
+                      value={formData.middleName}
+                      onChange={handleInputChange}
+                      onInput={(e) => {
+                        e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                        handleInputChange(e);
+                      }}
+                      pattern="[a-zA-Z\s]*"
+                      placeholder="Enter middle name"
+                    />
                   </FormGroup>
 
                   <FormGroup>
@@ -935,7 +946,13 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Date of Birth</FormLabel>
-                    <FormInput type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleInputChange} />
+                    <FormInput
+                      type="date"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
+                      onChange={handleInputChange}
+                      max={new Date().toISOString().split("T")[0]}
+                    />
                   </FormGroup>
 
                   <FormGroup>

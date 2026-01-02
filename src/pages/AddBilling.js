@@ -371,6 +371,64 @@ const ItemSearchWrapper = styled.div`
   z-index: 10;
 `;
 
+const QtyControlWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const QtyButton = styled.button`
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+
+  &:hover {
+    background-color: #f5f5f5;
+    border-color: #4a90e2;
+  }
+
+  &:active {
+    background-color: #e8e8e8;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+    color: #333333;
+  }
+`;
+
+const QtyInput = styled.input`
+  width: 50px;
+  padding: 4px 6px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333333;
+  text-align: center;
+  outline: none;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+
+  /* Hide number input arrows */
+  -moz-appearance: textfield;
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+`;
+
 const DeleteItemButton = styled.button`
   background: none;
   border: none;
@@ -562,20 +620,14 @@ const AddBilling = () => {
   // Form state
   const [billingData, setBillingData] = useState({
     company: "",
-    naming_series: "SINV-.YY.-",
     posting_date: new Date().toISOString().split("T")[0],
     set_posting_time: 1,
     is_pos: 0,
     customer: "",
     patient: "",
     patient_name: "",
-    currency: "INR",
-    selling_price_list: "Standard Selling",
-    update_stock: 0,
     apply_discount_on: "Grand Total",
     additional_discount_percentage: 0,
-    mode_of_transport: "",
-    lr_date: "",
     gst_vehicle_type: "Regular",
     ref_practitioner: "",
     service_unit: "",
@@ -603,7 +655,6 @@ const AddBilling = () => {
   const [serviceUnits, setServiceUnits] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [priceLists, setPriceLists] = useState([]);
 
   // Fetch dropdown options on mount
   useEffect(() => {
@@ -653,33 +704,6 @@ const AddBilling = () => {
             company: companyRes.data.data[0].name
           }));
         }
-      }
-
-      // Fetch price lists (selling only)
-      try {
-        const priceListRes = await apiService.get(API_ENDPOINTS.PRICE_LIST.LIST, {
-          fields: '["name", "price_list_name", "selling"]',
-          limit_page_length: 100,
-        });
-        if (priceListRes.data?.data) {
-          // Filter to only selling price lists
-          const sellingPriceLists = priceListRes.data.data.filter(p => p.selling === 1);
-          setPriceLists(sellingPriceLists.length > 0 ? sellingPriceLists : priceListRes.data.data);
-
-          // Set first price list as default if current value doesn't exist
-          const availableLists = sellingPriceLists.length > 0 ? sellingPriceLists : priceListRes.data.data;
-          if (availableLists.length > 0) {
-            setBillingData(prev => ({
-              ...prev,
-              selling_price_list: prev.selling_price_list && availableLists.some(p => p.name === prev.selling_price_list)
-                ? prev.selling_price_list
-                : availableLists[0].name
-            }));
-          }
-        }
-      } catch (priceListErr) {
-        console.error("Error fetching price lists:", priceListErr);
-        // Keep default "Standard Selling" if fetch fails
       }
     } catch (err) {
       console.error("Error fetching dropdown options:", err);
@@ -914,7 +938,6 @@ const AddBilling = () => {
       const payload = {
         docstatus: 0,
         doctype: "Sales Invoice",
-        naming_series: billingData.naming_series,
         company: billingData.company,
         posting_date: billingData.posting_date,
         set_posting_time: billingData.set_posting_time,
@@ -922,9 +945,6 @@ const AddBilling = () => {
         customer: billingData.customer,
         patient: billingData.patient,
         patient_name: billingData.patient_name,
-        currency: billingData.currency,
-        selling_price_list: billingData.selling_price_list,
-        update_stock: billingData.update_stock,
         items: items.map((item) => ({
           item_code: item.item_code,
           item_name: item.item_name,
@@ -944,12 +964,6 @@ const AddBilling = () => {
       }
       if (billingData.service_unit) {
         payload.service_unit = billingData.service_unit;
-      }
-      if (billingData.mode_of_transport) {
-        payload.mode_of_transport = billingData.mode_of_transport;
-      }
-      if (billingData.lr_date) {
-        payload.lr_date = billingData.lr_date;
       }
       if (billingData.gst_vehicle_type) {
         payload.gst_vehicle_type = billingData.gst_vehicle_type;
@@ -1064,14 +1078,6 @@ const AddBilling = () => {
               </FormGroup>
 
               <FormGroup>
-                <FormLabel>Currency</FormLabel>
-                <FormSelect name="currency" value={billingData.currency} onChange={handleBillingChange}>
-                  <option value="INR">INR</option>
-                  <option value="USD">USD</option>
-                </FormSelect>
-              </FormGroup>
-
-              <FormGroup>
                 <FormLabel>Posting Date</FormLabel>
                 <FormInput
                   type="date"
@@ -1081,31 +1087,6 @@ const AddBilling = () => {
                 />
               </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Selling Price List</FormLabel>
-                <FormSelect
-                  name="selling_price_list"
-                  value={billingData.selling_price_list}
-                  onChange={handleBillingChange}
-                >
-                  <option value="">Select price list</option>
-                  {priceLists.map((pl) => (
-                    <option key={pl.name} value={pl.name}>
-                      {pl.price_list_name || pl.name}
-                    </option>
-                  ))}
-                </FormSelect>
-              </FormGroup>
-
-              <FormGroup>
-                <FormLabel>Naming Series</FormLabel>
-                <FormInput
-                  type="text"
-                  name="naming_series"
-                  value={billingData.naming_series}
-                  onChange={handleBillingChange}
-                />
-              </FormGroup>
             </FormGrid>
 
             <CheckboxGroup>
@@ -1117,15 +1098,6 @@ const AddBilling = () => {
                   onChange={handleBillingChange}
                 />
                 Edit Posting Date and Time
-              </CheckboxLabel>
-              <CheckboxLabel style={{ marginLeft: "24px" }}>
-                <Checkbox
-                  type="checkbox"
-                  name="update_stock"
-                  checked={billingData.update_stock === 1}
-                  onChange={handleBillingChange}
-                />
-                Update Stock
               </CheckboxLabel>
             </CheckboxGroup>
           </FormSection>
@@ -1178,30 +1150,6 @@ const AddBilling = () => {
                 </FormSelect>
               </FormGroup>
 
-              <FormGroup>
-                <FormLabel>Mode of Transport</FormLabel>
-                <FormSelect
-                  name="mode_of_transport"
-                  value={billingData.mode_of_transport}
-                  onChange={handleBillingChange}
-                >
-                  <option value="">Select mode</option>
-                  <option value="Road">Road</option>
-                  <option value="Rail">Rail</option>
-                  <option value="Air">Air</option>
-                  <option value="Ship">Ship</option>
-                </FormSelect>
-              </FormGroup>
-
-              <FormGroup>
-                <FormLabel>LR Date</FormLabel>
-                <FormInput
-                  type="date"
-                  name="lr_date"
-                  value={billingData.lr_date}
-                  onChange={handleBillingChange}
-                />
-              </FormGroup>
             </FormGrid>
           </FormSection>
 
@@ -1288,7 +1236,7 @@ const AddBilling = () => {
                           <ItemInput
                             type="text"
                             value={item.item_name}
-                            onChange={(e) => handleItemChange(index, "item_name", e.target.value)}
+                            disabled
                           />
                         </TableCell>
                         <TableCell>
@@ -1309,17 +1257,39 @@ const AddBilling = () => {
                           <ItemInput
                             type="text"
                             value={item.uom}
-                            onChange={(e) => handleItemChange(index, "uom", e.target.value)}
+                            disabled
                             style={{ width: "60px" }}
                           />
                         </TableCell>
                         <TableCell>
-                          <ItemInput
-                            type="number"
-                            value={item.qty}
-                            onChange={(e) => handleItemChange(index, "qty", e.target.value)}
-                            style={{ width: "60px" }}
-                          />
+                          <QtyControlWrapper>
+                            <QtyButton
+                              type="button"
+                              onClick={() => {
+                                const currentQty = parseFloat(item.qty) || 0;
+                                if (currentQty > 1) {
+                                  handleItemChange(index, "qty", currentQty - 1);
+                                }
+                              }}
+                            >
+                              <Minus />
+                            </QtyButton>
+                            <QtyInput
+                              type="number"
+                              value={item.qty}
+                              onChange={(e) => handleItemChange(index, "qty", e.target.value)}
+                              min="1"
+                            />
+                            <QtyButton
+                              type="button"
+                              onClick={() => {
+                                const currentQty = parseFloat(item.qty) || 0;
+                                handleItemChange(index, "qty", currentQty + 1);
+                              }}
+                            >
+                              <Plus />
+                            </QtyButton>
+                          </QtyControlWrapper>
                         </TableCell>
                         <TableCell>
                           <ItemInput
