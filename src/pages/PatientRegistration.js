@@ -585,7 +585,11 @@ const PatientRegistration = () => {
     mobile: "",
     company: "",
     bloodGroup: "",
-    address: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state: "",
+    pincode: "",
     allergies: "",
     existingConditions: "",
     visitType: "walk-in",
@@ -655,8 +659,37 @@ const PatientRegistration = () => {
       }
     };
 
+    const fetchDefaultItem = async () => {
+      try {
+        const response = await fetch("https://hms.automedai.in/api/resource/Item/STO-ITEM-2025-00539", {
+          headers: {
+            Accept: "application/json",
+          },
+          credentials: "include",
+        });
+        const data = await response.json();
+        console.log("Default item fetched:", data);
+
+        if (data && data.data) {
+          const itemData = data.data;
+          const defaultItem = {
+            no: 1,
+            item: itemData.name || itemData.item_code || "",
+            itemName: itemData.item_name || "",
+            qty: 1,
+            rate: itemData.standard_rate || 0,
+            amount: itemData.standard_rate || 0,
+          };
+          setItems([defaultItem]);
+        }
+      } catch (error) {
+        console.error("Error fetching default item:", error);
+      }
+    };
+
     fetchGenderOptions();
     fetchCompanyOptions();
+    fetchDefaultItem();
   }, []);
 
   const handleInputChange = (e) => {
@@ -688,6 +721,8 @@ const PatientRegistration = () => {
       }
     }
 
+    // If address is provided from Aadhaar, put it in address_line1
+    // User can manually split it into different fields later
     setFormData((prev) => ({
       ...prev,
       firstName: data.firstName || prev.firstName,
@@ -696,7 +731,7 @@ const PatientRegistration = () => {
       uid: data.uid || prev.uid,
       dateOfBirth: data.dateOfBirth || prev.dateOfBirth,
       gender: matchedGender || data.gender || prev.gender,
-      address: data.address || prev.address,
+      address_line1: data.address || prev.address_line1,
     }));
   };
 
@@ -787,7 +822,11 @@ const PatientRegistration = () => {
         dob: formData.dateOfBirth,
         custom_company: formData.company,
         blood_group: formData.bloodGroup,
-        patient_address: formData.address,
+        address_line1: formData.address_line1,
+        address_line2: formData.address_line2,
+        city: formData.city,
+        state: formData.state,
+        pincode: formData.pincode,
         age: 0, // Ignoring as requested
         medical_history: formData.existingConditions,
         medication: medicalHistory.regularMedication,
@@ -1013,14 +1052,96 @@ const PatientRegistration = () => {
                     </FormSelect>
                   </FormGroup>
 
-                  <FormGroup fullWidth>
-                    <FormLabel>Address</FormLabel>
-                    <TextArea
-                      name="address"
-                      value={formData.address}
+                  <FormGroup>
+                    <FormLabel>Address Line 1</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="address_line1"
+                      value={formData.address_line1}
                       onChange={handleInputChange}
-                      placeholder="Enter full address..."
-                      style={{ minHeight: "80px" }}
+                      placeholder="Enter address line 1"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Address Line 2</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="address_line2"
+                      value={formData.address_line2}
+                      onChange={handleInputChange}
+                      placeholder="Enter address line 2"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>City</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      placeholder="Enter city"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>State</FormLabel>
+                    <FormSelect name="state" value={formData.state} onChange={handleInputChange}>
+                      <option value="">Select state</option>
+                      <option value="Andhra Pradesh">Andhra Pradesh</option>
+                      <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                      <option value="Assam">Assam</option>
+                      <option value="Bihar">Bihar</option>
+                      <option value="Chhattisgarh">Chhattisgarh</option>
+                      <option value="Goa">Goa</option>
+                      <option value="Gujarat">Gujarat</option>
+                      <option value="Haryana">Haryana</option>
+                      <option value="Himachal Pradesh">Himachal Pradesh</option>
+                      <option value="Jharkhand">Jharkhand</option>
+                      <option value="Karnataka">Karnataka</option>
+                      <option value="Kerala">Kerala</option>
+                      <option value="Madhya Pradesh">Madhya Pradesh</option>
+                      <option value="Maharashtra">Maharashtra</option>
+                      <option value="Manipur">Manipur</option>
+                      <option value="Meghalaya">Meghalaya</option>
+                      <option value="Mizoram">Mizoram</option>
+                      <option value="Nagaland">Nagaland</option>
+                      <option value="Odisha">Odisha</option>
+                      <option value="Punjab">Punjab</option>
+                      <option value="Rajasthan">Rajasthan</option>
+                      <option value="Sikkim">Sikkim</option>
+                      <option value="Tamil Nadu">Tamil Nadu</option>
+                      <option value="Telangana">Telangana</option>
+                      <option value="Tripura">Tripura</option>
+                      <option value="Uttar Pradesh">Uttar Pradesh</option>
+                      <option value="Uttarakhand">Uttarakhand</option>
+                      <option value="West Bengal">West Bengal</option>
+                      <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                      <option value="Chandigarh">Chandigarh</option>
+                      <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                      <option value="Delhi">Delhi</option>
+                      <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                      <option value="Ladakh">Ladakh</option>
+                      <option value="Lakshadweep">Lakshadweep</option>
+                      <option value="Puducherry">Puducherry</option>
+                    </FormSelect>
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Pincode</FormLabel>
+                    <FormInput
+                      type="text"
+                      name="pincode"
+                      value={formData.pincode}
+                      onChange={handleInputChange}
+                      onInput={(e) => {
+                        e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+                        handleInputChange(e);
+                      }}
+                      maxLength={6}
+                      pattern="[0-9]{6}"
+                      placeholder="Enter 6-digit pincode"
                     />
                   </FormGroup>
                 </FormGrid>
@@ -1136,42 +1257,19 @@ const PatientRegistration = () => {
               </FormSection>
 
               <FormSection>
-                <SectionTitle>Substance Use History</SectionTitle>
-                <FormGrid>
-                  <FormGroup>
-                    <FormLabel>Tobacco Use (Past)</FormLabel>
-                    <FormInput
-                      type="text"
-                      name="tobaccoPastUse"
-                      value={medicalHistory.tobaccoPastUse}
-                      onChange={handleMedicalHistoryChange}
-                      placeholder="e.g., Yes - 10 cigarettes/day for 5 years"
-                    />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <FormLabel>Tobacco Use (Current)</FormLabel>
-                    <FormInput type="text" name="tobaccoCurrentUse" value={medicalHistory.tobaccoCurrentUse} onChange={handleMedicalHistoryChange} placeholder="e.g., No" />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <FormLabel>Alcohol Use (Past)</FormLabel>
-                    <FormInput type="text" name="alcoholPastUse" value={medicalHistory.alcoholPastUse} onChange={handleMedicalHistoryChange} placeholder="e.g., Occasional" />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <FormLabel>Alcohol Use (Current)</FormLabel>
-                    <FormInput type="text" name="alcoholCurrentUse" value={medicalHistory.alcoholCurrentUse} onChange={handleMedicalHistoryChange} placeholder="e.g., No" />
-                  </FormGroup>
-                </FormGrid>
-              </FormSection>
-
-              <FormSection>
                 <SectionTitle>Lifestyle & Risk Factors</SectionTitle>
                 <FormGroup fullWidth>
                   <FormLabel>Select all applicable risk factors</FormLabel>
                   <RiskFactorsGrid>
-                    {["Tobacco Use", "Alcohol Consumption", "Occupational Hazard", "Environmental Exposure", "Others"].map((factor) => (
+                    {[
+                      "Tobacco Use (Past)",
+                      "Tobacco Use (Current)",
+                      "Alcohol Use (Past)",
+                      "Alcohol Use (Current)",
+                      "Occupational Hazard",
+                      "Environmental Exposure",
+                      "Others",
+                    ].map((factor) => (
                       <RiskFactorOption key={factor} selected={medicalHistory.riskFactors.includes(factor)}>
                         <RiskFactorCheckbox type="checkbox" checked={medicalHistory.riskFactors.includes(factor)} onChange={() => toggleRiskFactor(factor)} />
                         <RiskFactorLabel>{factor}</RiskFactorLabel>
@@ -1206,12 +1304,6 @@ const PatientRegistration = () => {
                     <option value="Dr. Johnson">Dr. Johnson</option>
                   </FormSelect>
                 </FormGroup>
-                <CheckboxGroup>
-                  <CheckboxLabel>
-                    <Checkbox type="checkbox" name="editPostingDate" checked={billingData.editPostingDate} onChange={handleBillingChange} />
-                    Edit Posting Date and Time
-                  </CheckboxLabel>
-                </CheckboxGroup>
               </FormSection>
 
               <ItemsSection>

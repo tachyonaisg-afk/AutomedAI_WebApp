@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Search, Filter, Plus, Printer } from "lucide-react";
+import { Search, Filter, Plus } from "lucide-react";
+import api, { API_ENDPOINTS } from "../services/api";
 
 const LabTestContainer = styled.div`
   display: flex;
@@ -198,63 +199,41 @@ const ActionLink = styled.button`
 const LabTest = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [labTestsData, setLabTestsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sample data - replace with API call later
-  const labTestsData = [
-    {
-      id: "LT001",
-      test_name: "Complete Blood Count",
-      patient_id: "P00123",
-      patient_name: "John Doe",
-      date: "2023-10-27",
-      time: "09:45 AM",
-      status: "In Progress",
-    },
-    {
-      id: "LT002",
-      test_name: "Urinalysis",
-      patient_id: "P00124",
-      patient_name: "Emily White",
-      date: "2023-10-27",
-      time: "10:30 AM",
-      status: "Completed",
-    },
-    {
-      id: "LT003",
-      test_name: "Lipid Panel",
-      patient_id: "P00125",
-      patient_name: "Michael Brown",
-      date: "2023-10-26",
-      time: "03:15 PM",
-      status: "Completed",
-    },
-    {
-      id: "LT004",
-      test_name: "Thyroid Function Test",
-      patient_id: "P00126",
-      patient_name: "Jessica Green",
-      date: "2023-10-26",
-      time: "12:00 PM",
-      status: "Cancelled",
-    },
-    {
-      id: "LT005",
-      test_name: "Glucose Tolerance Test",
-      patient_id: "P00127",
-      patient_name: "David Chen",
-      date: "2023-10-25",
-      time: "08:20 AM",
-      status: "Pending",
-    },
-  ];
+  // Fetch lab tests from API
+  useEffect(() => {
+    const fetchLabTests = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
+          fields: '["name","patient","patient_name","status","lab_test_name"]',
+          filters: '[["Lab Test","status","!=","Completed"]]',
+        });
+
+        console.log("Lab Tests API Response:", response);
+
+        if (response.data && response.data.data) {
+          setLabTestsData(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching lab tests:", err);
+        setError(err.message || "Failed to load lab tests");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLabTests();
+  }, []);
 
   const columns = [
-    { key: "id", label: "ID" },
-    { key: "test_name", label: "TEST NAME" },
-    { key: "patient_id", label: "PATIENT ID" },
+    { key: "name", label: "ID" },
+    { key: "patient", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
-    { key: "date", label: "DATE" },
-    { key: "time", label: "TIME" },
+    { key: "lab_test_name", label: "TEST NAME" },
     { key: "status", label: "STATUS" },
     { key: "actions", label: "ACTION" },
   ];
@@ -269,20 +248,17 @@ const LabTest = () => {
         <ActionLink onClick={() => handleAddResult(row)}>
           Add result
         </ActionLink>
-        <ActionLink onClick={() => handlePrint(row)}>
-          <Printer />
-          Print
-        </ActionLink>
       </ActionsContainer>
     );
   };
 
   const handleAddResult = (row) => {
-    navigate(`/pathlab/labtest/${row.id}/result`);
-  };
-
-  const handlePrint = (row) => {
-    navigate("/pathlab/result-print");
+    navigate(`/pathlab/labtest/${row.name}/result`, {
+      state: {
+        patientId: row.patient,
+        patientName: row.patient_name,
+      }
+    });
   };
 
   const handleNewTest = () => {
@@ -296,7 +272,7 @@ const LabTest = () => {
 
   const filteredData = labTestsData.filter((test) =>
     Object.values(test).some((value) =>
-      value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+      value && value.toString().toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
 
@@ -304,6 +280,9 @@ const LabTest = () => {
     <Layout>
       <LabTestContainer>
         <PageTitle>Lab Test List</PageTitle>
+
+        {loading && <div>Loading lab tests...</div>}
+        {error && <div style={{ color: "red" }}>Error: {error}</div>}
 
         <ToolbarSection>
           <SearchContainer>

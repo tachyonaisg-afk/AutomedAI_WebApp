@@ -328,6 +328,40 @@ const TableHeader = styled.th`
     padding-left: 16px;
     width: 40px;
   }
+
+  &:nth-child(2) {
+    width: 180px; /* Item Code */
+  }
+
+  &:nth-child(3) {
+    width: 200px; /* Item Name */
+  }
+
+  &:nth-child(4) {
+    width: 180px; /* Warehouse */
+  }
+
+  &:nth-child(5) {
+    width: 80px; /* UOM */
+  }
+
+  &:nth-child(6) {
+    width: 120px; /* Qty */
+  }
+
+  &:nth-child(7) {
+    width: 100px; /* Rate */
+  }
+
+  &:nth-child(8) {
+    width: 120px; /* Amount */
+    text-align: right;
+    padding-right: 16px;
+  }
+
+  &:nth-child(9) {
+    width: 50px; /* Delete button */
+  }
 `;
 
 const TableBody = styled.tbody``;
@@ -343,6 +377,12 @@ const TableCell = styled.td`
   &:first-child {
     padding-left: 16px;
     color: #666666;
+  }
+
+  &:nth-child(8) {
+    text-align: right;
+    padding-right: 16px;
+    font-weight: 600;
   }
 `;
 
@@ -628,7 +668,6 @@ const AddBilling = () => {
     patient_name: "",
     apply_discount_on: "Grand Total",
     additional_discount_percentage: 0,
-    gst_vehicle_type: "Regular",
     ref_practitioner: "",
     service_unit: "",
     payment_type: "Cash",
@@ -965,9 +1004,6 @@ const AddBilling = () => {
       if (billingData.service_unit) {
         payload.service_unit = billingData.service_unit;
       }
-      if (billingData.gst_vehicle_type) {
-        payload.gst_vehicle_type = billingData.gst_vehicle_type;
-      }
 
       console.log("Creating Sales Invoice with payload:", payload);
 
@@ -1138,18 +1174,6 @@ const AddBilling = () => {
                 </FormSelect>
               </FormGroup>
 
-              <FormGroup>
-                <FormLabel>GST Vehicle Type</FormLabel>
-                <FormSelect
-                  name="gst_vehicle_type"
-                  value={billingData.gst_vehicle_type}
-                  onChange={handleBillingChange}
-                >
-                  <option value="Regular">Regular</option>
-                  <option value="Over Dimensional Cargo (ODC)">Over Dimensional Cargo (ODC)</option>
-                </FormSelect>
-              </FormGroup>
-
             </FormGrid>
           </FormSection>
 
@@ -1300,7 +1324,7 @@ const AddBilling = () => {
                             style={{ width: "80px" }}
                           />
                         </TableCell>
-                        <TableCell style={{ fontWeight: "600" }}>
+                        <TableCell>
                           {(item.amount || 0).toFixed(2)}
                         </TableCell>
                         <TableCell>

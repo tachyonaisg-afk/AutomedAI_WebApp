@@ -11,7 +11,6 @@ import {
   FlaskConical,
   Settings,
   LogOut,
-  Plus,
   ChevronDown,
   TestTubes,
   ClipboardList,
@@ -42,15 +41,10 @@ const SidebarLogo = styled.div`
   gap: 12px;
 `;
 
-const LogoIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  background-color: #4a90e2;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
+const LogoIcon = styled.img`
+  width: 180px;
+  height: auto;
+  object-fit: contain;
 `;
 
 const LogoText = styled.span`
@@ -364,10 +358,7 @@ const Sidebar = () => {
   return (
     <SidebarContainer>
       <SidebarLogo>
-        <LogoIcon>
-          <Plus size={20} />
-        </LogoIcon>
-        <LogoText>AutoMedic</LogoText>
+        <LogoIcon src="/logo.png" alt="AutoMedic Logo" />
       </SidebarLogo>
 
       <SidebarNav>

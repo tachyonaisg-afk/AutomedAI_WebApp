@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import { Printer, Download } from "lucide-react";
+import { Printer, Download, ArrowLeft } from "lucide-react";
+import api from "../services/api";
 
 const Container = styled.div`
   display: flex;
@@ -257,6 +258,31 @@ const DownloadButton = styled(Button)`
   }
 `;
 
+const BackButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+
+  &:hover {
+    background-color: #f5f5f5;
+    border-color: #d0d0d0;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 const ReportPreview = styled.div`
   padding: 40px;
   background-color: #ffffff;
@@ -266,12 +292,10 @@ const ReportPreview = styled.div`
 `;
 
 const ReportHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  margin-top: 120px;
   margin-bottom: 40px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #333333;
+  border-bottom: 1px solid #e0e0e0;
 `;
 
 const ClinicInfo = styled.div`
@@ -429,11 +453,9 @@ const AbnormalValue = styled.span`
 
 const ReportFooter = styled.div`
   margin-top: 60px;
+  margin-bottom: 100px;
   padding-top: 20px;
   border-top: 1px solid #e0e0e0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
 `;
 
 const FooterNote = styled.div`
@@ -470,55 +492,85 @@ const SignatureTitle = styled.div`
 
 const ResultPrint = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Sample data - replace with API call later
-  const [tests, setTests] = useState([
-    {
-      id: "LT001",
-      patientId: "P00123",
-      patientName: "John Doe",
-      testName: "Complete Blood Count",
-      date: "2023-10-27",
-      selected: true,
-      disabled: false,
-    },
-    {
-      id: "LT002",
-      patientId: "P00123",
-      patientName: "John Doe",
-      testName: "Lipid Panel",
-      date: "2023-10-27",
-      selected: true,
-      disabled: false,
-    },
-    {
-      id: "LT003",
-      patientId: "P00124",
-      patientName: "Emily White",
-      testName: "Urinalysis",
-      date: "2023-10-27",
-      selected: false,
-      disabled: true,
-    },
-    {
-      id: "LT004",
-      patientId: "P00125",
-      patientName: "Michael Brown",
-      testName: "Lipid Panel",
-      date: "2023-10-26",
-      selected: false,
-      disabled: true,
-    },
-    {
-      id: "LT005",
-      patientId: "P00126",
-      patientName: "Jessica Green",
-      testName: "Thyroid Function Test",
-      date: "2023-10-26",
-      selected: false,
-      disabled: true,
-    },
-  ]);
+  const patientId = location.state?.patientId;
+  const labTestId = location.state?.labTestId;
+  const patientName = location.state?.patientName;
+
+  const [tests, setTests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedTestDetails, setSelectedTestDetails] = useState([]);
+
+  // Fetch lab tests for the patient
+  useEffect(() => {
+    const fetchLabTests = async () => {
+      if (!patientId) {
+        setError("Patient ID not provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
+          fields: '["name","patient_name","result_date","lab_test_name"]',
+          filters: JSON.stringify([["Lab Test", "patient", "=", patientId]]),
+        });
+
+        console.log("Lab Tests API Response:", response);
+
+        if (response.data && response.data.data) {
+          const formattedTests = response.data.data.map((test) => ({
+            id: test.name,
+            patientId: patientId,
+            patientName: test.patient_name || patientName,
+            testName: test.lab_test_name || "",
+            date: test.result_date || "",
+            selected: test.name === labTestId, // Select the current lab test by default
+            disabled: false,
+          }));
+          setTests(formattedTests);
+        }
+      } catch (err) {
+        console.error("Error fetching lab tests:", err);
+        setError(err.message || "Failed to load lab tests");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLabTests();
+  }, [patientId, labTestId, patientName]);
+
+  // Fetch detailed lab test data for selected tests
+  useEffect(() => {
+    const fetchSelectedTestDetails = async () => {
+      const selectedTestIds = tests.filter(test => test.selected).map(test => test.id);
+
+      if (selectedTestIds.length === 0) {
+        setSelectedTestDetails([]);
+        return;
+      }
+
+      try {
+        const detailsPromises = selectedTestIds.map(testId =>
+          api.get(`https://hms.automedai.in/api/resource/Lab Test/${testId}`)
+        );
+
+        const responses = await Promise.all(detailsPromises);
+        console.log("Selected Test Details API Responses:", responses);
+
+        const details = responses.map(response => response.data?.data).filter(Boolean);
+        setSelectedTestDetails(details);
+      } catch (err) {
+        console.error("Error fetching selected test details:", err);
+      }
+    };
+
+    fetchSelectedTestDetails();
+  }, [tests]);
 
   const toggleTestSelection = (testId) => {
     setTests(
@@ -557,39 +609,24 @@ const ResultPrint = () => {
           <SelectedCount>{selectedTests.length} Selected</SelectedCount>
         </SectionTitle>
 
-        <GroupLabel>Active Group</GroupLabel>
-        {activeTests.map((test) => (
-          <TestItem
-            key={test.id}
-            selected={test.selected}
-            onClick={() => toggleTestSelection(test.id)}
-          >
-            <TestItemHeader>
-              <Checkbox
-                type="checkbox"
-                checked={test.selected}
-                onChange={() => toggleTestSelection(test.id)}
-              />
-              <TestItemContent>
-                <PatientName>{test.patientName}</PatientName>
-                <TestInfo>
-                  <span>{test.date}</span>
-                  <span>-</span>
-                  <span>{test.testName}</span>
-                </TestInfo>
-                <TestId>{test.id}</TestId>
-              </TestItemContent>
-            </TestItemHeader>
-          </TestItem>
-        ))}
+        {loading && <div style={{ padding: "20px", color: "#666" }}>Loading lab tests...</div>}
+        {error && <div style={{ padding: "20px", color: "red" }}>Error: {error}</div>}
 
-        {disabledTests.length > 0 && (
+        {!loading && !error && activeTests.length > 0 && (
           <>
-            <GroupLabel>Other Patients (Disabled)</GroupLabel>
-            {disabledTests.map((test) => (
-              <TestItem key={test.id} disabled>
+            <GroupLabel>Active Group</GroupLabel>
+            {activeTests.map((test) => (
+              <TestItem
+                key={test.id}
+                selected={test.selected}
+                onClick={() => toggleTestSelection(test.id)}
+              >
                 <TestItemHeader>
-                  <Checkbox type="checkbox" disabled />
+                  <Checkbox
+                    type="checkbox"
+                    checked={test.selected}
+                    onChange={() => toggleTestSelection(test.id)}
+                  />
                   <TestItemContent>
                     <PatientName>{test.patientName}</PatientName>
                     <TestInfo>
@@ -602,6 +639,28 @@ const ResultPrint = () => {
                 </TestItemHeader>
               </TestItem>
             ))}
+
+            {disabledTests.length > 0 && (
+              <>
+                <GroupLabel>Other Patients (Disabled)</GroupLabel>
+                {disabledTests.map((test) => (
+                  <TestItem key={test.id} disabled>
+                    <TestItemHeader>
+                      <Checkbox type="checkbox" disabled />
+                      <TestItemContent>
+                        <PatientName>{test.patientName}</PatientName>
+                        <TestInfo>
+                          <span>{test.date}</span>
+                          <span>-</span>
+                          <span>{test.testName}</span>
+                        </TestInfo>
+                        <TestId>{test.id}</TestId>
+                      </TestItemContent>
+                    </TestItemHeader>
+                  </TestItem>
+                ))}
+              </>
+            )}
           </>
         )}
       </Sidebar>
@@ -609,7 +668,11 @@ const ResultPrint = () => {
       <MainContent>
         <Header>
           <div>
-            <Title>Result Print</Title>
+            <BackButton onClick={() => navigate("/pathlab/results")}>
+              <ArrowLeft />
+              Back to Results
+            </BackButton>
+            <Title style={{ marginTop: "12px" }}>Result Print</Title>
             <Subtitle>Select patient tests to combine into a single report.</Subtitle>
           </div>
         </Header>
@@ -631,63 +694,48 @@ const ResultPrint = () => {
 
           <ReportPreview>
             <ReportHeader>
-              <ClinicInfo>
-                <ClinicLogo />
-                <ClinicDetails>
-                  <ClinicName>Automedic Clinic</ClinicName>
-                  <ClinicAddress>
-                    123 Healthcare Ave, Medical District, NY 10012
-                    <br />
-                    Phone: (555) 123-4567 | Email: info@automedic.com
-                  </ClinicAddress>
-                </ClinicDetails>
-              </ClinicInfo>
-              <ReportTitle>
-                <ReportLabel>LAB REPORT</ReportLabel>
-                <ReportId>#RPT-2023-R021</ReportId>
-                <ReportDate>Date: Oct 27, 2023</ReportDate>
-              </ReportTitle>
+              {/* Space reserved for letterhead */}
             </ReportHeader>
 
             <PatientInfoSection>
               <InfoField>
                 <InfoLabel>Patient Name</InfoLabel>
-                <InfoValue>John Doe</InfoValue>
+                <InfoValue>{selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Ref Doctor</InfoLabel>
-                <InfoValue>Dr. Sarah Smith</InfoValue>
+                <InfoValue>{selectedTestDetails[0]?.referring_practitioner || "N/A"}</InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Patient ID</InfoLabel>
-                <InfoValue>P00123</InfoValue>
+                <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Sample Date</InfoLabel>
-                <InfoValue>2023-10-27 09:45 AM</InfoValue>
+                <InfoValue>{selectedTestDetails[0]?.submitted_date || "N/A"}</InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Age / Gender</InfoLabel>
-                <InfoValue>35 Yrs / Male</InfoValue>
+                <InfoValue>
+                  {selectedTestDetails[0]?.patient_age || "N/A"} / {selectedTestDetails[0]?.patient_sex || "N/A"}
+                </InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Report Status Date</InfoLabel>
-                <InfoValue>2023-10-27</InfoValue>
+                <InfoValue>{selectedTestDetails[0]?.result_date || "N/A"}</InfoValue>
               </InfoField>
             </PatientInfoSection>
 
-            {selectedTests.map((test, index) => (
-              <TestSection key={test.id}>
+            {selectedTestDetails.map((testDetail, index) => (
+              <TestSection key={testDetail.name}>
                 <TestSectionHeader>
-                  <TestName>{test.testName}</TestName>
+                  <TestName>{testDetail.lab_test_name || "N/A"}</TestName>
                   <TestCategory>
-                    {test.testName === "Complete Blood Count"
-                      ? "Hematol. Automated Cell Counter"
-                      : "Medical Spectrophotometry"}
+                    {testDetail.department || "Laboratory Test"}
                   </TestCategory>
                 </TestSectionHeader>
 
-                {test.testName === "Complete Blood Count" && (
+                {testDetail.normal_test_items && testDetail.normal_test_items.length > 0 && (
                   <ResultsTable>
                     <thead>
                       <tr>
@@ -698,73 +746,14 @@ const ResultPrint = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      <TableRow>
-                        <TableCell>Hemoglobin</TableCell>
-                        <TableCell>14.5</TableCell>
-                        <TableCell>g/dL</TableCell>
-                        <TableCell>13.5 - 17.5</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Red Blood Cell Count (RBC)</TableCell>
-                        <TableCell>5.1</TableCell>
-                        <TableCell>mill/mm3</TableCell>
-                        <TableCell>4.5 - 5.5</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>White Blood Cell Count (WBC)</TableCell>
-                        <TableCell>7.2</TableCell>
-                        <TableCell>thou/mm3</TableCell>
-                        <TableCell>4.5 - 11.0</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Platelet Count</TableCell>
-                        <TableCell>250</TableCell>
-                        <TableCell>thou/mm3</TableCell>
-                        <TableCell>150 - 450</TableCell>
-                      </TableRow>
-                    </tbody>
-                  </ResultsTable>
-                )}
-
-                {test.testName === "Lipid Panel" && (
-                  <ResultsTable>
-                    <thead>
-                      <tr>
-                        <TableHeader>Test Parameter</TableHeader>
-                        <TableHeader>Result</TableHeader>
-                        <TableHeader>Units</TableHeader>
-                        <TableHeader>Reference Interval</TableHeader>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <TableRow>
-                        <TableCell>Total Cholesterol</TableCell>
-                        <TableCell>
-                          <AbnormalValue>220 (High)</AbnormalValue>
-                        </TableCell>
-                        <TableCell>mg/dL</TableCell>
-                        <TableCell>&lt; 200</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>HDL Cholesterol</TableCell>
-                        <TableCell>45</TableCell>
-                        <TableCell>mg/dL</TableCell>
-                        <TableCell>&gt; 40</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>LDL Cholesterol (Calc)</TableCell>
-                        <TableCell>
-                          <AbnormalValue>135 (High)</AbnormalValue>
-                        </TableCell>
-                        <TableCell>mg/dL</TableCell>
-                        <TableCell>&lt; 100</TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Triglycerides</TableCell>
-                        <TableCell>140</TableCell>
-                        <TableCell>mg/dL</TableCell>
-                        <TableCell>&lt; 150</TableCell>
-                      </TableRow>
+                      {testDetail.normal_test_items.map((item, itemIndex) => (
+                        <TableRow key={itemIndex}>
+                          <TableCell>{item.lab_test_name || "N/A"}</TableCell>
+                          <TableCell>{item.result_value || "N/A"}</TableCell>
+                          <TableCell>{item.lab_test_uom || ""}</TableCell>
+                          <TableCell>{item.normal_range || "N/A"}</TableCell>
+                        </TableRow>
+                      ))}
                     </tbody>
                   </ResultsTable>
                 )}
@@ -772,17 +761,7 @@ const ResultPrint = () => {
             ))}
 
             <ReportFooter>
-              <FooterNote>
-                This report is electronically generated by AutoMedic Assistant and is
-                valid without a physical signature. Verified by system as per of 10-27.
-              </FooterNote>
-              <Signature>
-                <SignatureName>James Wilson</SignatureName>
-                <SignatureDetails>
-                  JAMES WILSON, M.SC
-                  <SignatureTitle>Senior Lab Technician</SignatureTitle>
-                </SignatureDetails>
-              </Signature>
+              {/* Space reserved for signature */}
             </ReportFooter>
           </ReportPreview>
         </PreviewCard>

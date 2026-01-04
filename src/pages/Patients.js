@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
@@ -129,10 +129,43 @@ const ViewButton = styled.button`
   }
 `;
 
+const FilterNotification = styled.div`
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const FilterText = styled.span`
+  font-size: 14px;
+  color: #1976d2;
+  font-weight: 500;
+`;
+
+const ClearFilterButton = styled.button`
+  background: none;
+  border: none;
+  color: #1976d2;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+
+  &:hover {
+    color: #1565c0;
+  }
+`;
+
 /* ================= COMPONENT ================= */
 
 const Patients = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [patientsData, setPatientsData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,6 +177,9 @@ const Patients = () => {
   const [filterDoctor, setFilterDoctor] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [filterVisitType, setFilterVisitType] = useState("");
+
+  // Get selected patient from navigation state
+  const selectedPatientId = location.state?.selectedPatientId;
 
   const columns = [
     { key: "patient_name", label: "PATIENT NAME" },
@@ -163,7 +199,7 @@ const Patients = () => {
 
   /* ========= DATA FETCH ========= */
 
-  const fetchPatients = async (page, limit) => {
+  const fetchPatients = async (page, limit, patientId = null) => {
     try {
       setLoading(true);
       setError(null);
@@ -171,11 +207,19 @@ const Patients = () => {
       const fields = '["name","patient_name","sex","mobile","email","uid"]';
       const limitStart = (page - 1) * limit;
 
-      const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, {
+      // Build filters for specific patient if provided
+      const params = {
         fields,
         limit_start: limitStart,
         limit_page_length: limit,
-      });
+      };
+
+      // If a specific patient is selected, add filter
+      if (patientId) {
+        params.filters = JSON.stringify([["Patient", "name", "=", patientId]]);
+      }
+
+      const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, params);
 
       const rawData = Array.isArray(response.data?.data) ? response.data.data : [];
 
@@ -201,8 +245,8 @@ const Patients = () => {
   };
 
   useEffect(() => {
-    fetchPatients(currentPage, rowsPerPage);
-  }, [currentPage, rowsPerPage]);
+    fetchPatients(currentPage, rowsPerPage, selectedPatientId);
+  }, [currentPage, rowsPerPage, selectedPatientId]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -211,6 +255,11 @@ const Patients = () => {
   const handleRowsPerPageChange = (newRowsPerPage) => {
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1); // Reset to first page when changing rows per page
+  };
+
+  const handleClearFilter = () => {
+    // Clear the filter by navigating without state
+    navigate('/patients', { replace: true });
   };
 
   /* ================= UI ================= */
@@ -232,6 +281,17 @@ const Patients = () => {
             Add New Patient
           </AddButton>
         </HeaderSection>
+
+        {selectedPatientId && (
+          <FilterNotification>
+            <FilterText>
+              Showing filtered results for patient: {location.state?.selectedPatientDescription || selectedPatientId}
+            </FilterText>
+            <ClearFilterButton onClick={handleClearFilter}>
+              Clear Filter
+            </ClearFilterButton>
+          </FilterNotification>
+        )}
 
         <FiltersCard>
           <FilterGroup>

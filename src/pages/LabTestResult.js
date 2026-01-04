@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Upload } from "lucide-react";
+import api from "../services/api";
 
 const ResultContainer = styled.div`
   display: flex;
@@ -356,47 +357,117 @@ const Button = styled.button`
 
 const LabTestResult = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
 
-  // Sample patient data - would come from API
-  const patientData = {
-    name: "John Doe",
-    patientId: "P12345",
-    age: "34",
-    gender: "Male",
-    referringDoctor: "Dr. Smith",
-  };
+  const patientId = location.state?.patientId;
+  const patientName = location.state?.patientName;
 
-  const [testResults, setTestResults] = useState([
-    {
-      parameter: "Hemoglobin",
-      value: "14.5",
-      unit: "g/dL",
-      normalRange: "13.5 - 17.5",
-      flag: "normal",
-    },
-    {
-      parameter: "WBC Count",
-      value: "12.2",
-      unit: "x10³/μL",
-      normalRange: "4.5 - 11.0",
-      flag: "high",
-    },
-    {
-      parameter: "Platelet Count",
-      value: "",
-      unit: "x10³/μL",
-      normalRange: "150 - 450",
-      flag: "none",
-    },
-  ]);
+  const [patientData, setPatientData] = useState(null);
+  const [labTestData, setLabTestData] = useState(null);
+  const [practitioners, setPractitioners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch patient details and lab test details
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!patientId) {
+        setError("Patient ID not provided");
+        setLoading(false);
+        return;
+      }
+
+      if (!id) {
+        setError("Lab Test ID not provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // Fetch patient details
+        const patientResponse = await api.get(`https://hms.automedai.in/api/resource/Patient/${patientId}`);
+        console.log("Patient API Response:", patientResponse);
+
+        if (patientResponse.data && patientResponse.data.data) {
+          setPatientData(patientResponse.data.data);
+        }
+
+        // Fetch lab test details
+        const labTestResponse = await api.get(`https://hms.automedai.in/api/resource/Lab Test/${id}`);
+        console.log("Lab Test API Response:", labTestResponse);
+
+        if (labTestResponse.data && labTestResponse.data.data) {
+          setLabTestData(labTestResponse.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(err.message || "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [patientId, id]);
+
+  const [testResults, setTestResults] = useState([]);
+
+  // Populate test results from lab test data
+  useEffect(() => {
+    if (labTestData && labTestData.normal_test_items) {
+      const formattedResults = labTestData.normal_test_items.map((item) => ({
+        parameter: item.lab_test_name || "",
+        value: item.result_value || "",
+        unit: item.lab_test_uom || "",
+        normalRange: item.normal_range || "",
+        flag: "none",
+      }));
+      setTestResults(formattedResults);
+    }
+  }, [labTestData]);
 
   const [formData, setFormData] = useState({
     technicianNotes: "",
     verifiedBy: "",
-    reportDate: "2023-10-27",
+    reportDate: new Date().toISOString().split('T')[0],
     status: "Under Review",
   });
+
+  // Fetch healthcare practitioners
+  useEffect(() => {
+    const fetchPractitioners = async () => {
+      try {
+        const response = await api.get("https://hms.automedai.in/api/resource/Healthcare Practitioner", {
+          fields: '["name", "practitioner_name"]',
+          limit_page_length: 100,
+        });
+
+        console.log("Healthcare Practitioners API Response:", response);
+
+        if (response.data && response.data.data) {
+          setPractitioners(response.data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching healthcare practitioners:", err);
+      }
+    };
+
+    fetchPractitioners();
+  }, []);
+
+  // Update form data when lab test data is loaded
+  useEffect(() => {
+    if (labTestData) {
+      setFormData((prev) => ({
+        ...prev,
+        status: labTestData.status || "Under Review",
+        reportDate: labTestData.result_date || new Date().toISOString().split('T')[0],
+      }));
+    }
+  }, [labTestData]);
 
   const handleResultChange = (index, value) => {
     const updatedResults = [...testResults];
@@ -456,26 +527,31 @@ const LabTestResult = () => {
       <ResultContainer>
         <PageTitle>Lab Test Result Entry</PageTitle>
 
-        <PatientInfoCard>
-          <InfoItem>
-            <InfoLabel>Patient Name</InfoLabel>
-            <InfoValue>{patientData.name}</InfoValue>
-          </InfoItem>
-          <InfoItem>
-            <InfoLabel>Patient ID</InfoLabel>
-            <InfoValue>{patientData.patientId}</InfoValue>
-          </InfoItem>
-          <InfoItem>
-            <InfoLabel>Age & Gender</InfoLabel>
-            <InfoValue>
-              {patientData.age} / {patientData.gender}
-            </InfoValue>
-          </InfoItem>
-          <InfoItem>
-            <InfoLabel>Referring Doctor</InfoLabel>
-            <InfoValue>{patientData.referringDoctor}</InfoValue>
-          </InfoItem>
-        </PatientInfoCard>
+        {loading && <div>Loading patient details...</div>}
+        {error && <div style={{ color: "red" }}>Error: {error}</div>}
+
+        {!loading && !error && patientData && (
+          <PatientInfoCard>
+            <InfoItem>
+              <InfoLabel>Patient Name</InfoLabel>
+              <InfoValue>{patientData.patient_name || patientName || "N/A"}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Patient ID</InfoLabel>
+              <InfoValue>{patientData.name || patientId || "N/A"}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Age & Gender</InfoLabel>
+              <InfoValue>
+                {patientData.age || "N/A"} / {patientData.sex || "N/A"}
+              </InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Mobile</InfoLabel>
+              <InfoValue>{patientData.mobile || "N/A"}</InfoValue>
+            </InfoItem>
+          </PatientInfoCard>
+        )}
 
         <ResultsTable>
           <Table>
@@ -532,9 +608,11 @@ const LabTestResult = () => {
                 onChange={handleFormChange}
               >
                 <option value="">Choose a supervisor</option>
-                <option value="Dr. Johnson">Dr. Johnson</option>
-                <option value="Dr. Smith">Dr. Smith</option>
-                <option value="Dr. Williams">Dr. Williams</option>
+                {practitioners.map((practitioner) => (
+                  <option key={practitioner.name} value={practitioner.name}>
+                    {practitioner.practitioner_name}
+                  </option>
+                ))}
               </Select>
             </FormGroup>
 

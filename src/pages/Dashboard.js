@@ -155,6 +155,15 @@ const SearchBarContainer = styled.div`
   display: flex;
   justify-content: center;
   width: 100%;
+  position: relative;
+  z-index: 1000;
+`;
+
+const SearchWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  z-index: 1001;
 `;
 
 const SearchBar = styled.div`
@@ -166,9 +175,10 @@ const SearchBar = styled.div`
   padding: 16px 24px;
   gap: 12px;
   width: 100%;
-  max-width: 800px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 1002;
 
   &:focus-within {
     border-color: #4a90e2;
@@ -203,6 +213,79 @@ const SearchInput = styled.input`
   &::placeholder {
     color: #94a3b8;
   }
+`;
+
+const SearchResultsDropdown = styled.div`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 1003;
+  animation: slideDown 0.2s ease;
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const SearchResultItem = styled.div`
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #f8fafc;
+  }
+
+  &:active {
+    background-color: #f1f5f9;
+  }
+`;
+
+const ResultValue = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+`;
+
+const ResultDescription = styled.div`
+  font-size: 13px;
+  color: #64748b;
+`;
+
+const SearchResultEmpty = styled.div`
+  padding: 32px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+`;
+
+const SearchResultLoading = styled.div`
+  padding: 32px 20px;
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
 `;
 
 const Section = styled.div`
@@ -417,6 +500,7 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
   const searchTimeoutRef = useRef(null);
 
   const navItems = [
@@ -475,6 +559,7 @@ const Dashboard = () => {
   const searchPatients = async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
+      setShowSearchResults(false);
       return;
     }
 
@@ -497,12 +582,29 @@ const Dashboard = () => {
       console.log("📝 First search result:", results[0]);
 
       setSearchResults(results);
+      setShowSearchResults(true);
     } catch (err) {
       console.error("❌ Error searching patients:", err);
       setSearchResults([]);
+      setShowSearchResults(false);
     } finally {
       setIsSearching(false);
     }
+  };
+
+  // Handle patient selection from dropdown
+  const handlePatientSelect = (patient) => {
+    const patientId = patient.value;
+    setShowSearchResults(false);
+    setSearchQuery("");
+    setSearchResults([]);
+    // Navigate to patients page with selected patient info
+    navigate('/patients', {
+      state: {
+        selectedPatientId: patientId,
+        selectedPatientDescription: patient.description
+      }
+    });
   };
 
   // Handle search input change with debouncing
@@ -581,23 +683,46 @@ const Dashboard = () => {
           </TopNavigation>
         </FadeInWrapper>
 
-        <FadeInWrapper ref={(el) => (sectionRefs.current.search = el)} data-sectionid="search" visible={visibleSections.search} delay={0.05}>
+        <FadeInWrapper ref={(el) => (sectionRefs.current.search = el)} data-sectionid="search" visible={visibleSections.search} delay={0.05} style={{ position: 'relative', zIndex: 1000 }}>
           <SearchBarContainer>
-            <SearchBar>
-              <SearchIcon>
-                <Search />
-              </SearchIcon>
-              <SearchInput
-                type="text"
-                placeholder="Search for a patient by name, ID, or phone number"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-            </SearchBar>
+            <SearchWrapper>
+              <SearchBar>
+                <SearchIcon>
+                  <Search />
+                </SearchIcon>
+                <SearchInput
+                  type="text"
+                  placeholder="Search for a patient by name, ID, or phone number"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => searchQuery.length >= 2 && searchResults.length > 0 && setShowSearchResults(true)}
+                  onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                />
+              </SearchBar>
+              {showSearchResults && (
+                <SearchResultsDropdown>
+                  {isSearching ? (
+                    <SearchResultLoading>Searching...</SearchResultLoading>
+                  ) : searchResults.length > 0 ? (
+                    searchResults.map((patient, index) => (
+                      <SearchResultItem
+                        key={index}
+                        onMouseDown={() => handlePatientSelect(patient)}
+                      >
+                        <ResultValue>{patient.value}</ResultValue>
+                        <ResultDescription>{patient.description}</ResultDescription>
+                      </SearchResultItem>
+                    ))
+                  ) : (
+                    <SearchResultEmpty>No patients found</SearchResultEmpty>
+                  )}
+                </SearchResultsDropdown>
+              )}
+            </SearchWrapper>
           </SearchBarContainer>
         </FadeInWrapper>
 
-        <FadeInWrapper ref={(el) => (sectionRefs.current.insights = el)} data-sectionid="insights" visible={visibleSections.insights} delay={0.1}>
+        <FadeInWrapper ref={(el) => (sectionRefs.current.insights = el)} data-sectionid="insights" visible={visibleSections.insights} delay={0.1} style={{ position: 'relative', zIndex: 1 }}>
           <Section>
             <SectionTitle>Daily Insights</SectionTitle>
             {isLoading ? (
@@ -632,7 +757,7 @@ const Dashboard = () => {
           </Section>
         </FadeInWrapper>
 
-        <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15}>
+        <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
           <Section>
             <SectionTitle>Doctor Availability</SectionTitle>
             {isLoading ? (
