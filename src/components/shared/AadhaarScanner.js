@@ -369,10 +369,21 @@ const AadhaarScanner = ({ isOpen, onClose, onDataExtracted }) => {
   const stopScanner = async () => {
     if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop();
+        const state = await html5QrCodeRef.current.getState();
+        if (state === 2) { // Scanner is running (state 2 means SCANNING)
+          await html5QrCodeRef.current.stop();
+        }
+        // Give a small delay to ensure video stream is properly stopped
+        await new Promise(resolve => setTimeout(resolve, 100));
         html5QrCodeRef.current.clear();
       } catch (error) {
         console.error("Error stopping scanner:", error);
+        // Still try to clear even if stop fails
+        try {
+          html5QrCodeRef.current.clear();
+        } catch (clearError) {
+          console.error("Error clearing scanner:", clearError);
+        }
       }
       html5QrCodeRef.current = null;
     }
@@ -380,20 +391,26 @@ const AadhaarScanner = ({ isOpen, onClose, onDataExtracted }) => {
   };
 
   const onQRCodeScanned = async (decodedText) => {
-    await stopScanner();
     setStatus({ type: "loading", message: "Processing QR code..." });
 
     const result = parseAadhaarQR(decodedText);
 
     if (result.success) {
-      const isValidAadhaar = validateAadhaarNumber(result.data.uid);
-      setExtractedData(result.data);
-      setStatus({
-        type: "success",
-        message: isValidAadhaar
-          ? "Aadhaar data extracted successfully!"
-          : "Data extracted (UID validation pending)",
-      });
+      // Stop scanner first to prevent video errors
+      if (html5QrCodeRef.current) {
+        try {
+          await html5QrCodeRef.current.stop();
+          // Small delay to ensure video stops completely
+          await new Promise(resolve => setTimeout(resolve, 50));
+        } catch (error) {
+          console.error("Error stopping scanner:", error);
+        }
+      }
+
+      // Auto-populate immediately without confirmation
+      onDataExtracted(result.data);
+      // Close modal (will call stopScanner again but it's safe)
+      await handleClose();
     } else {
       setStatus({ type: "error", message: result.error });
       // Restart scanner after error
@@ -459,8 +476,11 @@ const AadhaarScanner = ({ isOpen, onClose, onDataExtracted }) => {
         // QR code found, parse it
         const result = parseAadhaarQR(qrResult);
         if (result.success) {
-          setExtractedData(result.data);
-          setStatus({ type: "success", message: "Aadhaar QR code detected and parsed!" });
+          // Small delay to ensure cleanup
+          await new Promise(resolve => setTimeout(resolve, 50));
+          // Auto-populate immediately without confirmation
+          onDataExtracted(result.data);
+          await handleClose();
           return;
         }
       } catch (qrError) {
@@ -486,13 +506,11 @@ const AadhaarScanner = ({ isOpen, onClose, onDataExtracted }) => {
       const result = parseAadhaarOCR(text);
 
       if (result.success && (result.data.uid || result.data.firstName || result.data.gender)) {
-        setExtractedData(result.data);
-        setStatus({
-          type: "success",
-          message: result.confidence === "medium"
-            ? "Data extracted via OCR. Please verify the details."
-            : "Data extracted. Please verify all fields.",
-        });
+        // Small delay to ensure cleanup
+        await new Promise(resolve => setTimeout(resolve, 50));
+        // Auto-populate immediately without confirmation
+        onDataExtracted(result.data);
+        await handleClose();
       } else {
         setStatus({
           type: "error",

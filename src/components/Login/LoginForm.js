@@ -30,23 +30,10 @@ const LogoSection = styled.div`
   gap: 8px;
 `;
 
-const LogoIcon = styled.div`
-  width: 45px;
-  height: 45px;
-  background-color: #4a90e2;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 30px;
-  font-weight: 500;
-`;
-
-const LogoText = styled.span`
-  font-size: 27px;
-  font-weight: 600;
-  color: #333333;
+const LogoImage = styled.img`
+  height: 170px;
+  width: auto;
+  object-fit: contain;
 `;
 
 const LoginContent = styled.div`
@@ -214,7 +201,7 @@ const LoginForm = () => {
       // Use email as username for login
       const success = await login(email, password);
       if (success) {
-        navigate("/dashboard");
+        navigate("/opd");
       } else {
         setError("Invalid email or password");
       }
@@ -229,15 +216,14 @@ const LoginForm = () => {
     <LoginContainer>
       <LoginHeader>
         <LogoSection>
-          <LogoIcon>+</LogoIcon>
-          <LogoText>AutoMedic</LogoText>
+          <LogoImage src="/Logo_light_web.png" alt="Logo" />
         </LogoSection>
       </LoginHeader>
 
       <LoginContent>
-        <WelcomeHeading>Welcome back.</WelcomeHeading>
+        <WelcomeHeading>Welcome</WelcomeHeading>
         <SignUpText>
-          New to AutoMedic? <SignUpLink href="#">Sign up</SignUpLink>
+          New to AutoMedAi? <SignUpLink href="#">Sign up</SignUpLink>
         </SignUpText>
 
         {error && <LoginError>{error}</LoginError>}

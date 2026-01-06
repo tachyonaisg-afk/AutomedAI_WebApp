@@ -465,6 +465,21 @@ const FooterNote = styled.div`
   line-height: 1.5;
 `;
 
+const EndOfReport = styled.div`
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  margin-top: 40px;
+  padding: 20px 0;
+  border-top: 2px solid #e0e0e0;
+  letter-spacing: 1px;
+
+  @media print {
+    page-break-after: always;
+  }
+`;
+
 const Signature = styled.div`
   text-align: center;
 `;
@@ -586,9 +601,32 @@ const ResultPrint = () => {
     window.print();
   };
 
-  const handleDownloadPDF = () => {
-    // TODO: Implement PDF download functionality
-    console.log("Download PDF");
+  const handleDownloadPDF = async () => {
+    try {
+      // Dynamically import html2pdf
+      const html2pdf = (await import('html2pdf.js')).default;
+
+      const element = document.querySelector('[data-pdf-content]');
+
+      if (!element) {
+        console.error('PDF content element not found');
+        return;
+      }
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `lab-report-${patientId || 'patient'}-${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again or use the Print option.');
+    }
   };
 
   const selectedTests = tests.filter((test) => test.selected);
@@ -692,7 +730,7 @@ const ResultPrint = () => {
             </ButtonGroup>
           </PreviewHeader>
 
-          <ReportPreview>
+          <ReportPreview data-pdf-content>
             <ReportHeader>
               {/* Space reserved for letterhead */}
             </ReportHeader>
@@ -763,6 +801,8 @@ const ResultPrint = () => {
             <ReportFooter>
               {/* Space reserved for signature */}
             </ReportFooter>
+
+            <EndOfReport>*** END OF REPORT ***</EndOfReport>
           </ReportPreview>
         </PreviewCard>
       </MainContent>

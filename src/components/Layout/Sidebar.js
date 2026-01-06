@@ -287,9 +287,9 @@ const Sidebar = () => {
   ];
 
   const menuItemsAfterPathLab = [
-    { path: "/consultations", label: "Consultations", icon: MessageSquare },
+    // { path: "/consultations", label: "Consultations", icon: MessageSquare },
     { path: "/appointments", label: "Appointments", icon: Calendar },
-    { path: "/clinic-details", label: "Clinic Details", icon: Building2 },
+    // { path: "/clinic-details", label: "Clinic Details", icon: Building2 },
   ];
 
   const bottomItems = [
@@ -358,7 +358,7 @@ const Sidebar = () => {
   return (
     <SidebarContainer>
       <SidebarLogo>
-        <LogoIcon src="/logo.png" alt="AutoMedic Logo" />
+        <LogoIcon src="/Logo_light_web.png" alt="Logo" />
       </SidebarLogo>
 
       <SidebarNav>

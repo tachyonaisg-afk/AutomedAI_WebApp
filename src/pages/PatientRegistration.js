@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -131,6 +131,13 @@ const FormInput = styled.input`
   &::placeholder {
     color: #999999;
   }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #d0d0d0;
+  }
 `;
 
 const FormSelect = styled.select`
@@ -151,6 +158,13 @@ const FormSelect = styled.select`
 
   &:focus {
     border-color: #4a90e2;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #d0d0d0;
   }
 `;
 
@@ -575,6 +589,8 @@ const PatientRegistration = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
+  const mobileInputRef = useRef(null);
+  const occupationInputRef = useRef(null);
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -622,6 +638,85 @@ const PatientRegistration = () => {
 
   const [genderOptions, setGenderOptions] = useState([]);
   const [companyOptions, setCompanyOptions] = useState([]);
+  const [disabledFields, setDisabledFields] = useState({});
+
+  // Helper function to match gender values
+  const matchGenderValue = (genderValue, options) => {
+    if (!genderValue) return "";
+
+    const normalized = genderValue.trim().toLowerCase();
+    console.log("Trying to match gender:", normalized);
+
+    // Try exact match first
+    const exactMatch = options.find(opt => opt.name.toLowerCase() === normalized);
+    if (exactMatch) {
+      console.log("Exact match found:", exactMatch.name);
+      return exactMatch.name;
+    }
+
+    // Try matching common patterns
+    const patterns = {
+      'm': ['male', 'm'],
+      'f': ['female', 'f'],
+      't': ['transgender', 'trans', 't'],
+      'o': ['other', 'o']
+    };
+
+    for (const [key, variations] of Object.entries(patterns)) {
+      if (variations.some(v => normalized === v || normalized.startsWith(v))) {
+        const match = options.find(opt => opt.name.toLowerCase().startsWith(key));
+        if (match) {
+          console.log("Pattern match found:", match.name);
+          return match.name;
+        }
+      }
+    }
+
+    // Try partial match as fallback
+    const partialMatch = options.find(opt => {
+      const optName = opt.name.toLowerCase();
+      return optName.startsWith(normalized) || normalized.startsWith(optName.charAt(0));
+    });
+
+    if (partialMatch) {
+      console.log("Partial match found:", partialMatch.name);
+      return partialMatch.name;
+    }
+
+    console.log("No match found, returning raw value");
+    return genderValue;
+  };
+
+  // Normalize gender value when options are loaded (for auto-normalization after Aadhaar scan)
+  useEffect(() => {
+    if (genderOptions.length > 0 && formData.gender) {
+      const currentValue = formData.gender.trim();
+
+      // Check if current value is already a valid option
+      const isValidOption = genderOptions.some(
+        opt => opt.name.toLowerCase() === currentValue.toLowerCase()
+      );
+
+      if (!isValidOption) {
+        // Try to match and normalize
+        const matchedValue = matchGenderValue(currentValue, genderOptions);
+        if (matchedValue && matchedValue !== currentValue) {
+          console.log("Auto-normalizing gender from", currentValue, "to", matchedValue);
+          setFormData((prev) => ({ ...prev, gender: matchedValue }));
+        }
+      }
+    }
+  }, [genderOptions]);
+
+  // Auto-focus on appropriate field when step changes
+  useEffect(() => {
+    if (currentStep === 2 && occupationInputRef.current) {
+      // Small delay to ensure the step content is rendered
+      setTimeout(() => {
+        occupationInputRef.current?.focus();
+      }, 100);
+    }
+  }, [currentStep]);
 
   // Fetch gender and company options from API
   useEffect(() => {
@@ -635,6 +730,7 @@ const PatientRegistration = () => {
         });
         const data = await response.json();
         if (data && data.data) {
+          console.log("Gender options loaded:", data.data);
           setGenderOptions(data.data);
         }
       } catch (error) {
@@ -701,25 +797,35 @@ const PatientRegistration = () => {
   };
 
   const handleAadhaarDataExtracted = (data) => {
+    console.log("=== Aadhaar Scan Data ===");
+    console.log("Extracted data:", data);
+    console.log("Gender options available:", genderOptions.map(o => o.name));
+
     // Match gender value with available options from API
     let matchedGender = "";
-    if (data.gender && genderOptions.length > 0) {
-      // Try exact match first
-      const exactMatch = genderOptions.find(
-        (opt) => opt.name.toLowerCase() === data.gender.toLowerCase()
-      );
-      if (exactMatch) {
-        matchedGender = exactMatch.name;
+    if (data.gender) {
+      if (genderOptions.length > 0) {
+        matchedGender = matchGenderValue(data.gender, genderOptions);
+        console.log("Final matched gender:", matchedGender);
       } else {
-        // Try partial match (e.g., "M" matches "Male")
-        const partialMatch = genderOptions.find(
-          (opt) => opt.name.toLowerCase().startsWith(data.gender.toLowerCase().charAt(0))
-        );
-        if (partialMatch) {
-          matchedGender = partialMatch.name;
-        }
+        // If options not loaded yet, store the raw value
+        // It will be normalized when options load via useEffect
+        matchedGender = data.gender.trim();
+        console.log("Gender options not loaded yet, using raw value:", matchedGender);
       }
     }
+
+    // Track which fields are being populated from Aadhaar
+    const fieldsToDisable = {};
+    if (data.firstName) fieldsToDisable.firstName = true;
+    if (data.middleName) fieldsToDisable.middleName = true;
+    if (data.lastName) fieldsToDisable.lastName = true;
+    if (data.uid) fieldsToDisable.uid = true;
+    if (data.dateOfBirth) fieldsToDisable.dateOfBirth = true;
+    if (matchedGender) fieldsToDisable.gender = true;
+    if (data.address) fieldsToDisable.address_line1 = true;
+
+    setDisabledFields(fieldsToDisable);
 
     // If address is provided from Aadhaar, put it in address_line1
     // User can manually split it into different fields later
@@ -730,9 +836,16 @@ const PatientRegistration = () => {
       lastName: data.lastName || prev.lastName,
       uid: data.uid || prev.uid,
       dateOfBirth: data.dateOfBirth || prev.dateOfBirth,
-      gender: matchedGender || data.gender || prev.gender,
+      gender: matchedGender || prev.gender,
       address_line1: data.address || prev.address_line1,
     }));
+
+    // Auto-focus on mobile number field after Aadhaar scan
+    setTimeout(() => {
+      if (mobileInputRef.current) {
+        mobileInputRef.current.focus();
+      }
+    }, 100);
   };
 
   const handleBillingChange = (e) => {
@@ -886,8 +999,6 @@ const PatientRegistration = () => {
   return (
     <Layout>
       <RegistrationContainer>
-        <Title>Patient Registration :</Title>
-
         <ProgressIndicator>
           <ProgressStepsContainer>
             <ProgressStep>
@@ -942,6 +1053,8 @@ const PatientRegistration = () => {
                       pattern="[a-zA-Z\s]+"
                       placeholder="Enter first name"
                       required
+                      disabled={disabledFields.firstName}
+                      autoFocus
                     />
                   </FormGroup>
 
@@ -958,6 +1071,7 @@ const PatientRegistration = () => {
                       }}
                       pattern="[a-zA-Z\s]*"
                       placeholder="Enter middle name"
+                      disabled={disabledFields.middleName}
                     />
                   </FormGroup>
 
@@ -975,12 +1089,13 @@ const PatientRegistration = () => {
                       pattern="[a-zA-Z\s]+"
                       placeholder="Enter last name"
                       required
+                      disabled={disabledFields.lastName}
                     />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Identification Number (UID)</FormLabel>
-                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} />
+                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} disabled={disabledFields.uid} />
                   </FormGroup>
 
                   <FormGroup>
@@ -991,12 +1106,13 @@ const PatientRegistration = () => {
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
                       max={new Date().toISOString().split("T")[0]}
+                      disabled={disabledFields.dateOfBirth}
                     />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Gender</FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange}>
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender}>
                       <option value="">Select</option>
                       {genderOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -1009,6 +1125,7 @@ const PatientRegistration = () => {
                   <FormGroup>
                     <FormLabel>Mobile</FormLabel>
                     <FormInput
+                      ref={mobileInputRef}
                       type="tel"
                       name="mobile"
                       value={formData.mobile}
@@ -1060,6 +1177,7 @@ const PatientRegistration = () => {
                       value={formData.address_line1}
                       onChange={handleInputChange}
                       placeholder="Enter address line 1"
+                      disabled={disabledFields.address_line1}
                     />
                   </FormGroup>
 
@@ -1146,50 +1264,6 @@ const PatientRegistration = () => {
                   </FormGroup>
                 </FormGrid>
               </FormSection>
-
-              <FormSection>
-                <SectionTitle>Medical Info</SectionTitle>
-                <FormGroup fullWidth>
-                  <FormLabel>Allergies</FormLabel>
-                  <TextArea name="allergies" value={formData.allergies} onChange={handleInputChange} placeholder="Enter any known allergies..." />
-                </FormGroup>
-
-                <FormGroup fullWidth>
-                  <FormLabel>Existing Conditions</FormLabel>
-                  <TextArea name="existingConditions" value={formData.existingConditions} onChange={handleInputChange} placeholder="Enter any existing medical conditions..." />
-                </FormGroup>
-              </FormSection>
-
-              <FormSection>
-                <SectionTitle>Visit Details</SectionTitle>
-                <FormGroup>
-                  <FormLabel>Visit Type</FormLabel>
-                  <RadioGroup>
-                    <RadioOption>
-                      <RadioInput type="radio" name="visitType" value="walk-in" checked={formData.visitType === "walk-in"} onChange={handleInputChange} />
-                      <span>Walk-in</span>
-                    </RadioOption>
-                    <RadioOption>
-                      <RadioInput type="radio" name="visitType" value="telemedicine" checked={formData.visitType === "telemedicine"} onChange={handleInputChange} />
-                      <span>Telemedicine</span>
-                    </RadioOption>
-                    <RadioOption>
-                      <RadioInput type="radio" name="visitType" value="referral" checked={formData.visitType === "referral"} onChange={handleInputChange} />
-                      <span>Referral</span>
-                    </RadioOption>
-                  </RadioGroup>
-                </FormGroup>
-
-                <FormGroup>
-                  <FormLabel>Assigned Doctor</FormLabel>
-                  <FormSelect name="assignedDoctor" value={formData.assignedDoctor} onChange={handleInputChange}>
-                    <option value="">Select a doctor</option>
-                    <option value="dr1">Dr. Smith</option>
-                    <option value="dr2">Dr. Johnson</option>
-                    <option value="dr3">Dr. Williams</option>
-                  </FormSelect>
-                </FormGroup>
-              </FormSection>
             </>
           )}
 
@@ -1200,7 +1274,7 @@ const PatientRegistration = () => {
                 <FormGrid>
                   <FormGroup>
                     <FormLabel>Occupation</FormLabel>
-                    <FormInput type="text" name="occupation" value={medicalHistory.occupation} onChange={handleMedicalHistoryChange} placeholder="Software Engineer" />
+                    <FormInput ref={occupationInputRef} type="text" name="occupation" value={medicalHistory.occupation} onChange={handleMedicalHistoryChange} placeholder="Software Engineer" />
                   </FormGroup>
 
                   <FormGroup>
