@@ -241,6 +241,7 @@ const Collection = () => {
         limit_start: 0,
         limit_page_length: 1200,
         fields: fields,
+        order_by: "creation desc",
       });
 
       if (response.data?.data) {

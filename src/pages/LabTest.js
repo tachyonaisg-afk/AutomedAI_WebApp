@@ -213,6 +213,7 @@ const LabTest = () => {
         const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
           fields: '["name","patient","patient_name","status","lab_test_name"]',
           filters: '[["Lab Test","status","!=","Completed"]]',
+          order_by: "submitted_date desc",
         });
 
         console.log("Lab Tests API Response:", response);
