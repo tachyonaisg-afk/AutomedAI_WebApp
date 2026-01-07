@@ -88,7 +88,7 @@ function App() {
             path="/opd"
             element={
               <ProtectedRoute>
-                <ComingSoon />
+                <Dashboard />
               </ProtectedRoute>
             }
           />
@@ -145,7 +145,7 @@ function App() {
             path="/pathlab"
             element={
               <ProtectedRoute>
-                <PathLab />
+                <Dashboard />
               </ProtectedRoute>
             }
           />

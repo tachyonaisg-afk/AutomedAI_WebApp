@@ -34,11 +34,13 @@ const SidebarContainer = styled.div`
   z-index: 100;
 `;
 
-const SidebarLogo = styled.div`
+const SidebarLogo = styled(Link)`
   display: flex;
   align-items: center;
   padding: 20px;
   gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
 `;
 
 const LogoIcon = styled.img`
@@ -263,7 +265,6 @@ const Sidebar = () => {
   const isInitialMount = useRef(true);
 
   const menuItems = [
-    { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { path: "/patients", label: "Patients", icon: Users },
   ];
 
@@ -358,7 +359,7 @@ const Sidebar = () => {
 
   return (
     <SidebarContainer>
-      <SidebarLogo>
+      <SidebarLogo to="/opd">
         <LogoIcon src="/Logo_light_web.png" alt="Logo" />
       </SidebarLogo>
 

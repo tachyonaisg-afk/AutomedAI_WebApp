@@ -136,14 +136,14 @@ const Header = () => {
     if (path === "/patient-registration") return { pages: ["Patients", "Patient Registration"] };
 
     // OPD routes
-    if (path === "/opd") return { pages: ["OPD"] };
+    if (path === "/opd") return { pages: ["OPD", "Dashboard"] };
     if (path === "/opd/patient-registration") return { pages: ["OPD", "Patient Registration"] };
     if (path === "/opd/billing") return { pages: ["OPD", "Billing"] };
     if (path === "/opd/appointments") return { pages: ["OPD", "Appointments"] };
     if (path === "/opd/consultation") return { pages: ["OPD", "Consultation"] };
     if (path === "/opd/telemedicine") return { pages: ["OPD", "Telemedicine"] };
 
-    if (path === "/pathlab") return { pages: ["PathLab"] };
+    if (path === "/pathlab") return { pages: ["PathLab", "Dashboard"] };
     if (path === "/pathlab/patient-registration") return { pages: ["PathLab", "Patient Registration"] };
     if (path === "/pathlab/collection") return { pages: ["PathLab", "Collection"] };
     if (path === "/pathlab/collection/new") return { pages: ["PathLab", "Sample Collection"] };

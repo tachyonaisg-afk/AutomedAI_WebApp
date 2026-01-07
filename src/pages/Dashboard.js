@@ -711,8 +711,8 @@ const Dashboard = () => {
                         key={index}
                         onMouseDown={() => handlePatientSelect(patient)}
                       >
-                        <ResultValue>{patient.value}</ResultValue>
-                        <ResultDescription>{patient.description}</ResultDescription>
+                        <ResultValue>{patient.description}</ResultValue>
+                        <ResultDescription>{patient.value}</ResultDescription>
                       </SearchResultItem>
                     ))
                   ) : (
