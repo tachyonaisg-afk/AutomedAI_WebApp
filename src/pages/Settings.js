@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Camera } from "lucide-react";
+import usePageTitle from "../hooks/usePageTitle";
 
 const SettingsContainer = styled.div`
   display: flex;
@@ -198,6 +199,7 @@ const PasswordFormGrid = styled.div`
 `;
 
 const Settings = () => {
+  usePageTitle("Settings");
   const [profileData, setProfileData] = useState({
     fullName: "Dr. Emily Carter",
     phoneNumber: "(555) 123-4567",

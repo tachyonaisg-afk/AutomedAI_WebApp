@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import api, { API_ENDPOINTS } from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 import styled from "styled-components";
 import { UserPlus, Users, Receipt, ClipboardCheck, Video, FileBarChart, Mountain, Sun, Search, Users as UsersIcon, DollarSign, Clock, Pill } from "lucide-react";
@@ -496,6 +497,7 @@ const AnimatedNumber = ({ value }) => {
 };
 
 const Dashboard = () => {
+  usePageTitle("Dashboard");
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);

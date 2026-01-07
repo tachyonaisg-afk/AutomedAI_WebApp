@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import api from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 const Container = styled.div`
   display: flex;
@@ -506,6 +507,7 @@ const SignatureTitle = styled.div`
 `;
 
 const ResultPrint = () => {
+  usePageTitle("Result Print");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -517,6 +519,46 @@ const ResultPrint = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTestDetails, setSelectedTestDetails] = useState([]);
+
+  // Helper function to remove prefixes from test names
+  const removeTestPrefix = (testName) => {
+    if (!testName) return testName;
+    return testName.replace(/^(PHC-|LAB-|PLB-)\s*/i, '');
+  };
+
+  // Helper function to format date to dd/mm/yyyy
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      const date = new Date(dateString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Helper function to format age (extract years only)
+  const formatAge = (ageString) => {
+    if (!ageString) return "N/A";
+    // Extract the number of years from strings like "46 Year(s) 10 Month(s) 11 Day(s)"
+    const yearMatch = ageString.match(/(\d+)\s*Year/i);
+    if (yearMatch) {
+      return `${yearMatch[1]} Years`;
+    }
+    return ageString;
+  };
+
+  // Helper function to format gender
+  const formatGender = (gender) => {
+    if (!gender) return "N/A";
+    const genderLower = gender.toLowerCase();
+    if (genderLower === 'female' || genderLower === 'f') return "Female";
+    if (genderLower === 'male' || genderLower === 'm') return "Male";
+    return gender;
+  };
 
   // Fetch lab tests for the patient
   useEffect(() => {
@@ -668,9 +710,9 @@ const ResultPrint = () => {
                   <TestItemContent>
                     <PatientName>{test.patientName}</PatientName>
                     <TestInfo>
-                      <span>{test.date}</span>
+                      <span>{formatDate(test.date)}</span>
                       <span>-</span>
-                      <span>{test.testName}</span>
+                      <span>{removeTestPrefix(test.testName)}</span>
                     </TestInfo>
                     <TestId>{test.id}</TestId>
                   </TestItemContent>
@@ -688,9 +730,9 @@ const ResultPrint = () => {
                       <TestItemContent>
                         <PatientName>{test.patientName}</PatientName>
                         <TestInfo>
-                          <span>{test.date}</span>
+                          <span>{formatDate(test.date)}</span>
                           <span>-</span>
-                          <span>{test.testName}</span>
+                          <span>{removeTestPrefix(test.testName)}</span>
                         </TestInfo>
                         <TestId>{test.id}</TestId>
                       </TestItemContent>
@@ -750,24 +792,24 @@ const ResultPrint = () => {
               </InfoField>
               <InfoField>
                 <InfoLabel>Sample Date</InfoLabel>
-                <InfoValue>{selectedTestDetails[0]?.submitted_date || "N/A"}</InfoValue>
+                <InfoValue>{formatDate(selectedTestDetails[0]?.submitted_date)}</InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Age / Gender</InfoLabel>
                 <InfoValue>
-                  {selectedTestDetails[0]?.patient_age || "N/A"} / {selectedTestDetails[0]?.patient_sex || "N/A"}
+                  {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
                 </InfoValue>
               </InfoField>
               <InfoField>
                 <InfoLabel>Report Status Date</InfoLabel>
-                <InfoValue>{selectedTestDetails[0]?.result_date || "N/A"}</InfoValue>
+                <InfoValue>{formatDate(selectedTestDetails[0]?.result_date)}</InfoValue>
               </InfoField>
             </PatientInfoSection>
 
             {selectedTestDetails.map((testDetail, index) => (
               <TestSection key={testDetail.name}>
                 <TestSectionHeader>
-                  <TestName>{testDetail.lab_test_name || "N/A"}</TestName>
+                  <TestName>{removeTestPrefix(testDetail.lab_test_name) || "N/A"}</TestName>
                   <TestCategory>
                     {testDetail.department || "Laboratory Test"}
                   </TestCategory>
@@ -786,7 +828,7 @@ const ResultPrint = () => {
                     <tbody>
                       {testDetail.normal_test_items.map((item, itemIndex) => (
                         <TableRow key={itemIndex}>
-                          <TableCell>{item.lab_test_name || "N/A"}</TableCell>
+                          <TableCell>{removeTestPrefix(item.lab_test_name) || "N/A"}</TableCell>
                           <TableCell>{item.result_value || "N/A"}</TableCell>
                           <TableCell>{item.lab_test_uom || ""}</TableCell>
                           <TableCell>{item.normal_range || "N/A"}</TableCell>

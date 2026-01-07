@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import styled from "styled-components";
 import { Eye, EyeOff } from "lucide-react";
+import usePageTitle from "../../hooks/usePageTitle";
 
 const LoginContainer = styled.div`
   display: flex;
@@ -179,6 +180,7 @@ const LoginButton = styled.button`
 `;
 
 const LoginForm = () => {
+  usePageTitle("Login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

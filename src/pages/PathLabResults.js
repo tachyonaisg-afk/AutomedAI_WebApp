@@ -5,6 +5,7 @@ import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
 import { Search, Filter, Printer } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 const ResultsContainer = styled.div`
   display: flex;
@@ -168,6 +169,7 @@ const ActionLink = styled.button`
 `;
 
 const PathLabResults = () => {
+  usePageTitle("Test Results");
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [resultsData, setResultsData] = useState([]);

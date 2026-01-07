@@ -5,6 +5,7 @@ import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
 import { Plus, Calendar, Eye } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 /* ================= STYLES ================= */
 
@@ -164,6 +165,7 @@ const ClearFilterButton = styled.button`
 /* ================= COMPONENT ================= */
 
 const Patients = () => {
+  usePageTitle("Patients");
   const navigate = useNavigate();
   const location = useLocation();
 

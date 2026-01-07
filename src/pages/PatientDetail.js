@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import api, { API_ENDPOINTS } from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 const PatientDetailContainer = styled.div`
   display: flex;
@@ -220,6 +221,7 @@ const ErrorContainer = styled.div`
 `;
 
 const PatientDetail = () => {
+  usePageTitle("Patient Details");
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("personal");
@@ -267,8 +269,22 @@ const PatientDetail = () => {
   };
 
   const handleBookAppointment = () => {
+    if (!patientData) {
+      console.error("Patient data not available");
+      return;
+    }
+
     console.log("Book appointment for patient:", id);
-    // Navigate to appointment booking page
+    // Navigate to OPD billing page with patient data preselected
+    navigate("/opd/billing/add", {
+      state: {
+        preselectedPatient: {
+          name: patientData.name,
+          patient_name: patientData.patient_name || `${patientData.first_name || ''} ${patientData.middle_name || ''} ${patientData.last_name || ''}`.trim(),
+        },
+        defaultItemCode: "STO-ITEM-2025-00539"
+      }
+    });
   };
 
   if (loading) {

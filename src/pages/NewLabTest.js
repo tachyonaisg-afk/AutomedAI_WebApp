@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import usePageTitle from "../hooks/usePageTitle";
 
 const LabTestContainer = styled.div`
   display: flex;
@@ -203,6 +204,7 @@ const Button = styled.button`
 `;
 
 const NewLabTest = () => {
+  usePageTitle("New Lab Test");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     test_template: "",

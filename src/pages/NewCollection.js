@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import usePageTitle from "../hooks/usePageTitle";
 
 const CollectionContainer = styled.div`
   display: flex;
@@ -173,6 +174,7 @@ const Button = styled.button`
 `;
 
 const NewCollection = () => {
+  usePageTitle("New Sample Collection");
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     patient_id: "",

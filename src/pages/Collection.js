@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { Search, Filter, Plus, RefreshCw } from "lucide-react";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
+import usePageTitle from "../hooks/usePageTitle";
 
 const CollectionContainer = styled.div`
   display: flex;
@@ -204,6 +205,7 @@ const RetryButton = styled.button`
 `;
 
 const Collection = () => {
+  usePageTitle("Sample Collection");
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [collectionsData, setCollectionsData] = useState([]);

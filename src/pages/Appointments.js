@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Plus, Calendar, Clock, User, Video, MapPin, ChevronRight, Filter } from "lucide-react";
+import usePageTitle from "../hooks/usePageTitle";
 
 const AppointmentsContainer = styled.div`
   display: flex;
@@ -255,6 +256,7 @@ const ViewButton = styled.button`
 `;
 
 const Appointments = () => {
+  usePageTitle("Appointments");
   const [activeFilter, setActiveFilter] = useState("today");
 
   const stats = [

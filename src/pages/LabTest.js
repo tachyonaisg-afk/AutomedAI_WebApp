@@ -5,6 +5,7 @@ import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
 import { Search, Filter, Plus } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 const LabTestContainer = styled.div`
   display: flex;
@@ -197,6 +198,7 @@ const ActionLink = styled.button`
 `;
 
 const LabTest = () => {
+  usePageTitle("Lab Tests");
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [labTestsData, setLabTestsData] = useState([]);

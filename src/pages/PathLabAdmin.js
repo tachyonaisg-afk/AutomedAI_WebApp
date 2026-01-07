@@ -2,6 +2,7 @@ import React from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { ShieldCheck } from "lucide-react";
+import usePageTitle from "../hooks/usePageTitle";
 
 const Container = styled.div`
   display: flex;
@@ -53,6 +54,7 @@ const Message = styled.p`
 `;
 
 const PathLabAdmin = () => {
+  usePageTitle("PathLab Admin");
   return (
     <Layout>
       <Container>

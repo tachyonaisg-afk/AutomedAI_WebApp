@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Download, IndianRupee, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
+import usePageTitle from "../hooks/usePageTitle";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -304,6 +305,7 @@ const ActionLabel = styled.span`
 `;
 
 const Billing = () => {
+  usePageTitle("Billing");
   const navigate = useNavigate();
   const location = useLocation();
 

@@ -4,6 +4,9 @@ import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Plus, Minus, CreditCard, Camera } from "lucide-react";
 import AadhaarScanner from "../components/shared/AadhaarScanner";
+import usePageTitle from "../hooks/usePageTitle";
+import apiService from "../services/api/apiService";
+import API_ENDPOINTS from "../services/api/endpoints";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -113,6 +116,11 @@ const FormLabel = styled.label`
   font-size: 14px;
   font-weight: 500;
   color: #333333;
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #dc2626;
+  margin-left: 4px;
 `;
 
 const FormInput = styled.input`
@@ -586,6 +594,7 @@ const AadhaarDescription = styled.p`
 `;
 
 const PatientRegistration = () => {
+  usePageTitle("Patient Registration");
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
@@ -606,6 +615,7 @@ const PatientRegistration = () => {
     city: "",
     state: "",
     pincode: "",
+    country: "India",
     allergies: "",
     existingConditions: "",
     visitType: "walk-in",
@@ -638,6 +648,7 @@ const PatientRegistration = () => {
 
   const [genderOptions, setGenderOptions] = useState([]);
   const [companyOptions, setCompanyOptions] = useState([]);
+  const [practitioners, setPractitioners] = useState([]);
   const [disabledFields, setDisabledFields] = useState({});
 
   // Helper function to match gender values
@@ -755,6 +766,21 @@ const PatientRegistration = () => {
       }
     };
 
+    const fetchPractitioners = async () => {
+      try {
+        const practitionerRes = await apiService.get(API_ENDPOINTS.PRACTITIONERS.LIST, {
+          fields: '["name", "practitioner_name"]',
+          limit_page_length: 100,
+        });
+        if (practitionerRes.data?.data) {
+          setPractitioners(practitionerRes.data.data);
+          console.log("Practitioners loaded:", practitionerRes.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching practitioners:", error);
+      }
+    };
+
     const fetchDefaultItem = async () => {
       try {
         const response = await fetch("https://hms.automedai.in/api/resource/Item/STO-ITEM-2025-00539", {
@@ -785,6 +811,7 @@ const PatientRegistration = () => {
 
     fetchGenderOptions();
     fetchCompanyOptions();
+    fetchPractitioners();
     fetchDefaultItem();
   }, []);
 
@@ -940,6 +967,7 @@ const PatientRegistration = () => {
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
+        country: formData.country,
         age: 0, // Ignoring as requested
         medical_history: formData.existingConditions,
         medication: medicalHistory.regularMedication,
@@ -952,6 +980,11 @@ const PatientRegistration = () => {
         other_risk_factors: medicalHistory.otherRiskFactors,
         marital_status: medicalHistory.maritalStatus,
       };
+
+      // Add optional fields
+      if (billingData.referringPractitioner) {
+        payload.default_practitioner = billingData.referringPractitioner;
+      }
 
       console.log("Creating patient with payload:", payload);
 
@@ -1040,7 +1073,7 @@ const PatientRegistration = () => {
                 <SectionTitle>Personal Information</SectionTitle>
                 <FormGrid>
                   <FormGroup>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>First Name<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                     <FormInput
                       type="text"
                       name="firstName"
@@ -1076,7 +1109,7 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>Last Name<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                     <FormInput
                       type="text"
                       name="lastName"
@@ -1094,8 +1127,8 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Identification Number (UID)</FormLabel>
-                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} disabled={disabledFields.uid} />
+                    <FormLabel>Identification Number (UID)<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} disabled={disabledFields.uid} required />
                   </FormGroup>
 
                   <FormGroup>
@@ -1123,7 +1156,7 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Mobile</FormLabel>
+                    <FormLabel>Mobile<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                     <FormInput
                       ref={mobileInputRef}
                       type="tel"
@@ -1170,7 +1203,7 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Address Line 1</FormLabel>
+                    <FormLabel>Address Line 1<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                     <FormInput
                       type="text"
                       name="address_line1"
@@ -1178,6 +1211,7 @@ const PatientRegistration = () => {
                       onChange={handleInputChange}
                       placeholder="Enter address line 1"
                       disabled={disabledFields.address_line1}
+                      required
                     />
                   </FormGroup>
 
@@ -1260,6 +1294,18 @@ const PatientRegistration = () => {
                       maxLength={6}
                       pattern="[0-9]{6}"
                       placeholder="Enter 6-digit pincode"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Country<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                    <FormInput
+                      type="text"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      placeholder="Enter country"
+                      required
                     />
                   </FormGroup>
                 </FormGrid>
@@ -1373,9 +1419,11 @@ const PatientRegistration = () => {
                   <FormLabel>Referring Practitioner</FormLabel>
                   <FormSelect name="referringPractitioner" value={billingData.referringPractitioner} onChange={handleBillingChange}>
                     <option value="">Select practitioner</option>
-                    <option value="Dr. Emily White">Dr. Emily White</option>
-                    <option value="Dr. Smith">Dr. Smith</option>
-                    <option value="Dr. Johnson">Dr. Johnson</option>
+                    {practitioners.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.practitioner_name || p.name}
+                      </option>
+                    ))}
                   </FormSelect>
                 </FormGroup>
               </FormSection>

@@ -150,6 +150,14 @@ function App() {
             }
           />
           <Route
+            path="/pathlab/patient-registration"
+            element={
+              <ProtectedRoute>
+                <PatientRegistration />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/pathlab/billing"
             element={
               <ProtectedRoute>

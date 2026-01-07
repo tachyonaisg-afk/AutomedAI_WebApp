@@ -1,6 +1,7 @@
 import React from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
+import usePageTitle from "../hooks/usePageTitle";
 import { Clock } from "lucide-react";
 
 const Container = styled.div`
@@ -43,6 +44,7 @@ const Subtitle = styled.p`
 `;
 
 const ComingSoon = () => {
+  usePageTitle("Coming Soon");
   return (
     <Layout>
       <Container>

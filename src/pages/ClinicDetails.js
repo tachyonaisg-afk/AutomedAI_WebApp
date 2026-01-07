@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
+import usePageTitle from "../hooks/usePageTitle";
 
 const ClinicDetailsContainer = styled.div`
   display: flex;
@@ -244,6 +245,7 @@ const CheckIcon = styled.span`
 `;
 
 const ClinicDetails = () => {
+  usePageTitle("Clinic Details");
   const [showSuccess, setShowSuccess] = useState(false);
 
   const [generalInfo, setGeneralInfo] = useState({

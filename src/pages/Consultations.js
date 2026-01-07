@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
+import usePageTitle from "../hooks/usePageTitle";
 import { Plus } from "lucide-react";
 
 const ConsultationsContainer = styled.div`
@@ -340,6 +341,7 @@ const VideoAvatar = styled.div`
 `;
 
 const Consultations = () => {
+  usePageTitle("Consultations");
   const [selectedConsultation, setSelectedConsultation] = useState(1);
   const [activeTab, setActiveTab] = useState("notes");
   const [newNote, setNewNote] = useState("");

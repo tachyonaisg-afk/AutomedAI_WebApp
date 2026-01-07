@@ -144,6 +144,7 @@ const Header = () => {
     if (path === "/opd/telemedicine") return { pages: ["OPD", "Telemedicine"] };
 
     if (path === "/pathlab") return { pages: ["PathLab"] };
+    if (path === "/pathlab/patient-registration") return { pages: ["PathLab", "Patient Registration"] };
     if (path === "/pathlab/collection") return { pages: ["PathLab", "Collection"] };
     if (path === "/pathlab/collection/new") return { pages: ["PathLab", "Sample Collection"] };
     if (path === "/pathlab/labtest") return { pages: ["PathLab", "Lab Test List"] };

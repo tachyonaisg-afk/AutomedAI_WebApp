@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { Plus, Minus, Search, X, Loader2 } from "lucide-react";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
+import usePageTitle from "../hooks/usePageTitle";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -651,6 +652,7 @@ const ErrorMessage = styled.div`
 `;
 
 const AddBilling = () => {
+  usePageTitle("Add Billing");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -699,6 +701,54 @@ const AddBilling = () => {
   useEffect(() => {
     fetchDropdownOptions();
   }, []);
+
+  // Handle preselected patient from navigation state
+  useEffect(() => {
+    const { preselectedPatient } = location.state || {};
+
+    // Set preselected patient
+    if (preselectedPatient) {
+      setBillingData(prev => ({
+        ...prev,
+        patient: preselectedPatient.name,
+        patient_name: preselectedPatient.patient_name,
+      }));
+      setPatientSearch(preselectedPatient.patient_name);
+      console.log("Preselected patient set:", preselectedPatient);
+    }
+  }, [location.state]);
+
+  // Handle default item after warehouses are loaded
+  useEffect(() => {
+    const { defaultItemCode } = location.state || {};
+
+    // Fetch and add default item only if warehouses are loaded and items array is empty
+    if (defaultItemCode && warehouses.length > 0 && items.length === 0) {
+      fetchDefaultItem(defaultItemCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, warehouses]);
+
+  const fetchDefaultItem = async (itemCode) => {
+    try {
+      const response = await apiService.get(API_ENDPOINTS.ITEMS.GET_BY_ID(itemCode));
+      if (response.data?.data) {
+        const itemData = response.data.data;
+        const newItem = {
+          item_code: itemData.item_code || itemData.name,
+          item_name: itemData.item_name || itemData.item_code,
+          qty: 1,
+          rate: itemData.standard_rate || 0,
+          amount: itemData.standard_rate || 0,
+          warehouse: warehouses.length > 0 ? warehouses[0].name : "",
+        };
+        setItems([newItem]);
+        console.log("Default item loaded:", newItem);
+      }
+    } catch (error) {
+      console.error("Error fetching default item:", error);
+    }
+  };
 
   const fetchDropdownOptions = async () => {
     try {

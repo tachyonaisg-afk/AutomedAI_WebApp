@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Upload } from "lucide-react";
 import api from "../services/api";
+import usePageTitle from "../hooks/usePageTitle";
 
 const ResultContainer = styled.div`
   display: flex;
@@ -356,6 +357,7 @@ const Button = styled.button`
 `;
 
 const LabTestResult = () => {
+  usePageTitle("Lab Test Result");
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();

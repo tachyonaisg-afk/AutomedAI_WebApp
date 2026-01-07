@@ -279,6 +279,7 @@ const Sidebar = () => {
 
   const pathLabSubItems = [
     { path: "/pathlab", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/pathlab/patient-registration", label: "Patient Registration", icon: UserPlus },
     { path: "/pathlab/billing", label: "Billing", icon: FileText },
     { path: "/pathlab/collection", label: "Sample Collection", icon: TestTubes },
     { path: "/pathlab/labtest", label: "Lab Tests", icon: ClipboardList },
