@@ -1127,8 +1127,8 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Identification Number (UID)<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} disabled={disabledFields.uid} required />
+                    <FormLabel>Identification Number (UID)</FormLabel>
+                    <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} disabled={disabledFields.uid} />
                   </FormGroup>
 
                   <FormGroup>
@@ -1156,7 +1156,7 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Mobile<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                    <FormLabel>Mobile</FormLabel>
                     <FormInput
                       ref={mobileInputRef}
                       type="tel"
@@ -1170,7 +1170,6 @@ const PatientRegistration = () => {
                       maxLength={10}
                       pattern="[0-9]{10}"
                       placeholder="Enter 10-digit mobile number"
-                      required
                     />
                     <HelperText>Existing patient data will be fetched automatically.</HelperText>
                   </FormGroup>
