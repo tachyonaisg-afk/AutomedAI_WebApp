@@ -201,12 +201,40 @@ const Patients = () => {
 
   /* ========= DATA FETCH ========= */
 
+  const fetchPatientCount = async (patientId = null) => {
+    try {
+      const params = {
+        doctype: "Patient",
+      };
+
+      // If a specific patient is selected, add filter
+      if (patientId) {
+        params.filters = JSON.stringify({ name: patientId });
+      }
+
+      console.log("📊 Fetching patient count with params:", params);
+
+      const response = await api.get(API_ENDPOINTS.PATIENTS.COUNT, params);
+
+      console.log("📊 Count API Response:", response);
+
+      // The count is usually in response.data.message
+      const count = response.data?.message || response.data?.data || 0;
+      console.log("📊 Total Patient Count:", count);
+
+      setTotalCount(count);
+    } catch (err) {
+      console.error("❌ Error fetching patient count:", err);
+      setTotalCount(0);
+    }
+  };
+
   const fetchPatients = async (page, limit, patientId = null) => {
     try {
       setLoading(true);
       setError(null);
 
-      const fields = '["name","patient_name","sex","mobile","email","uid"]';
+      const fields = '["name","patient_name","sex","mobile","email","uid","modified"]';
       const limitStart = (page - 1) * limit;
 
       // Build filters for specific patient if provided
@@ -214,6 +242,7 @@ const Patients = () => {
         fields,
         limit_start: limitStart,
         limit_page_length: limit,
+        order_by: "modified desc",
       };
 
       // If a specific patient is selected, add filter
@@ -221,7 +250,14 @@ const Patients = () => {
         params.filters = JSON.stringify([["Patient", "name", "=", patientId]]);
       }
 
+      console.log("📊 Fetching patients with params:", params);
+
+      // Fetch count separately
+      await fetchPatientCount(patientId);
+
       const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, params);
+
+      console.log("📊 API Response:", response);
 
       const rawData = Array.isArray(response.data?.data) ? response.data.data : [];
 
@@ -234,12 +270,8 @@ const Patients = () => {
       }));
 
       setPatientsData(normalizedData);
-
-      // Set total count if available in response
-      if (response.data?.total_count !== undefined) {
-        setTotalCount(response.data.total_count);
-      }
     } catch (err) {
+      console.error("❌ Error fetching patients:", err);
       setError(err.message || "Failed to load patients");
     } finally {
       setLoading(false);

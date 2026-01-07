@@ -26,6 +26,7 @@ const API_ENDPOINTS = {
     DELETE: (id) => `/resource/Patient/${id}`,
     SEARCH: "/resource/Patient",
     SEARCH_LINK: "/method/frappe.desk.search.search_link",
+    COUNT: "/method/frappe.client.get_count",
   },
 
   // Appointments
