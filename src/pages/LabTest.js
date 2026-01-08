@@ -204,33 +204,82 @@ const LabTest = () => {
   const [labTestsData, setLabTestsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Fetch lab test count
+  const fetchLabTestCount = async () => {
+    try {
+      const params = {
+        doctype: "Lab Test",
+        filters: JSON.stringify({ status: ["!=", "Completed"] }),
+      };
+
+      console.log("📊 Fetching lab test count with params:", params);
+
+      const response = await api.get(API_ENDPOINTS.LAB_TEST.COUNT, params);
+
+      console.log("📊 Count API Response:", response);
+
+      const count = response.data?.message || response.data?.data || 0;
+      console.log("📊 Total Lab Test Count:", count);
+
+      setTotalCount(count);
+    } catch (err) {
+      console.error("❌ Error fetching lab test count:", err);
+      setTotalCount(0);
+    }
+  };
 
   // Fetch lab tests from API
-  useEffect(() => {
-    const fetchLabTests = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
-          fields: '["name","patient","patient_name","status","lab_test_name"]',
-          filters: '[["Lab Test","status","!=","Completed"]]',
-          order_by: "submitted_date desc",
-        });
+  const fetchLabTests = async (page, limit) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        console.log("Lab Tests API Response:", response);
+      const limitStart = (page - 1) * limit;
 
-        if (response.data && response.data.data) {
-          setLabTestsData(response.data.data);
-        }
-      } catch (err) {
-        console.error("Error fetching lab tests:", err);
-        setError(err.message || "Failed to load lab tests");
-      } finally {
-        setLoading(false);
+      const params = {
+        fields: '["name","patient","patient_name","status","lab_test_name"]',
+        filters: '[["Lab Test","status","!=","Completed"]]',
+        order_by: "submitted_date desc",
+        limit_start: limitStart,
+        limit_page_length: limit,
+      };
+
+      console.log("📊 Fetching lab tests with params:", params);
+
+      // Fetch count separately
+      await fetchLabTestCount();
+
+      const response = await api.get(API_ENDPOINTS.LAB_TEST.LIST, params);
+
+      console.log("📊 Lab Tests API Response:", response);
+
+      if (response.data && response.data.data) {
+        setLabTestsData(response.data.data);
       }
-    };
+    } catch (err) {
+      console.error("❌ Error fetching lab tests:", err);
+      setError(err.message || "Failed to load lab tests");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchLabTests();
-  }, []);
+  useEffect(() => {
+    fetchLabTests(currentPage, rowsPerPage);
+  }, [currentPage, rowsPerPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1);
+  };
 
   const columns = [
     { key: "name", label: "ID" },
@@ -273,6 +322,7 @@ const LabTest = () => {
     // TODO: Open filter modal
   };
 
+  // Client-side filtering for search
   const filteredData = labTestsData.filter((test) =>
     Object.values(test).some((value) =>
       value && value.toString().toLowerCase().includes(searchQuery.toLowerCase())
@@ -315,9 +365,15 @@ const LabTest = () => {
         <DataTable
           columns={columns}
           data={filteredData}
-          sortableColumns={["id", "patient_id", "patient_name", "date", "time"]}
+          sortableColumns={["name", "patient", "patient_name"]}
           renderStatus={renderStatus}
           renderActions={renderActions}
+          serverSide={true}
+          totalCount={totalCount}
+          currentPageProp={currentPage}
+          rowsPerPageProp={rowsPerPage}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
       </LabTestContainer>
     </Layout>

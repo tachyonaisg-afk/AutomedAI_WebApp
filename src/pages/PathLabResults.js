@@ -175,32 +175,82 @@ const PathLabResults = () => {
   const [resultsData, setResultsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Fetch completed lab test count
+  const fetchCompletedTestCount = async () => {
+    try {
+      const params = {
+        doctype: "Lab Test",
+        filters: JSON.stringify({ status: "Completed" }),
+      };
+
+      console.log("📊 Fetching completed lab test count with params:", params);
+
+      const response = await api.get(API_ENDPOINTS.LAB_TEST.COUNT, params);
+
+      console.log("📊 Count API Response:", response);
+
+      const count = response.data?.message || response.data?.data || 0;
+      console.log("📊 Total Completed Lab Test Count:", count);
+
+      setTotalCount(count);
+    } catch (err) {
+      console.error("❌ Error fetching completed lab test count:", err);
+      setTotalCount(0);
+    }
+  };
 
   // Fetch completed lab tests from API
-  useEffect(() => {
-    const fetchCompletedTests = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
-          fields: '["name","patient","patient_name","status"]',
-          filters: '[["Lab Test","status","=","Completed"]]',
-        });
+  const fetchCompletedTests = async (page, limit) => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        console.log("Completed Lab Tests API Response:", response);
+      const limitStart = (page - 1) * limit;
 
-        if (response.data && response.data.data) {
-          setResultsData(response.data.data);
-        }
-      } catch (err) {
-        console.error("Error fetching completed lab tests:", err);
-        setError(err.message || "Failed to load completed lab tests");
-      } finally {
-        setLoading(false);
+      const params = {
+        fields: '["name","patient","patient_name","status"]',
+        filters: '[["Lab Test","status","=","Completed"]]',
+        order_by: "modified desc",
+        limit_start: limitStart,
+        limit_page_length: limit,
+      };
+
+      console.log("📊 Fetching completed lab tests with params:", params);
+
+      // Fetch count separately
+      await fetchCompletedTestCount();
+
+      const response = await api.get(API_ENDPOINTS.LAB_TEST.LIST, params);
+
+      console.log("📊 Completed Lab Tests API Response:", response);
+
+      if (response.data && response.data.data) {
+        setResultsData(response.data.data);
       }
-    };
+    } catch (err) {
+      console.error("❌ Error fetching completed lab tests:", err);
+      setError(err.message || "Failed to load completed lab tests");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchCompletedTests();
-  }, []);
+  useEffect(() => {
+    fetchCompletedTests(currentPage, rowsPerPage);
+  }, [currentPage, rowsPerPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handleRowsPerPageChange = (newRowsPerPage) => {
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1);
+  };
 
   const columns = [
     { key: "name", label: "ID" },
@@ -240,6 +290,7 @@ const PathLabResults = () => {
     // TODO: Open filter modal
   };
 
+  // Client-side filtering for search
   const filteredData = resultsData.filter((test) =>
     Object.values(test).some((value) =>
       value && value.toString().toLowerCase().includes(searchQuery.toLowerCase())
@@ -281,6 +332,12 @@ const PathLabResults = () => {
           sortableColumns={["name", "patient", "patient_name"]}
           renderStatus={renderStatus}
           renderActions={renderActions}
+          serverSide={true}
+          totalCount={totalCount}
+          currentPageProp={currentPage}
+          rowsPerPageProp={rowsPerPage}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
       </ResultsContainer>
     </Layout>

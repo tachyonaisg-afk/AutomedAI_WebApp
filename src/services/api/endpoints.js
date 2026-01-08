@@ -93,6 +93,13 @@ const API_ENDPOINTS = {
     UPDATE: (id) => `/resource/Sample Collection/${id}`,
   },
 
+  // Lab Test (ERPNext)
+  LAB_TEST: {
+    LIST: "/resource/Lab Test",
+    GET_BY_ID: (id) => `/resource/Lab Test/${id}`,
+    COUNT: "/method/frappe.client.get_count",
+  },
+
   // Dashboard
   DASHBOARD: {
     STATS: "/dashboard/stats",
