@@ -241,6 +241,7 @@ const PathLabResults = () => {
 
   useEffect(() => {
     fetchCompletedTests(currentPage, rowsPerPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, rowsPerPage]);
 
   const handlePageChange = (newPage) => {

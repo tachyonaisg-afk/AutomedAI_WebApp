@@ -1,19 +1,366 @@
 /**
  * Aadhaar Card Data Parser
- * Parses QR code XML data and OCR text from Aadhaar cards
+ * Parses QR code XML data, Secure QR data, and OCR text from Aadhaar cards
  */
 
+/* global BigInt */
+import pako from 'pako';
+
 /**
- * Parse Aadhaar QR code XML data
- * QR format: <PrintLetterBarcodeData uid="..." name="..." gender="..." dob="..." ... />
+ * Convert a big integer string to byte array
+ */
+const bigIntToBytes = (bigIntStr) => {
+  let bigInt = BigInt(bigIntStr);
+  const bytes = [];
+
+  while (bigInt > 0n) {
+    bytes.unshift(Number(bigInt & 0xFFn));
+    bigInt = bigInt >> 8n;
+  }
+
+  return new Uint8Array(bytes);
+};
+
+/**
+ * Parse Secure QR Code format (numeric string that decompresses to data)
+ * This is the format used in modern Aadhaar cards (post-2018)
+ */
+const parseSecureQR = (qrData) => {
+  try {
+    console.log("Attempting to parse Secure QR code...");
+
+    // Secure QR is a large numeric string (typically 2000+ digits)
+    if (!/^\d+$/.test(qrData) || qrData.length < 100) {
+      return { success: false, error: "Not a secure QR format" };
+    }
+
+    // Convert big integer to bytes
+    const bytes = bigIntToBytes(qrData);
+    console.log("Converted to bytes, length:", bytes.length);
+
+    // Try to decompress using zlib
+    let decompressed;
+    try {
+      decompressed = pako.inflate(bytes);
+    } catch (e) {
+      // Try raw deflate if inflate fails
+      try {
+        decompressed = pako.inflateRaw(bytes);
+      } catch (e2) {
+        console.log("Decompression failed:", e2);
+        return { success: false, error: "Failed to decompress QR data" };
+      }
+    }
+
+    console.log("Decompressed data length:", decompressed.length);
+
+    // Parse the decompressed data
+    // Format varies based on version, but typically contains:
+    // - Email/Mobile present flags (first 2 bytes in some versions)
+    // - Reference ID
+    // - Name, DOB, Gender, Address fields separated by specific delimiters
+
+    // Try to decode as text first
+    const textDecoder = new TextDecoder('utf-8', { fatal: false });
+    const textData = textDecoder.decode(decompressed);
+    console.log("Decoded text (first 500 chars):", textData.substring(0, 500));
+
+    // Check if it's the newer V2 format with byte markers
+    // V2 format: starts with version byte (2), then has specific byte lengths for each field
+    if (decompressed[0] === 2 || decompressed[0] === 86) { // V2 or 'V' ASCII
+      return parseSecureQRV2(decompressed);
+    }
+
+    // Try parsing as delimiter-separated text (older secure format)
+    // Fields are often separated by specific byte sequences or fixed positions
+    return parseSecureQRText(textData, decompressed);
+
+  } catch (error) {
+    console.error("Error parsing secure QR:", error);
+    return { success: false, error: "Failed to parse secure QR" };
+  }
+};
+
+/**
+ * Parse Secure QR V2 format (binary format with byte markers)
+ */
+const parseSecureQRV2 = (data) => {
+  try {
+    console.log("Parsing Secure QR V2 format...");
+
+    let offset = 0;
+    const textDecoder = new TextDecoder('utf-8', { fatal: false });
+
+    // Skip version byte if present
+    if (data[0] === 2 || data[0] === 86) {
+      offset = 1;
+    }
+
+    // Read email/mobile presence flags (2 bytes) - stored for potential future use
+    // eslint-disable-next-line no-unused-vars
+    const _emailPresent = data[offset];
+    // eslint-disable-next-line no-unused-vars
+    const _mobilePresent = data[offset + 1];
+    offset += 2;
+
+    // Helper to read length-prefixed string
+    const readString = () => {
+      if (offset >= data.length) return "";
+      const length = data[offset];
+      offset += 1;
+      if (length === 0 || offset + length > data.length) return "";
+      const str = textDecoder.decode(data.slice(offset, offset + length));
+      offset += length;
+      return str.trim();
+    };
+
+    // Read fields in order
+    const referenceId = readString();
+    const name = readString();
+    const dob = readString();
+    const gender = readString();
+    const careOf = readString();
+    const district = readString();
+    const landmark = readString();
+    const house = readString();
+    const location = readString();
+    const pincode = readString();
+    const postOffice = readString();
+    const state = readString();
+    const street = readString();
+    const subDistrict = readString();
+    const vtc = readString();
+
+    // Last 4 digits of Aadhaar might be in reference ID
+    const uid = referenceId ? referenceId.substring(0, 4) : "";
+
+    // Split name
+    const { firstName, middleName, lastName } = splitName(name);
+
+    // Format DOB
+    const formattedDob = formatDateOfBirth(dob);
+
+    // Map gender
+    const mappedGender = mapGender(gender);
+
+    // Build address
+    const addressParts = [
+      careOf ? `C/O ${careOf}` : "",
+      house,
+      street,
+      landmark,
+      location,
+      postOffice ? `PO: ${postOffice}` : "",
+      vtc,
+      subDistrict,
+      district,
+      state,
+      pincode,
+    ].filter((part) => part && part.trim());
+    const fullAddress = addressParts.join(", ");
+
+    console.log("Parsed V2 data:", { name, dob, gender, pincode });
+
+    if (name || dob || gender) {
+      return {
+        success: true,
+        data: {
+          firstName,
+          middleName,
+          lastName,
+          uid,
+          dateOfBirth: formattedDob,
+          gender: mappedGender,
+          address: fullAddress,
+          careOf,
+          district,
+          state,
+          pincode,
+        },
+      };
+    }
+
+    return { success: false, error: "Could not extract data from V2 format" };
+  } catch (error) {
+    console.error("Error parsing V2 format:", error);
+    return { success: false, error: "Failed to parse V2 format" };
+  }
+};
+
+/**
+ * Parse Secure QR as text format (delimiter separated)
+ */
+const parseSecureQRText = (textData, rawBytes) => {
+  try {
+    console.log("Parsing Secure QR as text format...");
+
+    // Try different delimiters
+    const delimiters = ['\u001c', '\u001d', '\u001e', '\x00', '|', '\n'];
+    let fields = [];
+
+    for (const delimiter of delimiters) {
+      const parts = textData.split(delimiter).filter(p => p.length > 0);
+      if (parts.length > 5) {
+        fields = parts;
+        console.log(`Found ${parts.length} fields using delimiter:`, delimiter.charCodeAt(0));
+        break;
+      }
+    }
+
+    // If no delimiter works, try to extract using patterns
+    if (fields.length < 5) {
+      // Look for common patterns in the text
+      const patterns = {
+        name: /([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/,
+        dob: /(\d{2}[/\-.]\d{2}[/\-.]\d{4})/,
+        gender: /\b(MALE|FEMALE|Male|Female|M|F)\b/,
+        pincode: /\b(\d{6})\b/,
+      };
+
+      let name = "", dob = "", gender = "", pincode = "";
+
+      const nameMatch = textData.match(patterns.name);
+      if (nameMatch) name = nameMatch[1];
+
+      const dobMatch = textData.match(patterns.dob);
+      if (dobMatch) dob = dobMatch[1];
+
+      const genderMatch = textData.match(patterns.gender);
+      if (genderMatch) gender = genderMatch[1];
+
+      const pincodeMatch = textData.match(patterns.pincode);
+      if (pincodeMatch) pincode = pincodeMatch[1];
+
+      if (name || dob || gender) {
+        const { firstName, middleName, lastName } = splitName(name);
+        const formattedDob = formatDateOfBirth(dob);
+        const mappedGender = mapGender(gender);
+
+        return {
+          success: true,
+          data: {
+            firstName,
+            middleName,
+            lastName,
+            uid: "",
+            dateOfBirth: formattedDob,
+            gender: mappedGender,
+            address: "",
+            pincode,
+          },
+        };
+      }
+    }
+
+    // Parse fields array
+    // Common order: ReferenceId, Name, DOB, Gender, CareOf, Address components...
+    if (fields.length >= 4) {
+      const referenceId = fields[0] || "";
+      const name = fields[1] || "";
+      const dob = fields[2] || "";
+      const gender = fields[3] || "";
+      const careOf = fields[4] || "";
+
+      // Try to find address components in remaining fields
+      let district = "", state = "", pincode = "", vtc = "";
+      for (let i = 5; i < fields.length; i++) {
+        const field = fields[i];
+        if (/^\d{6}$/.test(field)) pincode = field;
+        else if (field.length > 3 && field.length < 30) {
+          if (!vtc) vtc = field;
+          else if (!district) district = field;
+          else if (!state) state = field;
+        }
+      }
+
+      const { firstName, middleName, lastName } = splitName(name);
+      const formattedDob = formatDateOfBirth(dob);
+      const mappedGender = mapGender(gender);
+
+      // Build address
+      const addressParts = [
+        careOf ? `C/O ${careOf}` : "",
+        vtc,
+        district,
+        state,
+        pincode,
+      ].filter((part) => part && part.trim());
+      const fullAddress = addressParts.join(", ");
+
+      console.log("Parsed text format data:", { name, dob, gender });
+
+      if (name || dob || gender) {
+        return {
+          success: true,
+          data: {
+            firstName,
+            middleName,
+            lastName,
+            uid: referenceId.substring(0, 4),
+            dateOfBirth: formattedDob,
+            gender: mappedGender,
+            address: fullAddress,
+            careOf,
+            district,
+            state,
+            pincode,
+          },
+        };
+      }
+    }
+
+    return { success: false, error: "Could not parse text format" };
+  } catch (error) {
+    console.error("Error parsing text format:", error);
+    return { success: false, error: "Failed to parse text format" };
+  }
+};
+
+/**
+ * Parse Aadhaar QR code data (supports both XML and Secure QR formats)
  */
 export const parseAadhaarQR = (qrData) => {
   try {
-    // Check if it's XML data
-    if (!qrData || (!qrData.includes("<") && !qrData.includes("uid"))) {
+    if (!qrData || qrData.length < 10) {
       return { success: false, error: "Invalid QR code data" };
     }
 
+    console.log("=== Parsing Aadhaar QR ===");
+    console.log("QR Data length:", qrData.length);
+    console.log("QR Data (first 100 chars):", qrData.substring(0, 100));
+
+    // Check if it's XML format (old format)
+    if (qrData.includes("<") && qrData.includes("uid")) {
+      console.log("Detected XML format");
+      return parseXMLFormat(qrData);
+    }
+
+    // Check if it's Secure QR format (numeric string)
+    if (/^\d+$/.test(qrData)) {
+      console.log("Detected Secure QR format (numeric)");
+      return parseSecureQR(qrData);
+    }
+
+    // Try XML parsing anyway (might have some non-standard format)
+    if (qrData.includes("<")) {
+      console.log("Attempting XML parsing...");
+      const xmlResult = parseXMLFormat(qrData);
+      if (xmlResult.success) return xmlResult;
+    }
+
+    return { success: false, error: "Unrecognized QR code format. Please try uploading the Aadhaar card image instead." };
+  } catch (error) {
+    console.error("Error parsing Aadhaar QR:", error);
+    return { success: false, error: "Failed to parse Aadhaar data" };
+  }
+};
+
+/**
+ * Parse XML format QR code
+ * QR format: <PrintLetterBarcodeData uid="..." name="..." gender="..." dob="..." ... />
+ */
+const parseXMLFormat = (qrData) => {
+  try {
     // Parse XML
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(qrData, "text/xml");
@@ -91,8 +438,8 @@ export const parseAadhaarQR = (qrData) => {
       },
     };
   } catch (error) {
-    console.error("Error parsing Aadhaar QR:", error);
-    return { success: false, error: "Failed to parse Aadhaar data" };
+    console.error("Error parsing XML format:", error);
+    return { success: false, error: "Failed to parse XML format" };
   }
 };
 
@@ -213,7 +560,7 @@ const extractName = (text, lines) => {
 
   // Method 1: Look for name after common name indicators
   const nameIndicators = [
-    /(?:Name|नाम)\s*[:\-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
+    /(?:Name|नाम)\s*[:=-]?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/i,
     /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\s*$/m,
   ];
 
@@ -285,13 +632,13 @@ const extractDOB = (text) => {
 
   // Look for DOB with label first
   const dobPatterns = [
-    /DOB\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
-    /D\.?O\.?B\.?\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
-    /Date\s*of\s*Birth\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
-    /जन्म\s*तिथि\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{4})/i,
+    /DOB\s*[:=-]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{4})/i,
+    /D\.?O\.?B\.?\s*[:=-]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{4})/i,
+    /Date\s*of\s*Birth\s*[:=-]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{4})/i,
+    /जन्म\s*तिथि\s*[:=-]?\s*(\d{1,2}[/.-]\d{1,2}[/.-]\d{4})/i,
     // Standalone date pattern (DD/MM/YYYY format common in India)
     /\b(\d{2}\/\d{2}\/\d{4})\b/,
-    /\b(\d{2}\-\d{2}\-\d{4})\b/,
+    /\b(\d{2}-\d{2}-\d{4})\b/,
   ];
 
   for (const pattern of dobPatterns) {
@@ -303,7 +650,7 @@ const extractDOB = (text) => {
   }
 
   // Look for Year of Birth
-  const yobMatch = text.match(/(?:Year\s*of\s*Birth|YOB)\s*[:\-]?\s*(\d{4})/i);
+  const yobMatch = text.match(/(?:Year\s*of\s*Birth|YOB)\s*[:=-]?\s*(\d{4})/i);
   if (yobMatch) {
     console.log("YOB found:", yobMatch[1]);
     return yobMatch[1];
@@ -321,7 +668,7 @@ const extractGender = (text, lines) => {
 
   // Look for explicit gender patterns
   const genderPatterns = [
-    /(?:Gender|Sex|लिंग)\s*[:\-]?\s*(Male|Female|MALE|FEMALE|पुरुष|महिला)/i,
+    /(?:Gender|Sex|लिंग)\s*[:=-]?\s*(Male|Female|MALE|FEMALE|पुरुष|महिला)/i,
     /\b(MALE|FEMALE)\b/,
     /\/(Male|Female)\//i,
   ];
@@ -371,7 +718,7 @@ const extractUID = (text) => {
   // Look for 12-digit patterns (with or without spaces)
   const uidPatterns = [
     /\b(\d{4}\s+\d{4}\s+\d{4})\b/,
-    /\b(\d{4}[\s\-]*\d{4}[\s\-]*\d{4})\b/,
+    /\b(\d{4}[\s-]*\d{4}[\s-]*\d{4})\b/,
     /\b(\d{12})\b/,
   ];
 
@@ -379,7 +726,7 @@ const extractUID = (text) => {
     const matches = text.match(new RegExp(pattern, 'g'));
     if (matches) {
       for (const match of matches) {
-        const uid = match.replace(/[\s\-]/g, "");
+        const uid = match.replace(/[\s-]/g, "");
         // Validate it's a proper UID (12 digits, doesn't start with 0 or 1)
         if (uid.length === 12 && /^[2-9]\d{11}$/.test(uid)) {
           console.log("UID found:", uid);
@@ -413,7 +760,7 @@ const cleanAddress = (rawAddress) => {
     .replace(/\b\d{1,3}\b(?!\d)/g, (match, offset, str) => {
       // Keep if it looks like part of address (followed by letters or preceded by NO/FLAT)
       const before = str.substring(Math.max(0, offset - 10), offset);
-      if (/(?:NO|FLAT|HOUSE|BLOCK|SECTOR)[\s\-]*$/i.test(before)) {
+      if (/(?:NO|FLAT|HOUSE|BLOCK|SECTOR)[\s-]*$/i.test(before)) {
         return match;
       }
       return " ";
@@ -427,8 +774,8 @@ const cleanAddress = (rawAddress) => {
 
   // Look for common address patterns
   const patterns = [
-    /FLAT\s*NO[\s\-:]*[A-Z0-9\-\/]+/i,
-    /[A-Z0-9\-\/]+\s*,?\s*MILESTONE[^,]*/i,
+    /FLAT\s*NO[\s:/-]*[A-Z0-9/-]+/i,
+    /[A-Z0-9/-]+\s*,?\s*MILESTONE[^,]*/i,
     /PANCHAM\s+HEIGHTS/i,
     /ALTHAN/i,
     /Surat/i,
@@ -486,8 +833,8 @@ const extractAddress = (text) => {
   console.log("Extracting Address...");
 
   const addressPatterns = [
-    /(?:Address|पता)\s*[:\-]?\s*(.+?)(?=\d{4}\s*\d{4}\s*\d{4}|VID|$)/is,
-    /(?:S\/O|D\/O|W\/O|C\/O)\s*[:\-]?\s*(.+?)(?=\d{4}\s*\d{4}\s*\d{4}|VID|$)/is,
+    /(?:Address|पता)\s*[:=-]?\s*(.+?)(?=\d{4}\s*\d{4}\s*\d{4}|VID|$)/is,
+    /(?:S\/O|D\/O|W\/O|C\/O)\s*[:=-]?\s*(.+?)(?=\d{4}\s*\d{4}\s*\d{4}|VID|$)/is,
   ];
 
   for (const pattern of addressPatterns) {

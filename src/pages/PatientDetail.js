@@ -315,13 +315,13 @@ const PatientDetail = () => {
     <Layout>
       <PatientDetailContainer>
         <Breadcrumbs>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>
+          <button type="button" onClick={() => navigate("/dashboard")} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, font: 'inherit' }}>
             Home
-          </a>
+          </button>
           <span>/</span>
-          <a href="#" onClick={(e) => { e.preventDefault(); navigate("/patients"); }}>
+          <button type="button" onClick={() => navigate("/patients")} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, font: 'inherit' }}>
             Patients
-          </a>
+          </button>
           <span>/</span>
           <span style={{ color: "#333333" }}>{patientData.patient_name || "Patient"}</span>
         </Breadcrumbs>

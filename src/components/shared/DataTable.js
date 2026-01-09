@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const TableContainer = styled.div`
   background-color: #ffffff;
@@ -93,37 +93,6 @@ const TableCell = styled.td`
 
   &:last-child {
     padding-right: 24px;
-  }
-`;
-
-const StatusBadge = styled.span`
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  background-color: ${(props) => (props.variant === "active" ? "#e8f5e9" : "#ffebee")};
-  color: ${(props) => (props.variant === "active" ? "#2e7d32" : "#c62828")};
-`;
-
-const ActionButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666666;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #4a90e2;
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
   }
 `;
 

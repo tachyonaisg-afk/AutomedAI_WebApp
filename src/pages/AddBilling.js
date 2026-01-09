@@ -700,6 +700,7 @@ const AddBilling = () => {
   // Fetch dropdown options on mount
   useEffect(() => {
     fetchDropdownOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle preselected patient from navigation state

@@ -7,7 +7,6 @@ import {
   Calendar,
   FileText,
   MessageSquare,
-  Building2,
   FlaskConical,
   Settings,
   LogOut,
@@ -47,12 +46,6 @@ const LogoIcon = styled.img`
   width: 180px;
   height: auto;
   object-fit: contain;
-`;
-
-const LogoText = styled.span`
-  font-size: 20px;
-  font-weight: 700;
-  color: #333333;
 `;
 
 const SidebarNav = styled.nav`

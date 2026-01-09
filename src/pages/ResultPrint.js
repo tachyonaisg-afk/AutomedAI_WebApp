@@ -299,70 +299,6 @@ const ReportHeader = styled.div`
   border-bottom: 1px solid #e0e0e0;
 `;
 
-const ClinicInfo = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-`;
-
-const ClinicLogo = styled.div`
-  width: 50px;
-  height: 50px;
-  background-color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-
-  &::after {
-    content: "+";
-    color: #ffffff;
-    font-size: 32px;
-    font-weight: 300;
-  }
-`;
-
-const ClinicDetails = styled.div``;
-
-const ClinicName = styled.h1`
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 4px 0;
-  text-transform: uppercase;
-`;
-
-const ClinicAddress = styled.p`
-  font-size: 11px;
-  color: #666666;
-  margin: 0;
-  line-height: 1.4;
-`;
-
-const ReportTitle = styled.div`
-  text-align: right;
-`;
-
-const ReportLabel = styled.div`
-  font-size: 14px;
-  color: #999999;
-  letter-spacing: 2px;
-  font-weight: 300;
-`;
-
-const ReportId = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-top: 4px;
-`;
-
-const ReportDate = styled.div`
-  font-size: 11px;
-  color: #666666;
-  margin-top: 4px;
-`;
-
 const PatientInfoSection = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -447,23 +383,11 @@ const TableCell = styled.td`
   color: #333333;
 `;
 
-const AbnormalValue = styled.span`
-  color: #dc2626;
-  font-weight: 600;
-`;
-
 const ReportFooter = styled.div`
   margin-top: 60px;
   margin-bottom: 100px;
   padding-top: 20px;
   border-top: 1px solid #e0e0e0;
-`;
-
-const FooterNote = styled.div`
-  font-size: 10px;
-  color: #999999;
-  max-width: 60%;
-  line-height: 1.5;
 `;
 
 const EndOfReport = styled.div`
@@ -479,31 +403,6 @@ const EndOfReport = styled.div`
   @media print {
     page-break-after: always;
   }
-`;
-
-const Signature = styled.div`
-  text-align: center;
-`;
-
-const SignatureName = styled.div`
-  font-family: "Brush Script MT", cursive;
-  font-size: 24px;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-`;
-
-const SignatureDetails = styled.div`
-  border-top: 1px solid #333333;
-  padding-top: 8px;
-  font-size: 11px;
-  color: #333333;
-  font-weight: 600;
-`;
-
-const SignatureTitle = styled.div`
-  font-size: 10px;
-  color: #666666;
-  margin-top: 2px;
 `;
 
 const ResultPrint = () => {
@@ -679,7 +578,7 @@ const ResultPrint = () => {
     <Container>
       <Sidebar>
         <Breadcrumb>
-          <a onClick={() => navigate("/pathlab")}>PathLab</a>
+          <button type="button" onClick={() => navigate("/pathlab")} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, font: 'inherit' }}>PathLab</button>
           <span>/</span>
           <span>Result Print</span>
         </Breadcrumb>

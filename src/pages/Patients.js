@@ -280,6 +280,7 @@ const Patients = () => {
 
   useEffect(() => {
     fetchPatients(currentPage, rowsPerPage, selectedPatientId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, rowsPerPage, selectedPatientId]);
 
   const handlePageChange = (newPage) => {

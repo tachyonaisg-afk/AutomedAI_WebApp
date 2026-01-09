@@ -14,13 +14,6 @@ const RegistrationContainer = styled.div`
   gap: 24px;
 `;
 
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 600;
-  color: #333333;
-  margin: 0;
-`;
-
 const ProgressIndicator = styled.div`
   display: flex;
   flex-direction: column;
@@ -203,28 +196,6 @@ const TextArea = styled.textarea`
   }
 `;
 
-const RadioGroup = styled.div`
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-`;
-
-const RadioOption = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #333333;
-`;
-
-const RadioInput = styled.input`
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #4a90e2;
-`;
-
 const ActionButtons = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -262,29 +233,6 @@ const BackButton = styled.button`
   &:hover {
     background-color: #e8e8e8;
   }
-`;
-
-const CheckboxGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-`;
-
-const CheckboxLabel = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #333333;
-  cursor: pointer;
-`;
-
-const Checkbox = styled.input`
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #4a90e2;
 `;
 
 const ItemsSection = styled.div`
@@ -717,6 +665,7 @@ const PatientRegistration = () => {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [genderOptions]);
 
   // Auto-focus on appropriate field when step changes
