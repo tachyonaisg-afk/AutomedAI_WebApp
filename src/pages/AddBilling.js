@@ -1004,6 +1004,12 @@ const AddBilling = () => {
     e.preventDefault();
     setError("");
 
+    // Prevent double submission
+    if (loading) {
+      console.log("Form submission already in progress, ignoring duplicate request");
+      return;
+    }
+
     // Validation
     if (!billingData.patient) {
       setError("Please select a patient");
@@ -1024,6 +1030,12 @@ const AddBilling = () => {
     setLoading(true);
 
     try {
+      // Debug: Log the items array to check for duplicates
+      console.log("=== BILLING SUBMISSION START ===");
+      console.log("Items array length:", items.length);
+      console.log("Items array:", JSON.stringify(items, null, 2));
+      console.log("billingData:", JSON.stringify(billingData, null, 2));
+
       // ============ Step 1: Create Sales Invoice ============
       console.log("Step 1: Creating Sales Invoice...");
       const invoicePayload = {
@@ -1111,64 +1123,82 @@ const AddBilling = () => {
       console.log(`Step 3 Complete: Payment Entry ${paymentEntryId} created`);
 
       // ============ Step 4 & 5: Create Lab Tests for each item ============
-      console.log("Step 4 & 5: Creating Lab Tests for items...");
-      const labTestPromises = items.map(async (item, index) => {
-        try {
-          // Step 4: Get Lab Test Template
-          console.log(`Step 4.${index + 1}: Fetching template for item ${item.item_code}...`);
-          const templateResponse = await apiService.get(
-            `/resource/Lab Test Template?fields=["name","item","department"]&filters=[["Lab Test Template","item","=","${item.item_code}"]]`
-          );
+      console.log(`Step 4 & 5: Creating Lab Tests for ${items.length} items...`, items.map(i => i.item_code));
 
-          if (!templateResponse.data?.data || templateResponse.data.data.length === 0) {
-            console.log(`No template found for item ${item.item_code}, skipping lab test creation`);
+      // First, check if lab tests were auto-created by ERPNext
+      console.log("Checking if lab tests already exist for this invoice...");
+      const existingLabTestsResponse = await apiService.get(
+        `/resource/Lab Test?fields=["name","template"]&filters=[["Lab Test","invoice","=","${salesInvoiceId}"]]`
+      );
+      const existingLabTests = existingLabTestsResponse.data?.data || [];
+      console.log(`Found ${existingLabTests.length} existing lab tests for invoice ${salesInvoiceId}`);
+
+      if (existingLabTests.length > 0) {
+        console.log("Lab tests were auto-created by ERPNext, skipping manual creation");
+        console.log("Existing lab tests:", existingLabTests.map(lt => lt.name));
+      } else {
+        console.log("No existing lab tests found, creating them manually...");
+
+        const labTestPromises = items.map(async (item, index) => {
+          try {
+            // Step 4: Get Lab Test Template
+            console.log(`Step 4.${index + 1}: Fetching template for item ${item.item_code}...`);
+            const templateResponse = await apiService.get(
+              `/resource/Lab Test Template?fields=["name","item","department"]&filters=[["Lab Test Template","item","=","${item.item_code}"]]`
+            );
+
+            if (!templateResponse.data?.data || templateResponse.data.data.length === 0) {
+              console.log(`No template found for item ${item.item_code}, skipping lab test creation`);
+              return null;
+            }
+
+            const template = templateResponse.data.data[0];
+            console.log(`Step 4.${index + 1} Complete: Template ${template.name} found for ${item.item_code}`);
+
+            // Step 5: Create Lab Test
+            console.log(`Step 5.${index + 1}: Creating Lab Test for ${item.item_code}...`);
+            const currentDate = new Date();
+            const currentTime = currentDate.toTimeString().split(' ')[0];
+            const expectedResultDate = new Date(currentDate);
+            expectedResultDate.setDate(expectedResultDate.getDate() + 1);
+
+            const labTestPayload = {
+              doctype: "Lab Test",
+              naming_series: "HLC-LAB-.YYYY.-",
+              company: billingData.company,
+              status: "Draft",
+              template: template.name,
+              department: template.department,
+              patient: billingData.patient,
+              patient_sex: "Male", // Default value, can be enhanced later
+              date: billingData.posting_date,
+              time: currentTime,
+              expected_result_date: expectedResultDate.toISOString().split('T')[0],
+              employee: "HR-EMP-00001", // Default employee
+              employee_name: "Lab Technician",
+              invoiced: 1, // Mark as invoiced
+              invoice: salesInvoiceId, // Link to sales invoice
+              normal_test_items: [],
+              descriptive_test_items: [],
+              organism_test_items: [],
+              sensitivity_test_items: [],
+              codification_table: []
+            };
+
+            const labTestResponse = await apiService.post("/resource/Lab Test", labTestPayload);
+            const labTestId = labTestResponse.data?.data?.name;
+            console.log(`Step 5.${index + 1} Complete: Lab Test ${labTestId} created for ${item.item_code}`);
+            return labTestId;
+          } catch (error) {
+            console.error(`Error creating lab test for item ${item.item_code}:`, error);
+            // Don't throw error for individual lab test failures
             return null;
           }
+        });
 
-          const template = templateResponse.data.data[0];
-          console.log(`Step 4.${index + 1} Complete: Template ${template.name} found for ${item.item_code}`);
-
-          // Step 5: Create Lab Test
-          console.log(`Step 5.${index + 1}: Creating Lab Test for ${item.item_code}...`);
-          const currentDate = new Date();
-          const currentTime = currentDate.toTimeString().split(' ')[0];
-          const expectedResultDate = new Date(currentDate);
-          expectedResultDate.setDate(expectedResultDate.getDate() + 1);
-
-          const labTestPayload = {
-            doctype: "Lab Test",
-            naming_series: "HLC-LAB-.YYYY.-",
-            company: billingData.company,
-            status: "Draft",
-            template: template.name,
-            department: template.department,
-            patient: billingData.patient,
-            patient_sex: "Male", // Default value, can be enhanced later
-            date: billingData.posting_date,
-            time: currentTime,
-            expected_result_date: expectedResultDate.toISOString().split('T')[0],
-            employee: "HR-EMP-00001", // Default employee
-            employee_name: "Lab Technician",
-            normal_test_items: [],
-            descriptive_test_items: [],
-            organism_test_items: [],
-            sensitivity_test_items: [],
-            codification_table: []
-          };
-
-          const labTestResponse = await apiService.post("/resource/Lab Test", labTestPayload);
-          const labTestId = labTestResponse.data?.data?.name;
-          console.log(`Step 5.${index + 1} Complete: Lab Test ${labTestId} created for ${item.item_code}`);
-          return labTestId;
-        } catch (error) {
-          console.error(`Error creating lab test for item ${item.item_code}:`, error);
-          // Don't throw error for individual lab test failures
-          return null;
-        }
-      });
-
-      await Promise.all(labTestPromises);
-      console.log("All lab tests processed");
+        await Promise.all(labTestPromises);
+        console.log("All lab tests created successfully");
+      }
 
       // Success!
       alert(`Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}\nPayment Entry: ${paymentEntryId}`);
