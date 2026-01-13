@@ -889,8 +889,8 @@ const AddBilling = () => {
         ...prev,
         // Customer should be the linked customer or patient name
         customer: patientData?.customer || patientName,
-        // Patient field uses patient name, not ID
-        patient: patientName,
+        // Patient field uses the patient ID (name field like "HLC-PAT-2025-00032")
+        patient: patientId,
         patient_name: patientName,
       }));
     } catch (err) {
@@ -899,7 +899,7 @@ const AddBilling = () => {
       setBillingData((prev) => ({
         ...prev,
         customer: patientName,
-        patient: patientName,
+        patient: patientId,
         patient_name: patientName,
       }));
     }
