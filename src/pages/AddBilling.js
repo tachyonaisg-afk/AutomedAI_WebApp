@@ -1024,8 +1024,9 @@ const AddBilling = () => {
     setLoading(true);
 
     try {
-      // Prepare the API payload matching ERPNext Sales Invoice structure
-      const payload = {
+      // ============ Step 1: Create Sales Invoice ============
+      console.log("Step 1: Creating Sales Invoice...");
+      const invoicePayload = {
         docstatus: 0,
         doctype: "Sales Invoice",
         company: billingData.company,
@@ -1040,6 +1041,9 @@ const AddBilling = () => {
           item_name: item.item_name,
           description: item.description || item.item_name,
           warehouse: item.warehouse,
+          income_account: "Sales - RKMS",
+          expense_account: "Cost of Goods Sold - RKMS",
+          cost_center: "Main - RKMS",
           uom: item.uom || "Unit",
           qty: parseFloat(item.qty) || 1,
           rate: parseFloat(item.rate) || 0,
@@ -1050,22 +1054,126 @@ const AddBilling = () => {
 
       // Add optional fields if they have values
       if (billingData.ref_practitioner) {
-        payload.ref_practitioner = billingData.ref_practitioner;
+        invoicePayload.ref_practitioner = billingData.ref_practitioner;
       }
       if (billingData.service_unit) {
-        payload.service_unit = billingData.service_unit;
+        invoicePayload.service_unit = billingData.service_unit;
       }
 
-      console.log("Creating Sales Invoice with payload:", payload);
+      const invoiceResponse = await apiService.post(API_ENDPOINTS.BILLING.CREATE, invoicePayload);
 
-      const response = await apiService.post(API_ENDPOINTS.BILLING.CREATE, payload);
-
-      if (response.data?.data) {
-        alert(`Sales Invoice ${response.data.data.name} created successfully!`);
-        navigate(basePath);
-      } else {
-        throw new Error("Failed to create invoice");
+      if (!invoiceResponse.data?.data?.name) {
+        throw new Error("Failed to create sales invoice - no invoice name returned");
       }
+
+      const salesInvoiceId = invoiceResponse.data.data.name;
+      const invoiceTotal = invoiceResponse.data.data.grand_total || invoiceResponse.data.data.rounded_total || 0;
+      console.log(`Step 1 Complete: Sales Invoice ${salesInvoiceId} created with total ${invoiceTotal}`);
+
+      // ============ Step 2: Submit Sales Invoice ============
+      console.log(`Step 2: Submitting Sales Invoice ${salesInvoiceId}...`);
+      await apiService.put(API_ENDPOINTS.BILLING.UPDATE(salesInvoiceId), {
+        docstatus: 1
+      });
+      console.log(`Step 2 Complete: Sales Invoice ${salesInvoiceId} submitted`);
+
+      // ============ Step 3: Create Payment Entry ============
+      console.log("Step 3: Creating Payment Entry...");
+      const paymentPayload = {
+        doctype: "Payment Entry",
+        naming_series: "ACC-PAY-.YYYY.-",
+        payment_type: "Receive",
+        posting_date: billingData.posting_date,
+        company: billingData.company,
+        party_type: "Customer",
+        party: billingData.customer,
+        party_name: billingData.patient_name,
+        received_amount: invoiceTotal,
+        paid_amount: invoiceTotal,
+        paid_from: "Debtors - RKMS",
+        paid_to: billingData.payment_type === "Cash" ? "Cash - RKMS" : "Bank - RKMS",
+        paid_from_account_type: "Receivable",
+        paid_from_account_currency: "INR",
+        mode_of_payment: billingData.payment_type,
+        reference_no: "",
+        reference_date: "",
+        references: [
+          {
+            reference_doctype: "Sales Invoice",
+            reference_name: salesInvoiceId,
+            allocated_amount: invoiceTotal
+          }
+        ]
+      };
+
+      const paymentResponse = await apiService.post("/resource/Payment Entry", paymentPayload);
+      const paymentEntryId = paymentResponse.data?.data?.name;
+      console.log(`Step 3 Complete: Payment Entry ${paymentEntryId} created`);
+
+      // ============ Step 4 & 5: Create Lab Tests for each item ============
+      console.log("Step 4 & 5: Creating Lab Tests for items...");
+      const labTestPromises = items.map(async (item, index) => {
+        try {
+          // Step 4: Get Lab Test Template
+          console.log(`Step 4.${index + 1}: Fetching template for item ${item.item_code}...`);
+          const templateResponse = await apiService.get(
+            `/resource/Lab Test Template?fields=["name","item","department"]&filters=[["Lab Test Template","item","=","${item.item_code}"]]`
+          );
+
+          if (!templateResponse.data?.data || templateResponse.data.data.length === 0) {
+            console.log(`No template found for item ${item.item_code}, skipping lab test creation`);
+            return null;
+          }
+
+          const template = templateResponse.data.data[0];
+          console.log(`Step 4.${index + 1} Complete: Template ${template.name} found for ${item.item_code}`);
+
+          // Step 5: Create Lab Test
+          console.log(`Step 5.${index + 1}: Creating Lab Test for ${item.item_code}...`);
+          const currentDate = new Date();
+          const currentTime = currentDate.toTimeString().split(' ')[0];
+          const expectedResultDate = new Date(currentDate);
+          expectedResultDate.setDate(expectedResultDate.getDate() + 1);
+
+          const labTestPayload = {
+            doctype: "Lab Test",
+            naming_series: "HLC-LAB-.YYYY.-",
+            company: billingData.company,
+            status: "Draft",
+            template: template.name,
+            department: template.department,
+            patient: billingData.patient,
+            patient_sex: "Male", // Default value, can be enhanced later
+            date: billingData.posting_date,
+            time: currentTime,
+            expected_result_date: expectedResultDate.toISOString().split('T')[0],
+            employee: "HR-EMP-00001", // Default employee
+            employee_name: "Lab Technician",
+            normal_test_items: [],
+            descriptive_test_items: [],
+            organism_test_items: [],
+            sensitivity_test_items: [],
+            codification_table: []
+          };
+
+          const labTestResponse = await apiService.post("/resource/Lab Test", labTestPayload);
+          const labTestId = labTestResponse.data?.data?.name;
+          console.log(`Step 5.${index + 1} Complete: Lab Test ${labTestId} created for ${item.item_code}`);
+          return labTestId;
+        } catch (error) {
+          console.error(`Error creating lab test for item ${item.item_code}:`, error);
+          // Don't throw error for individual lab test failures
+          return null;
+        }
+      });
+
+      await Promise.all(labTestPromises);
+      console.log("All lab tests processed");
+
+      // Success!
+      alert(`Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}\nPayment Entry: ${paymentEntryId}`);
+      navigate(basePath);
+
     } catch (err) {
       console.error("Error creating billing:", err);
       // Extract detailed error message from ERPNext response
