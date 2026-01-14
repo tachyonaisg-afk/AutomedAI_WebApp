@@ -1127,10 +1127,15 @@ const AddBilling = () => {
 
       // First, check if lab tests were auto-created by ERPNext
       console.log("Checking if lab tests already exist for this invoice...");
-      const existingLabTestsResponse = await apiService.get(
-        `/resource/Lab Test?fields=["name","template"]&filters=[["Lab Test","invoice","=","${salesInvoiceId}"]]`
+      const existingLabTestsResponse = await apiService.post(
+        `/method/frappe.client.get_list`,
+        {
+          doctype: "Lab Test",
+          fields: ["name", "template"],
+          filters: { invoice: salesInvoiceId }
+        }
       );
-      const existingLabTests = existingLabTestsResponse.data?.data || [];
+      const existingLabTests = existingLabTestsResponse.data?.message || [];
       console.log(`Found ${existingLabTests.length} existing lab tests for invoice ${salesInvoiceId}`);
 
       if (existingLabTests.length > 0) {

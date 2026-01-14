@@ -243,7 +243,7 @@ const LabTest = () => {
       const params = {
         fields: '["name","patient","patient_name","status","lab_test_name"]',
         filters: '[["Lab Test","status","!=","Completed"]]',
-        order_by: "submitted_date desc",
+        order_by: "creation desc",
         limit_start: limitStart,
         limit_page_length: limit,
       };
