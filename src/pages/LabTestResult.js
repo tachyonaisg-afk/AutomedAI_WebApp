@@ -330,8 +330,13 @@ const Button = styled.button`
     background-color: #4a90e2;
     color: white;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background-color: #357abd;
+    }
+
+    &:disabled {
+      background-color: #93c5fd;
+      cursor: not-allowed;
     }
   }
 
@@ -370,6 +375,7 @@ const LabTestResult = () => {
   const [practitioners, setPractitioners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [publishing, setPublishing] = useState(false);
 
   // Fetch patient details and lab test details
   useEffect(() => {
@@ -514,10 +520,55 @@ const LabTestResult = () => {
     // TODO: Implement report preview
   };
 
-  const handlePublishReport = () => {
-    console.log("Publishing report...", { testResults, formData });
-    // TODO: Call API to publish report
-    navigate("/pathlab/labtest");
+  const handlePublishReport = async () => {
+    try {
+      setPublishing(true);
+
+      // Map testResults to normal_test_items format expected by the API
+      const normal_test_items = testResults.map((result) => ({
+        lab_test_name: result.parameter,
+        result_value: result.value,
+        lab_test_uom: result.unit,
+        normal_range: result.normalRange,
+      }));
+
+      // Prepare the request body
+      const requestBody = {
+        normal_test_items,
+        status: formData.status,
+        result_date: formData.reportDate,
+      };
+
+      // Add verified_by if selected
+      if (formData.verifiedBy) {
+        requestBody.employee = formData.verifiedBy;
+      }
+
+      // Add technician notes if provided
+      if (formData.technicianNotes) {
+        requestBody.lab_test_comment = formData.technicianNotes;
+      }
+
+      console.log("Publishing report with data:", requestBody);
+
+      // Call the API to update the lab test
+      const response = await api.put(
+        `https://hms.automedai.in/api/resource/Lab Test/${id}`,
+        requestBody
+      );
+
+      console.log("Publish response:", response);
+
+      if (response.data) {
+        alert("Report published successfully!");
+        navigate("/pathlab/labtest");
+      }
+    } catch (err) {
+      console.error("Error publishing report:", err);
+      alert("Failed to publish report. Please try again.");
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const isAbnormal = (flag) => {
@@ -658,8 +709,12 @@ const LabTestResult = () => {
           <Button className="outline" onClick={handlePreviewReport}>
             Preview Report
           </Button>
-          <Button className="primary" onClick={handlePublishReport}>
-            Publish Report
+          <Button
+            className="primary"
+            onClick={handlePublishReport}
+            disabled={publishing}
+          >
+            {publishing ? "Publishing..." : "Publish Report"}
           </Button>
         </ButtonGroup>
       </ResultContainer>

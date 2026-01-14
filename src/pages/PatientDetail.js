@@ -118,6 +118,22 @@ const BookButton = styled.button`
   }
 `;
 
+const PrescriptionButton = styled.button`
+  background-color: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #16a34a;
+  }
+`;
+
 const TabsContainer = styled.div`
   display: flex;
   gap: 32px;
@@ -287,6 +303,10 @@ const PatientDetail = () => {
     });
   };
 
+  const handlePrescription = () => {
+    navigate(`/prescription/${id}`);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -345,6 +365,7 @@ const PatientDetail = () => {
           <ActionButtons>
             <EditButton onClick={handleEditProfile}>Edit Profile</EditButton>
             <BookButton onClick={handleBookAppointment}>Book Appointment</BookButton>
+            <PrescriptionButton onClick={handlePrescription}>Prescription</PrescriptionButton>
           </ActionButtons>
         </PatientHeader>
 

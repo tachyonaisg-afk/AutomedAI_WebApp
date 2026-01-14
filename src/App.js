@@ -16,6 +16,7 @@ import LabTest from './pages/LabTest';
 import NewLabTest from './pages/NewLabTest';
 import LabTestResult from './pages/LabTestResult';
 import ResultPrint from './pages/ResultPrint';
+import Prescription from './pages/Prescription';
 import Consultations from './pages/Consultations';
 import Appointments from './pages/Appointments';
 import Billing from './pages/Billing';
@@ -71,6 +72,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PatientDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/prescription/:id"
+            element={
+              <ProtectedRoute>
+                <Prescription />
               </ProtectedRoute>
             }
           />
