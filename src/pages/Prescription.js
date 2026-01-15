@@ -290,156 +290,112 @@ const PrescriptionPreview = styled.div`
 `;
 
 const TopRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #333;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  padding: 8px;
+  border: 1px solid #000;
+  border-bottom: 2px solid #000;
+  margin-bottom: 0;
+  gap: 12px;
 `;
 
 const DoctorInfo = styled.div`
   font-size: ${props => props.paperSize === 'a5' ? '11px' : '13px'};
-  font-weight: 600;
-  color: #333;
+  font-weight: 500;
+  color: #000;
+  line-height: 1.4;
 `;
 
 const TicketInfo = styled.div`
   font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
-  color: #333;
+  color: #000;
   text-align: right;
-`;
-
-const AddressRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  font-size: ${props => props.paperSize === 'a5' ? '9px' : '11px'};
-  color: #555;
-  margin-bottom: 8px;
+  line-height: 1.5;
 `;
 
 const PatientInfoRow = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 12px;
   padding: 8px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
+  border: 1px solid #000;
+  border-top: none;
   margin-bottom: 8px;
   font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
 `;
 
 const PatientInfoItem = styled.div`
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 `;
 
 const PatientLabel = styled.span`
-  font-size: ${props => props.paperSize === 'a5' ? '8px' : '9px'};
-  color: #666;
-  text-transform: uppercase;
+  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
+  color: #000;
+  font-weight: 500;
 `;
 
 const PatientValue = styled.span`
-  font-weight: 600;
-  color: #333;
-`;
-
-const ExaminationSection = styled.div`
-  border: 1px solid #ddd;
-  margin-bottom: 8px;
-`;
-
-const ExaminationTitle = styled.div`
-  background-color: #333;
-  color: #fff;
-  padding: 4px 8px;
-  font-size: ${props => props.paperSize === 'a5' ? '9px' : '10px'};
-  font-weight: 600;
-`;
-
-const ExaminationGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1px;
-  background-color: #ddd;
-`;
-
-const ExaminationItem = styled.div`
-  background-color: #fff;
-  padding: 6px 8px;
-  font-size: ${props => props.paperSize === 'a5' ? '9px' : '11px'};
-`;
-
-const ExamLabel = styled.div`
-  font-size: ${props => props.paperSize === 'a5' ? '8px' : '9px'};
-  color: #666;
-`;
-
-const ExamValue = styled.div`
-  font-weight: 600;
-  color: #333;
-  min-height: 14px;
+  font-weight: 400;
+  color: #000;
 `;
 
 const MainContentArea = styled.div`
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 8px;
-  min-height: ${props => props.paperSize === 'a5' ? '250px' : '380px'};
+  grid-template-columns: 250px 1fr;
+  gap: 0;
+  min-height: ${props => props.paperSize === 'a5' ? '250px' : '450px'};
 
   @media print {
-    min-height: ${props => props.paperSize === 'a5' ? '100mm' : '150mm'};
+    min-height: ${props => props.paperSize === 'a5' ? '100mm' : '180mm'};
   }
 `;
 
 const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  border: 1px solid #000;
+  border-right: 1px solid #000;
 `;
 
-const DiagnosisBox = styled.div`
-  border: 1px solid #ddd;
+const StaticInfoBox = styled.div`
+  border-bottom: 1px solid #000;
   flex: 1;
+  min-height: auto;
 `;
 
-const DiagnosisTitle = styled.div`
-  background-color: #333;
-  color: #fff;
-  padding: 4px 8px;
-  font-size: ${props => props.paperSize === 'a5' ? '9px' : '10px'};
+const StaticInfoTitle = styled.div`
+  font-size: ${props => props.paperSize === 'a5' ? '11px' : '13px'};
   font-weight: 600;
+  color: #000;
+  padding: 8px 10px;
+  border-bottom: 1px solid #000;
+  background-color: #f5f5f5;
 `;
 
-const DiagnosisContent = styled.div`
-  padding: 8px;
-  font-size: ${props => props.paperSize === 'a5' ? '9px' : '11px'};
-  min-height: 60px;
-  white-space: pre-wrap;
+const StaticInfoContent = styled.div`
+  padding: 12px 10px;
+  font-size: ${props => props.paperSize === 'a5' ? '10px' : '11px'};
+  line-height: 1.8;
+  color: #000;
 `;
 
-const PrescriptionArea = styled.div`
-  border: 1px solid #ddd;
+const RightColumn = styled.div`
+  border: 1px solid #000;
+  border-left: none;
   position: relative;
-  background-color: #fff;
-`;
-
-const RxSymbol = styled.div`
-  position: absolute;
-  top: 8px;
-  left: 12px;
-  font-size: ${props => props.paperSize === 'a5' ? '24px' : '32px'};
-  font-weight: bold;
-  color: #333;
-  font-family: serif;
-`;
-
-const PrescriptionContent = styled.div`
-  padding: ${props => props.paperSize === 'a5' ? '40px 12px 12px 50px' : '50px 16px 16px 60px'};
   min-height: 100%;
-  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
-  white-space: pre-wrap;
+`;
+
+const SignatureBox = styled.div`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  border: 1px solid #000;
+  font-size: ${props => props.paperSize === 'a5' ? '9px' : '10px'};
+  text-align: center;
 `;
 
 const LoadingContainer = styled.div`
@@ -543,12 +499,17 @@ const Prescription = () => {
   };
 
   const formatAge = (ageString) => {
-    if (!ageString) return "N/A";
+    if (!ageString) return "00 Years 00 Month 00 Days";
+
     const yearMatch = ageString.match(/(\d+)\s*Year/i);
-    if (yearMatch) {
-      return `${yearMatch[1]}Y`;
-    }
-    return ageString;
+    const monthMatch = ageString.match(/(\d+)\s*Month/i);
+    const dayMatch = ageString.match(/(\d+)\s*Day/i);
+
+    const years = yearMatch ? yearMatch[1] : "00";
+    const months = monthMatch ? monthMatch[1] : "00";
+    const days = dayMatch ? dayMatch[1] : "00";
+
+    return `${years} Years ${months} Month ${days} Days`;
   };
 
   const handlePrint = () => {
@@ -651,118 +612,6 @@ const Prescription = () => {
               ))}
             </Select>
           </FormGroup>
-          <FormGroup>
-            <Label>Grade</Label>
-            <Input
-              type="text"
-              name="grade"
-              value={formData.grade}
-              onChange={handleFormChange}
-              placeholder="e.g., 1"
-            />
-          </FormGroup>
-        </SidebarSection>
-
-        <SidebarSection>
-          <SectionTitle>General Examination</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <FormGroup style={{ marginBottom: '8px' }}>
-              <Label>Pulse</Label>
-              <Input
-                type="text"
-                name="pulse"
-                value={formData.pulse}
-                onChange={handleFormChange}
-                placeholder="/min"
-              />
-            </FormGroup>
-            <FormGroup style={{ marginBottom: '8px' }}>
-              <Label>BP</Label>
-              <Input
-                type="text"
-                name="bp"
-                value={formData.bp}
-                onChange={handleFormChange}
-                placeholder="mmHg"
-              />
-            </FormGroup>
-            <FormGroup style={{ marginBottom: '8px' }}>
-              <Label>Weight</Label>
-              <Input
-                type="text"
-                name="weight"
-                value={formData.weight}
-                onChange={handleFormChange}
-                placeholder="kg"
-              />
-            </FormGroup>
-            <FormGroup style={{ marginBottom: '8px' }}>
-              <Label>RR</Label>
-              <Input
-                type="text"
-                name="rr"
-                value={formData.rr}
-                onChange={handleFormChange}
-                placeholder="/min"
-              />
-            </FormGroup>
-            <FormGroup style={{ marginBottom: '8px' }}>
-              <Label>Temp</Label>
-              <Input
-                type="text"
-                name="temp"
-                value={formData.temp}
-                onChange={handleFormChange}
-                placeholder="F"
-              />
-            </FormGroup>
-            <FormGroup style={{ marginBottom: '8px' }}>
-              <Label>GRBS</Label>
-              <Input
-                type="text"
-                name="grbs"
-                value={formData.grbs}
-                onChange={handleFormChange}
-                placeholder="mg/dl"
-              />
-            </FormGroup>
-          </div>
-        </SidebarSection>
-
-        <SidebarSection>
-          <SectionTitle>Diagnosis</SectionTitle>
-          <FormGroup>
-            <Label>Chief Present</Label>
-            <Textarea
-              name="chiefPresent"
-              value={formData.chiefPresent}
-              onChange={handleFormChange}
-              placeholder="Enter chief complaints..."
-            />
-          </FormGroup>
-          <FormGroup>
-            <Label>Provisional Diagnosis</Label>
-            <Textarea
-              name="provisionalDiagnosis"
-              value={formData.provisionalDiagnosis}
-              onChange={handleFormChange}
-              placeholder="Enter diagnosis..."
-            />
-          </FormGroup>
-        </SidebarSection>
-
-        <SidebarSection>
-          <SectionTitle>Prescription</SectionTitle>
-          <FormGroup>
-            <Label>Medications / Instructions</Label>
-            <Textarea
-              name="prescription"
-              value={formData.prescription}
-              onChange={handleFormChange}
-              placeholder="Enter prescription details..."
-              style={{ minHeight: '120px' }}
-            />
-          </FormGroup>
         </SidebarSection>
       </Sidebar>
 
@@ -806,96 +655,65 @@ const Prescription = () => {
           <PrescriptionPreview data-pdf-content paperSize={paperSize}>
             <TopRow>
               <DoctorInfo paperSize={paperSize}>
-                Dr. {selectedDoctorData?.practitioner_name || "[Select Doctor]"}
-                {selectedDoctorData?.designation && ` (${selectedDoctorData.designation})`}
+                [Dr. {selectedDoctorData?.practitioner_name || "Dlk, Biswas"}]<br />
+                [Ex- H.M.o]<br />
+                PM]
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
-                <div>Ticket Date: {formData.ticketDate} - {formData.ticketTime}</div>
-                <div>Generated By: [Employee Name]</div>
+                <div>SL NO:</div>
+                <div>Ticket No:</div>
+                <div>Ticket Date: [{formData.ticketDate} - {formData.ticketTime}]</div>
               </TicketInfo>
             </TopRow>
 
-            <AddressRow paperSize={paperSize}>
-              <span>[Hospital/Clinic Address]</span>
-            </AddressRow>
-
             <PatientInfoRow paperSize={paperSize}>
               <PatientInfoItem>
-                <PatientLabel paperSize={paperSize}>Patient Name</PatientLabel>
-                <PatientValue>{patientData?.patient_name || "N/A"}</PatientValue>
+                <PatientLabel paperSize={paperSize}>[PT Reg No :</PatientLabel>
+                <PatientValue>{patientData?.name || "0000000000"}]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
-                <PatientLabel paperSize={paperSize}>Age / Sex</PatientLabel>
-                <PatientValue>
-                  {formatAge(patientData?.age)} / {patientData?.sex?.charAt(0) || "N/A"}
-                </PatientValue>
+                <PatientLabel paperSize={paperSize}>[PT Name :</PatientLabel>
+                <PatientValue>{patientData?.patient_name || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
-                <PatientLabel paperSize={paperSize}>Grade</PatientLabel>
-                <PatientValue>{formData.grade || "-"}</PatientValue>
-              </PatientInfoItem>
-              <PatientInfoItem>
-                <PatientLabel paperSize={paperSize}>Mobile</PatientLabel>
-                <PatientValue>{patientData?.mobile || "N/A"}</PatientValue>
-              </PatientInfoItem>
-              <PatientInfoItem>
-                <PatientLabel paperSize={paperSize}>PIN</PatientLabel>
-                <PatientValue>{patientData?.pincode || "N/A"}</PatientValue>
+                <PatientLabel paperSize={paperSize}>Age</PatientLabel>
+                <PatientValue>[{formatAge(patientData?.age)}]</PatientValue>
               </PatientInfoItem>
             </PatientInfoRow>
 
-            <ExaminationSection>
-              <ExaminationTitle paperSize={paperSize}>General Examination</ExaminationTitle>
-              <ExaminationGrid>
-                <ExaminationItem paperSize={paperSize}>
-                  <ExamLabel paperSize={paperSize}>Pulse</ExamLabel>
-                  <ExamValue>{formData.pulse || "-"}</ExamValue>
-                </ExaminationItem>
-                <ExaminationItem paperSize={paperSize}>
-                  <ExamLabel paperSize={paperSize}>BP</ExamLabel>
-                  <ExamValue>{formData.bp || "-"}</ExamValue>
-                </ExaminationItem>
-                <ExaminationItem paperSize={paperSize}>
-                  <ExamLabel paperSize={paperSize}>Wt</ExamLabel>
-                  <ExamValue>{formData.weight || "-"}</ExamValue>
-                </ExaminationItem>
-                <ExaminationItem paperSize={paperSize}>
-                  <ExamLabel paperSize={paperSize}>RR</ExamLabel>
-                  <ExamValue>{formData.rr || "-"}</ExamValue>
-                </ExaminationItem>
-                <ExaminationItem paperSize={paperSize}>
-                  <ExamLabel paperSize={paperSize}>Temp</ExamLabel>
-                  <ExamValue>{formData.temp || "-"}</ExamValue>
-                </ExaminationItem>
-                <ExaminationItem paperSize={paperSize}>
-                  <ExamLabel paperSize={paperSize}>GRBS</ExamLabel>
-                  <ExamValue>{formData.grbs || "-"}</ExamValue>
-                </ExaminationItem>
-              </ExaminationGrid>
-            </ExaminationSection>
-
             <MainContentArea paperSize={paperSize}>
               <LeftColumn>
-                <DiagnosisBox>
-                  <DiagnosisTitle paperSize={paperSize}>Chief Present</DiagnosisTitle>
-                  <DiagnosisContent paperSize={paperSize}>
-                    {formData.chiefPresent || ""}
-                  </DiagnosisContent>
-                </DiagnosisBox>
-                <DiagnosisBox>
-                  <DiagnosisTitle paperSize={paperSize}>Provisional Diagnosis</DiagnosisTitle>
-                  <DiagnosisContent paperSize={paperSize}>
-                    {formData.provisionalDiagnosis || ""}
-                  </DiagnosisContent>
-                </DiagnosisBox>
+                <StaticInfoBox>
+                  <StaticInfoTitle paperSize={paperSize}>General Examinations</StaticInfoTitle>
+                  <StaticInfoContent paperSize={paperSize}>
+                    Temperature<br />
+                    Blood Pressure<br />
+                    Weight Height
+                  </StaticInfoContent>
+                </StaticInfoBox>
+                <StaticInfoBox style={{ borderBottom: 'none' }}>
+                  <StaticInfoTitle paperSize={paperSize}>Advice for Investigation</StaticInfoTitle>
+                  <StaticInfoContent paperSize={paperSize}>
+                    CBC/TC.DC,HB,ESR/PL-COUNT<br />
+                    MP/MP DA/WIDAL/ASO/CRP/RA/ANF<br />
+                    BT,CT/PT/APTT,FDP/D-<br />
+                    DIMER/FIBRINOGEN<br />
+                    URINE R/E,C/S, STOOL R/E<br />
+                    SUGER R/PP,H/HBA1C, ACR, N+, K+<br />
+                    CL-,CA+<br />
+                    CR UREA/URIC/LFT/LIPID PRO<br />
+                    T4,T3,TSH/PPL/FSH,LH, E, VIT D3<br />
+                    RFT/CREATININE RATIO PARTIAL<br />
+                    RD U/S ASC/PLY,ANO-PARTIAL
+                  </StaticInfoContent>
+                </StaticInfoBox>
               </LeftColumn>
 
-              <PrescriptionArea>
-                <RxSymbol paperSize={paperSize}>Rx</RxSymbol>
-                <PrescriptionContent paperSize={paperSize}>
-                  {formData.prescription || ""}
-                </PrescriptionContent>
-              </PrescriptionArea>
+              <RightColumn>
+                <SignatureBox paperSize={paperSize}>
+                  [Signature]
+                </SignatureBox>
+              </RightColumn>
             </MainContentArea>
           </PrescriptionPreview>
         </PreviewCard>

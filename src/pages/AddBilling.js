@@ -1126,17 +1126,23 @@ const AddBilling = () => {
       console.log(`Step 4 & 5: Creating Lab Tests for ${items.length} items...`, items.map(i => i.item_code));
 
       // First, check if lab tests were auto-created by ERPNext
-      console.log("Checking if lab tests already exist for this invoice...");
-      const existingLabTestsResponse = await apiService.post(
-        `/method/frappe.client.get_list`,
-        {
-          doctype: "Lab Test",
-          fields: ["name", "template"],
-          filters: { invoice: salesInvoiceId }
-        }
-      );
-      const existingLabTests = existingLabTestsResponse.data?.message || [];
-      console.log(`Found ${existingLabTests.length} existing lab tests for invoice ${salesInvoiceId}`);
+      let existingLabTests = [];
+      try {
+        console.log("Checking if lab tests already exist for this invoice...");
+        const existingLabTestsResponse = await apiService.post(
+          `/method/frappe.client.get_list`,
+          {
+            doctype: "Lab Test",
+            fields: ["name", "template"],
+            filters: { invoice: salesInvoiceId }
+          }
+        );
+        existingLabTests = existingLabTestsResponse.data?.message || [];
+        console.log(`Found ${existingLabTests.length} existing lab tests for invoice ${salesInvoiceId}`);
+      } catch (checkError) {
+        console.log("Could not check for existing lab tests (field not permitted), proceeding with creation...");
+        existingLabTests = [];
+      }
 
       if (existingLabTests.length > 0) {
         console.log("Lab tests were auto-created by ERPNext, skipping manual creation");
