@@ -1123,6 +1123,10 @@ const AddBilling = () => {
       console.log(`Step 3 Complete: Payment Entry ${paymentEntryId} created`);
 
       // ============ Step 4 & 5: Create Lab Tests for each item ============
+      // COMMENTED OUT FOR TESTING - Lab test creation is disabled
+      console.log(`Step 4 & 5: SKIPPED - Lab Test creation is commented out for testing`);
+
+      /*
       console.log(`Step 4 & 5: Creating Lab Tests for ${items.length} items...`, items.map(i => i.item_code));
 
       // First, check if lab tests were auto-created by ERPNext
@@ -1210,6 +1214,7 @@ const AddBilling = () => {
         await Promise.all(labTestPromises);
         console.log("All lab tests created successfully");
       }
+      */
 
       // Success!
       alert(`Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}\nPayment Entry: ${paymentEntryId}`);
