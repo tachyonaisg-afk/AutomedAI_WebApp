@@ -678,6 +678,13 @@ const PatientRegistration = () => {
     }
   }, [currentStep]);
 
+  // Auto-select company if only one option is available
+  useEffect(() => {
+    if (companyOptions.length === 1 && !formData.company) {
+      setFormData((prev) => ({ ...prev, company: companyOptions[0].name }));
+    }
+  }, [companyOptions, formData.company]);
+
   // Fetch gender and company options from API
   useEffect(() => {
     const fetchGenderOptions = async () => {
@@ -1175,13 +1182,13 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>City</FormLabel>
+                    <FormLabel>District</FormLabel>
                     <FormInput
                       type="text"
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
-                      placeholder="Enter city"
+                      placeholder="Enter district"
                     />
                   </FormGroup>
 

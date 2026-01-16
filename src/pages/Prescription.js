@@ -393,7 +393,8 @@ const SignatureBox = styled.div`
   bottom: 10px;
   right: 10px;
   padding: 8px 12px;
-  border: 1px solid #000;
+  padding-top: 12px;
+  border-top: 1px solid #000;
   font-size: ${props => props.paperSize === 'a5' ? '9px' : '10px'};
   text-align: center;
 `;
@@ -482,12 +483,24 @@ const Prescription = () => {
 
   // Update selected doctor data when selection changes
   useEffect(() => {
-    if (formData.selectedDoctor) {
-      const doctor = practitioners.find(p => p.name === formData.selectedDoctor);
-      setSelectedDoctorData(doctor);
-    } else {
-      setSelectedDoctorData(null);
-    }
+    const fetchDoctorDetails = async () => {
+      if (formData.selectedDoctor) {
+        try {
+          const response = await api.get(`https://hms.automedai.in/api/resource/Healthcare Practitioner/${formData.selectedDoctor}`);
+          console.log("Doctor Details Response:", response.data);
+          setSelectedDoctorData(response.data?.data);
+        } catch (err) {
+          console.error("Error fetching doctor details:", err);
+          // Fallback to basic info from practitioners list
+          const doctor = practitioners.find(p => p.name === formData.selectedDoctor);
+          setSelectedDoctorData(doctor);
+        }
+      } else {
+        setSelectedDoctorData(null);
+      }
+    };
+
+    fetchDoctorDetails();
   }, [formData.selectedDoctor, practitioners]);
 
   const handleFormChange = (e) => {

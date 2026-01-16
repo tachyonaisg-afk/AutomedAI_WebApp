@@ -174,6 +174,14 @@ function App() {
             }
           />
           <Route
+            path="/pathlab/billing/add"
+            element={
+              <ProtectedRoute>
+                <AddBilling />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/pathlab/results"
             element={
               <ProtectedRoute>
