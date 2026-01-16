@@ -32,7 +32,7 @@ const LogoSection = styled.div`
 `;
 
 const LogoImage = styled.img`
-  height: 170px;
+  height: 100px;
   width: auto;
   object-fit: contain;
 `;
