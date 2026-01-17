@@ -560,8 +560,19 @@ const LabTestResult = () => {
       console.log("Publish response:", response);
 
       if (response.data) {
-        alert("Report published successfully!");
-        navigate("/pathlab/labtest");
+        // After successful publish, submit the document (docstatus = 1)
+        console.log("Submitting Lab Test document...");
+        const submitResponse = await api.put(
+          `https://hms.automedai.in/api/resource/Lab Test/${id}`,
+          { docstatus: 1 }
+        );
+
+        console.log("Submit response:", submitResponse);
+
+        if (submitResponse.data) {
+          alert("Report published successfully!");
+          navigate("/pathlab/labtest");
+        }
       }
     } catch (err) {
       console.error("Error publishing report:", err);

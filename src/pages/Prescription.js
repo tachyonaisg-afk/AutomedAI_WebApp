@@ -289,6 +289,35 @@ const PrescriptionPreview = styled.div`
   }
 `;
 
+const PrescriptionHeader = styled.div`
+  text-align: center;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-bottom: 2px solid #000;
+`;
+
+const HeaderTitle = styled.h1`
+  font-size: ${props => props.paperSize === 'a5' ? '16px' : '18px'};
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+`;
+
+const HeaderSubtitle = styled.h2`
+  font-size: ${props => props.paperSize === 'a5' ? '12px' : '14px'};
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 8px 0;
+`;
+
+const HeaderAddress = styled.p`
+  font-size: ${props => props.paperSize === 'a5' ? '10px' : '11px'};
+  color: #000;
+  margin: 0;
+  line-height: 1.5;
+`;
+
 const TopRow = styled.div`
   display: grid;
   grid-template-columns: 1fr auto;
@@ -345,10 +374,10 @@ const MainContentArea = styled.div`
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: 0;
-  min-height: ${props => props.paperSize === 'a5' ? '250px' : '450px'};
+  min-height: ${props => props.paperSize === 'a5' ? '200px' : '350px'};
 
   @media print {
-    min-height: ${props => props.paperSize === 'a5' ? '100mm' : '180mm'};
+    min-height: ${props => props.paperSize === 'a5' ? '70mm' : '130mm'};
   }
 `;
 
@@ -666,6 +695,14 @@ const Prescription = () => {
           </PreviewHeader>
 
           <PrescriptionPreview data-pdf-content paperSize={paperSize}>
+            <PrescriptionHeader>
+              <HeaderTitle paperSize={paperSize}>Ramakrishna Mission Ashrama Sargachi</HeaderTitle>
+              <HeaderSubtitle paperSize={paperSize}>Charitable Dispensary & Diagnostic Centre ( ISO 9001:2008 Certified )</HeaderSubtitle>
+              <HeaderAddress paperSize={paperSize}>
+                P.0 - Sugachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India, Phone : (03482) 232301
+              </HeaderAddress>
+            </PrescriptionHeader>
+
             <TopRow>
               <DoctorInfo paperSize={paperSize}>
                 [Dr. {selectedDoctorData?.practitioner_name || "Dlk, Biswas"}]<br />

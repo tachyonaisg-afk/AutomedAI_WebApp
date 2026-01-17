@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Plus, Minus, CreditCard, Camera } from "lucide-react";
@@ -544,10 +544,14 @@ const AadhaarDescription = styled.p`
 const PatientRegistration = () => {
   usePageTitle("Patient Registration");
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
   const mobileInputRef = useRef(null);
   const occupationInputRef = useRef(null);
+
+  // Check if we're on pathlab route
+  const isPathLabRoute = location.pathname.includes("/pathlab");
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -592,12 +596,51 @@ const PatientRegistration = () => {
     paymentType: "Cash",
   });
 
-  const [items, setItems] = useState([]);
+  // Initialize items based on route - pathlab has no items, others have default consultation
+  const [items, setItems] = useState(() => {
+    if (isPathLabRoute) {
+      return [];
+    } else {
+      return [{
+        no: 1,
+        item: "STO-ITEM-2025-00539",
+        itemName: "",
+        qty: 1,
+        rate: 20,
+        amount: 20,
+      }];
+    }
+  });
 
   const [genderOptions, setGenderOptions] = useState([]);
   const [companyOptions, setCompanyOptions] = useState([]);
   const [practitioners, setPractitioners] = useState([]);
   const [disabledFields, setDisabledFields] = useState({});
+  const [age, setAge] = useState(""); // UI-only field for age
+
+  // Check if any address field has a value - if yes, all address fields become required
+  const hasAnyAddressValue = formData.address_line1 || formData.address_line2 || formData.city || formData.state || formData.pincode;
+
+  // Calculate age from date of birth
+  const calculateAgeFromDOB = (dob) => {
+    if (!dob) return "";
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      calculatedAge--;
+    }
+    return calculatedAge;
+  };
+
+  // Calculate DOB from age (set to 01/01/YYYY)
+  const calculateDOBFromAge = (ageValue) => {
+    if (!ageValue || isNaN(ageValue)) return "";
+    const currentYear = new Date().getFullYear();
+    const birthYear = currentYear - parseInt(ageValue);
+    return `${birthYear}-01-01`;
+  };
 
   // Helper function to match gender values
   const matchGenderValue = (genderValue, options) => {
@@ -773,10 +816,40 @@ const PatientRegistration = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Handle DOB change - calculate age
+    if (name === "dateOfBirth") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      setAge(calculateAgeFromDOB(value));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  // Handle age input change - calculate DOB
+  const handleAgeChange = (e) => {
+    const ageValue = e.target.value;
+    setAge(ageValue);
+
+    if (ageValue && !isNaN(ageValue)) {
+      const calculatedDOB = calculateDOBFromAge(ageValue);
+      setFormData((prev) => ({
+        ...prev,
+        dateOfBirth: calculatedDOB,
+      }));
+    } else if (!ageValue) {
+      // Clear DOB if age is cleared
+      setFormData((prev) => ({
+        ...prev,
+        dateOfBirth: "",
+      }));
+    }
   };
 
   const handleAadhaarDataExtracted = (data) => {
@@ -812,16 +885,22 @@ const PatientRegistration = () => {
 
     // If address is provided from Aadhaar, put it in address_line1
     // User can manually split it into different fields later
+    const newDOB = data.dateOfBirth || formData.dateOfBirth;
     setFormData((prev) => ({
       ...prev,
       firstName: data.firstName || prev.firstName,
       middleName: data.middleName || prev.middleName,
       lastName: data.lastName || prev.lastName,
       uid: data.uid || prev.uid,
-      dateOfBirth: data.dateOfBirth || prev.dateOfBirth,
+      dateOfBirth: newDOB,
       gender: matchedGender || prev.gender,
       address_line1: data.address || prev.address_line1,
     }));
+
+    // Calculate and set age if DOB is provided
+    if (newDOB) {
+      setAge(calculateAgeFromDOB(newDOB));
+    }
 
     // Auto-focus on mobile number field after Aadhaar scan
     setTimeout(() => {
@@ -958,7 +1037,90 @@ const PatientRegistration = () => {
 
       if (response.ok) {
         console.log("Patient created successfully:", data);
-        alert("Patient registered successfully!");
+
+        // Get patient details from response
+        const patientId = data.data?.name;
+        const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
+
+        // Create Sales Invoice if there are billing items
+        if (items.length > 0 && items.some(item => item.item)) {
+          try {
+            console.log("Creating Sales Invoice...");
+
+            // Map items to Sales Invoice format
+            const invoiceItems = items
+              .filter(item => item.item) // Only include items with item_code
+              .map(item => ({
+                item_code: item.item,
+                item_name: item.itemName || item.item,
+                description: item.itemName || item.item,
+                warehouse: "Finished Goods - RKMS",
+                income_account: "Sales - RKMS",
+                expense_account: "Cost of Goods Sold - RKMS",
+                cost_center: "Main - RKMS",
+                uom: "Unit",
+                qty: parseFloat(item.qty) || 1,
+                rate: parseFloat(item.rate) || 0,
+              }));
+
+            // Prepare Sales Invoice payload
+            const invoicePayload = {
+              docstatus: 0,
+              doctype: "Sales Invoice",
+              naming_series: "SINV-.YY.-",
+              company: "Ramakrishna Mission Sargachi",
+              posting_date: new Date().toISOString().split("T")[0],
+              set_posting_time: 1,
+              is_pos: 0,
+              customer: patientName,
+              patient: patientId,
+              patient_name: patientName,
+              currency: "INR",
+              selling_price_list: "Standard Selling",
+              update_stock: 0,
+              items: invoiceItems,
+              apply_discount_on: "Grand Total",
+              additional_discount_percentage: parseFloat(billingData.discountPercent) || 0,
+              rounding_adjustment: 0,
+              mode_of_transport: "Road",
+              gst_vehicle_type: "Regular",
+              service_unit: "All Healthcare Service Units - RKMS",
+            };
+
+            // Add ref_practitioner if selected
+            if (billingData.referringPractitioner) {
+              invoicePayload.ref_practitioner = billingData.referringPractitioner;
+            }
+
+            console.log("Sales Invoice payload:", invoicePayload);
+
+            const invoiceResponse = await fetch("https://hms.automedai.in/api/resource/Sales%20Invoice", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify(invoicePayload),
+            });
+
+            const invoiceData = await invoiceResponse.json();
+
+            if (invoiceResponse.ok) {
+              console.log("Sales Invoice created successfully:", invoiceData);
+              alert("Patient registered and invoice created successfully!");
+            } else {
+              console.error("Error creating Sales Invoice:", invoiceData);
+              alert(`Patient registered but invoice creation failed: ${invoiceData.message || "Unknown error"}`);
+            }
+          } catch (invoiceError) {
+            console.error("Error creating Sales Invoice:", invoiceError);
+            alert("Patient registered but invoice creation failed. Please create invoice manually.");
+          }
+        } else {
+          alert("Patient registered successfully!");
+        }
+
         navigate("/patients");
       } else {
         console.error("Error creating patient:", data);
@@ -1100,6 +1262,19 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
+                    <FormLabel>Age (Years)</FormLabel>
+                    <FormInput
+                      type="number"
+                      name="age"
+                      value={age}
+                      onChange={handleAgeChange}
+                      placeholder="Enter age"
+                      min="0"
+                      max="150"
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
                     <FormLabel>Gender</FormLabel>
                     <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender}>
                       <option value="">Select</option>
@@ -1131,9 +1306,9 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Company</FormLabel>
+                    <FormLabel>Clinic</FormLabel>
                     <FormSelect name="company" value={formData.company} onChange={handleInputChange}>
-                      <option value="">Select company</option>
+                      <option value="">Select clinic</option>
                       {companyOptions.map((option) => (
                         <option key={option.name} value={option.name}>
                           {option.name}
@@ -1158,7 +1333,7 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Address Line 1<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                    <FormLabel>Address Line 1{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
                     <FormInput
                       type="text"
                       name="address_line1"
@@ -1166,35 +1341,37 @@ const PatientRegistration = () => {
                       onChange={handleInputChange}
                       placeholder="Enter address line 1"
                       disabled={disabledFields.address_line1}
-                      required
+                      required={hasAnyAddressValue}
                     />
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Address Line 2</FormLabel>
+                    <FormLabel>Address Line 2{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
                     <FormInput
                       type="text"
                       name="address_line2"
                       value={formData.address_line2}
                       onChange={handleInputChange}
                       placeholder="Enter address line 2"
+                      required={hasAnyAddressValue}
                     />
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>District</FormLabel>
+                    <FormLabel>District{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
                     <FormInput
                       type="text"
                       name="city"
                       value={formData.city}
                       onChange={handleInputChange}
                       placeholder="Enter district"
+                      required={hasAnyAddressValue}
                     />
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>State</FormLabel>
-                    <FormSelect name="state" value={formData.state} onChange={handleInputChange}>
+                    <FormLabel>State{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
+                    <FormSelect name="state" value={formData.state} onChange={handleInputChange} required={hasAnyAddressValue}>
                       <option value="">Select state</option>
                       <option value="Andhra Pradesh">Andhra Pradesh</option>
                       <option value="Arunachal Pradesh">Arunachal Pradesh</option>
@@ -1236,7 +1413,7 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Pincode</FormLabel>
+                    <FormLabel>Pincode{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
                     <FormInput
                       type="text"
                       name="pincode"
@@ -1249,6 +1426,7 @@ const PatientRegistration = () => {
                       maxLength={6}
                       pattern="[0-9]{6}"
                       placeholder="Enter 6-digit pincode"
+                      required={hasAnyAddressValue}
                     />
                   </FormGroup>
 
