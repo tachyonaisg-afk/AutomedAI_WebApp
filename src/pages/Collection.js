@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Search, Filter, Plus } from "lucide-react";
+import { Search, Filter, Plus, Check, X } from "lucide-react";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import usePageTitle from "../hooks/usePageTitle";
@@ -297,6 +297,69 @@ const ActionButton = styled.button`
   }
 `;
 
+const ActionContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const EmployeeSelect = styled.select`
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333333;
+  background-color: #ffffff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+  min-width: 150px;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+`;
+
+const IconButton = styled.button`
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  ${props => props.variant === 'confirm' && `
+    background-color: #4caf50;
+    color: white;
+
+    &:hover {
+      background-color: #45a049;
+    }
+  `}
+
+  ${props => props.variant === 'cancel' && `
+    background-color: #f44336;
+    color: white;
+
+    &:hover {
+      background-color: #da190b;
+    }
+  `}
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
 const Collection = () => {
   usePageTitle("Sample Collection");
   const navigate = useNavigate();
@@ -304,8 +367,9 @@ const Collection = () => {
   const [collectionsData, setCollectionsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [employees, setEmployees] = useState([]);
 
   // Fetch collections data from API
   const fetchCollections = async () => {
@@ -401,6 +465,40 @@ const Collection = () => {
   const renderActions = (row) => {
     // Show button only if docstatus === 0 (Not Collected)
     if (row.docstatus === 0) {
+      // If this row is in editing mode, show dropdown + icons
+      if (editingRowId === row.name) {
+        return (
+          <ActionContainer>
+            <EmployeeSelect
+              value={selectedEmployee}
+              onChange={(e) => setSelectedEmployee(e.target.value)}
+            >
+              <option value="">Select Employee</option>
+              {employees.map((emp) => (
+                <option key={emp.name} value={emp.name}>
+                  {emp.employee_name || emp.name}
+                </option>
+              ))}
+            </EmployeeSelect>
+            <IconButton
+              variant="confirm"
+              onClick={() => handleConfirmCollect(row)}
+              title="Confirm"
+            >
+              <Check />
+            </IconButton>
+            <IconButton
+              variant="cancel"
+              onClick={handleCancelEdit}
+              title="Cancel"
+            >
+              <X />
+            </IconButton>
+          </ActionContainer>
+        );
+      }
+
+      // Otherwise show the "Collected" button
       return (
         <ActionButton onClick={() => handleCollectClick(row)}>
           Collected
@@ -410,41 +508,48 @@ const Collection = () => {
     return null;
   };
 
-  const handleCollectClick = (collection) => {
-    setSelectedCollection(collection);
-    setShowConfirmModal(true);
+  const handleCollectClick = (row) => {
+    setEditingRowId(row.name);
+    setSelectedEmployee("");
   };
 
-  const handleConfirmCollect = async () => {
-    try {
-      console.log("Marking as collected:", selectedCollection);
+  const handleCancelEdit = () => {
+    setEditingRowId(null);
+    setSelectedEmployee("");
+  };
 
-      // Call API to update docstatus to 1
-      await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(selectedCollection.name), {
+  const handleConfirmCollect = async (row) => {
+    try {
+      if (!selectedEmployee) {
+        alert("Please select an employee");
+        return;
+      }
+
+      console.log("Marking as collected:", row);
+      console.log("Selected employee:", selectedEmployee);
+
+      // TODO: API Call 1 - Mark as collected
+      await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {
         docstatus: 1
       });
 
       console.log("✅ Successfully marked as collected");
 
-      // Close modal
-      setShowConfirmModal(false);
-      setSelectedCollection(null);
+      // TODO: API Call 2 - Assign employee (User will provide this API)
+      console.log("🔄 Need to call assign employee API here");
+
+      // Reset editing state
+      setEditingRowId(null);
+      setSelectedEmployee("");
 
       // Refresh the list
       await fetchCollections();
+
+      alert("Sample marked as collected successfully!");
     } catch (error) {
       console.error("❌ Error marking as collected:", error);
       alert("Failed to mark sample as collected. Please try again.");
-
-      // Keep modal open on error
-      setShowConfirmModal(false);
-      setSelectedCollection(null);
     }
-  };
-
-  const handleCancelCollect = () => {
-    setShowConfirmModal(false);
-    setSelectedCollection(null);
   };
 
   const handleNewCollection = () => {
@@ -507,25 +612,6 @@ const Collection = () => {
             renderStatus={renderStatus}
             renderActions={renderActions}
           />
-        )}
-
-        {showConfirmModal && (
-          <ConfirmationModal onClick={handleCancelCollect}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              <ModalTitle>Confirm Collection</ModalTitle>
-              <ModalMessage>
-                Are you sure you want to mark this sample as collected?
-              </ModalMessage>
-              <ModalButtonGroup>
-                <ModalButton onClick={handleCancelCollect}>
-                  Cancel
-                </ModalButton>
-                <ModalButton variant="primary" onClick={handleConfirmCollect}>
-                  Continue
-                </ModalButton>
-              </ModalButtonGroup>
-            </ModalContent>
-          </ConfirmationModal>
         )}
       </CollectionContainer>
     </Layout>

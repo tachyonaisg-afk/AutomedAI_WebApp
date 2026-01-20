@@ -122,6 +122,13 @@ const API_ENDPOINTS = {
     UPDATE: (id) => `/users/${id}`,
     DELETE: (id) => `/users/${id}`,
   },
+
+  // Reports
+  REPORTS: {
+    RUN_QUERY_REPORT: "/method/frappe.desk.query_report.run",
+    GENERAL_LEDGER: "General Ledger",
+    SALES_REGISTER: "Sales Register",
+  },
 };
 
 export default API_ENDPOINTS;

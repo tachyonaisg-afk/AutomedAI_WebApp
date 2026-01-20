@@ -1093,26 +1093,24 @@ const AddBilling = () => {
       console.log("Step 3: Creating Payment Entry...");
       const paymentPayload = {
         doctype: "Payment Entry",
-        naming_series: "ACC-PAY-.YYYY.-",
+        docstatus: 1,
         payment_type: "Receive",
         posting_date: billingData.posting_date,
         company: billingData.company,
+        mode_of_payment: billingData.payment_type,
         party_type: "Customer",
         party: billingData.customer,
-        party_name: billingData.patient_name,
-        received_amount: invoiceTotal,
         paid_amount: invoiceTotal,
-        paid_from: "Debtors - RKMS",
+        received_amount: invoiceTotal,
+        target_exchange_rate: 1,
         paid_to: billingData.payment_type === "Cash" ? "Cash - RKMS" : "Bank - RKMS",
-        paid_from_account_type: "Receivable",
-        paid_from_account_currency: "INR",
-        mode_of_payment: billingData.payment_type,
-        reference_no: "",
-        reference_date: "",
+        paid_to_account_currency: "INR",
         references: [
           {
             reference_doctype: "Sales Invoice",
             reference_name: salesInvoiceId,
+            total_amount: invoiceTotal,
+            outstanding_amount: invoiceTotal,
             allocated_amount: invoiceTotal
           }
         ]
@@ -1608,10 +1606,6 @@ const AddBilling = () => {
                   onChange={handleBillingChange}
                 >
                   <option value="Cash">Cash</option>
-                  <option value="Card">Card</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Bank Transfer">Bank Transfer</option>
-                  <option value="Insurance">Insurance</option>
                 </FormSelect>
               </FormGroup>
             </CalculationCard>

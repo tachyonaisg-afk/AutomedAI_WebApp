@@ -24,6 +24,7 @@ import AddBilling from './pages/AddBilling';
 import ClinicDetails from './pages/ClinicDetails';
 import Settings from './pages/Settings';
 import ComingSoon from './pages/ComingSoon';
+import SalesReport from './pages/SalesReport';
 import './App.css';
 
 const LogoutHandler = () => {
@@ -274,6 +275,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AddBilling />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <SalesReport />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reports/sales"
+            element={
+              <ProtectedRoute>
+                <SalesReport />
               </ProtectedRoute>
             }
           />
