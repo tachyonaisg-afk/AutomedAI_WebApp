@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { Html5Qrcode } from "html5-qrcode";
-import { createWorker } from "tesseract.js";
-import { X, Camera, Upload, Loader, CheckCircle, AlertCircle, RotateCcw } from "lucide-react";
-import { parseAadhaarQR, parseAadhaarOCR } from "../../utils/aadhaarParser";
+import { X, Loader, CheckCircle, AlertCircle } from "lucide-react";
+import { parseAadhaarQR } from "../../utils/aadhaarParser";
 
 const Overlay = styled.div`
   position: fixed;
@@ -64,127 +63,19 @@ const ModalBody = styled.div`
   padding: 20px;
 `;
 
-const TabContainer = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-`;
-
-const Tab = styled.button`
-  flex: 1;
-  padding: 12px 16px;
-  border: 1px solid ${(props) => (props.active ? "#4a90e2" : "#e0e0e0")};
-  background-color: ${(props) => (props.active ? "#e3f2fd" : "#fff")};
-  color: ${(props) => (props.active ? "#4a90e2" : "#666")};
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #4a90e2;
-  }
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const StepIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 12px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-`;
-
-const Step = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: ${(props) => (props.active ? "#4a90e2" : props.completed ? "#2e7d32" : "#999")};
-  font-weight: ${(props) => (props.active ? "600" : "400")};
-`;
-
-const StepNumber = styled.div`
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  background-color: ${(props) => (props.active ? "#4a90e2" : props.completed ? "#2e7d32" : "#e0e0e0")};
-  color: ${(props) => (props.active || props.completed ? "white" : "#666")};
-`;
-
-const StepDivider = styled.div`
-  width: 30px;
-  height: 2px;
-  background-color: ${(props) => (props.completed ? "#2e7d32" : "#e0e0e0")};
-`;
-
 const ScannerContainer = styled.div`
   width: 100%;
-  min-height: 280px;
+  min-height: 300px;
   background-color: #000;
   border-radius: 8px;
   overflow: hidden;
   position: relative;
-`;
-
-const VideoPreview = styled.video`
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-`;
-
-const CaptureButton = styled.button`
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background-color: white;
-  border: 4px solid #4a90e2;
-  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
-  &:hover {
-    background-color: #e3f2fd;
-    transform: translateX(-50%) scale(1.05);
-  }
-
-  &:active {
-    transform: translateX(-50%) scale(0.95);
-  }
-
-  svg {
-    width: 28px;
-    height: 28px;
-    color: #4a90e2;
-  }
 `;
 
-const CaptureHint = styled.div`
+const ScanHint = styled.div`
   position: absolute;
   top: 12px;
   left: 50%;
@@ -195,65 +86,7 @@ const CaptureHint = styled.div`
   border-radius: 20px;
   font-size: 13px;
   white-space: nowrap;
-`;
-
-const UploadArea = styled.div`
-  width: 100%;
-  min-height: 280px;
-  border: 2px dashed ${(props) => (props.isDragging ? "#4a90e2" : "#e0e0e0")};
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  cursor: pointer;
-  background-color: ${(props) => (props.isDragging ? "#e3f2fd" : "#f8f9fa")};
-  transition: all 0.2s;
-
-  &:hover {
-    border-color: #4a90e2;
-    background-color: #e3f2fd;
-  }
-`;
-
-const UploadIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background-color: #e3f2fd;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #4a90e2;
-
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-`;
-
-const UploadText = styled.p`
-  margin: 0;
-  font-size: 14px;
-  color: #666;
-  text-align: center;
-`;
-
-const UploadHint = styled.span`
-  font-size: 12px;
-  color: #999;
-`;
-
-const HiddenInput = styled.input`
-  display: none;
-`;
-
-const PreviewImage = styled.img`
-  max-width: 100%;
-  max-height: 280px;
-  object-fit: contain;
-  border-radius: 8px;
+  z-index: 10;
 `;
 
 const StatusMessage = styled.div`
@@ -286,13 +119,6 @@ const StatusMessage = styled.div`
     color: #c62828;
   `}
 
-  ${(props) =>
-    props.type === "info" &&
-    `
-    background-color: #fff3e0;
-    color: #e65100;
-  `}
-
   svg {
     width: 20px;
     height: 20px;
@@ -318,14 +144,6 @@ const ExtractedData = styled.div`
   padding: 16px;
   background-color: #f8f9fa;
   border-radius: 8px;
-`;
-
-const DataSection = styled.div`
-  margin-bottom: 12px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
 `;
 
 const DataSectionTitle = styled.div`
@@ -409,552 +227,186 @@ const Button = styled.button`
   `}
 `;
 
-const HiddenCanvas = styled.canvas`
-  display: none;
-`;
-
-const SkipButton = styled.button`
-  background: none;
-  border: none;
-  color: #4a90e2;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: underline;
-  margin-top: 8px;
-
-  &:hover {
-    color: #357abd;
-  }
-`;
-
 const AadhaarScanner = ({ isOpen, onClose, onDataExtracted }) => {
-  const [activeTab, setActiveTab] = useState("scan");
   const [status, setStatus] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [cameraReady, setCameraReady] = useState(false);
+  const [extractedData, setExtractedData] = useState(null);
+  const [html5QrCode, setHtml5QrCode] = useState(null);
 
-  // Two-step capture state
-  const [captureStep, setCaptureStep] = useState(1); // 1 = front, 2 = back
-  const [frontData, setFrontData] = useState(null);
-  const [backData, setBackData] = useState(null);
-  const [combinedData, setCombinedData] = useState(null);
+  const qrReaderRef = useRef(null);
 
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
-  const fileInputRef = useRef(null);
-  const workerRef = useRef(null);
-
-  // Start camera when scan tab is active
+  // Start QR scanner when modal opens
   useEffect(() => {
-    if (isOpen && activeTab === "scan" && !previewImage) {
-      startCamera();
+    if (isOpen) {
+      startQRScanner();
     }
 
     return () => {
-      stopCamera();
+      stopQRScanner();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, activeTab, captureStep]);
+  }, [isOpen]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopCamera();
-      if (workerRef.current) {
-        workerRef.current.terminate();
-      }
+      stopQRScanner();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startCamera = async () => {
+  const startQRScanner = async () => {
     try {
-      setCameraReady(false);
-      setStatus({ type: "loading", message: "Starting camera..." });
+      setStatus({ type: "loading", message: "Starting QR scanner..." });
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
+      // Create scanner instance
+      const scanner = new Html5Qrcode("qr-reader", { verbose: false });
+      setHtml5QrCode(scanner);
+
+      // Start scanning
+      await scanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
         },
-      });
+        (decodedText) => {
+          console.log("QR Code detected:", decodedText);
+          processQRCode(decodedText);
+        },
+        (errorMessage) => {
+          // Ignore scan errors (happens when no QR in view)
+        }
+      );
 
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current.play();
-          setCameraReady(true);
-          const hint = captureStep === 1
-            ? "Position FRONT side of Aadhaar card"
-            : "Position BACK side of Aadhaar card";
-          setStatus({ type: "loading", message: hint });
-        };
-      }
+      setStatus({ type: "loading", message: "Position QR code within frame" });
     } catch (error) {
-      console.error("Error starting camera:", error);
+      console.error("Error starting QR scanner:", error);
       setStatus({ type: "error", message: "Camera access denied or not available" });
     }
   };
 
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-    setCameraReady(false);
-  };
-
-  const captureImage = async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    setStatus({ type: "loading", message: "Capturing image..." });
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    canvas.toBlob(async (blob) => {
-      if (blob) {
-        const imageUrl = URL.createObjectURL(blob);
-        setPreviewImage(imageUrl);
-        stopCamera();
-        await processImageFile(blob, captureStep === 1 ? "front" : "back");
+  const stopQRScanner = async () => {
+    if (html5QrCode && html5QrCode.isScanning) {
+      try {
+        await html5QrCode.stop();
+        await html5QrCode.clear();
+      } catch (error) {
+        console.error("Error stopping scanner:", error);
       }
-    }, "image/jpeg", 0.9);
-  };
-
-  const processImageFile = async (file, side = "front") => {
-    setStatus({ type: "loading", message: `Processing ${side} side...` });
-
-    try {
-      // First try QR code (only on front side)
-      if (side === "front") {
-        setStatus({ type: "loading", message: "Scanning for QR code..." });
-
-        let tempDiv = document.getElementById("qr-reader-temp");
-        if (!tempDiv) {
-          tempDiv = document.createElement("div");
-          tempDiv.id = "qr-reader-temp";
-          tempDiv.style.display = "none";
-          document.body.appendChild(tempDiv);
-        }
-
-        const html5QrCode = new Html5Qrcode("qr-reader-temp", { verbose: false });
-
-        try {
-          const qrResult = await html5QrCode.scanFile(file, true);
-          html5QrCode.clear();
-
-          console.log("QR Code found:", qrResult);
-
-          const result = parseAadhaarQR(qrResult);
-          if (result.success) {
-            // QR has all data, no need for back side
-            await new Promise((resolve) => setTimeout(resolve, 50));
-            onDataExtracted(result.data);
-            await handleClose();
-            return;
-          }
-        } catch (qrError) {
-          console.log("No QR code found, trying OCR...");
-          try {
-            html5QrCode.clear();
-          } catch (e) {}
-        }
-      }
-
-      // OCR processing
-      setStatus({ type: "loading", message: "Extracting text with OCR..." });
-
-      if (!workerRef.current) {
-        setStatus({ type: "loading", message: "Loading OCR engine..." });
-        workerRef.current = await createWorker("eng+hin");
-      }
-
-      const { data: { text } } = await workerRef.current.recognize(file);
-      console.log(`OCR Text (${side}):`, text);
-
-      const result = parseAadhaarOCR(text);
-
-      if (side === "front") {
-        // Store front side data
-        const frontExtracted = {
-          firstName: result.data?.firstName || "",
-          middleName: result.data?.middleName || "",
-          lastName: result.data?.lastName || "",
-          dateOfBirth: result.data?.dateOfBirth || "",
-          gender: result.data?.gender || "",
-          uid: result.data?.uid || "",
-        };
-        setFrontData(frontExtracted);
-
-        // Check if we got essential data
-        if (frontExtracted.firstName || frontExtracted.uid || frontExtracted.gender) {
-          setStatus({
-            type: "success",
-            message: "Front side captured! Now capture the back side for address."
-          });
-          // Move to step 2
-          setCaptureStep(2);
-          setPreviewImage(null);
-          // Restart camera for back side
-          setTimeout(() => startCamera(), 500);
-        } else {
-          setStatus({
-            type: "error",
-            message: "Could not read front side. Please try again.",
-          });
-        }
-      } else {
-        // Store back side data (address)
-        const backExtracted = {
-          address: result.data?.address || "",
-          pincode: result.data?.pincode || "",
-          district: result.data?.district || "",
-          state: result.data?.state || "",
-        };
-        setBackData(backExtracted);
-
-        // Combine front and back data
-        const combined = {
-          ...frontData,
-          ...backExtracted,
-        };
-        setCombinedData(combined);
-
-        if (backExtracted.address || backExtracted.pincode) {
-          setStatus({ type: "success", message: "Both sides captured successfully!" });
-        } else {
-          setStatus({
-            type: "info",
-            message: "Back side captured. Address may be incomplete."
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error processing image:", error);
-      setStatus({ type: "error", message: "Failed to process image. Please try again." });
     }
   };
 
-  const handleTabChange = async (tab) => {
-    if (tab === activeTab) return;
+  const processQRCode = (qrData) => {
+    setStatus({ type: "loading", message: "Processing QR code..." });
 
-    stopCamera();
-    setActiveTab(tab);
-    setStatus(null);
-    setPreviewImage(null);
-    // Reset capture state when changing tabs
-    setCaptureStep(1);
-    setFrontData(null);
-    setBackData(null);
-    setCombinedData(null);
-  };
+    // Parse the QR data
+    const result = parseAadhaarQR(qrData);
 
-  const handleFileSelect = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
+    if (result.success) {
+      setExtractedData(result.data);
+      setStatus({ type: "success", message: "Aadhaar data extracted successfully!" });
 
-      const side = captureStep === 1 ? "front" : "back";
-      processImageFile(file, side);
-    }
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const file = event.dataTransfer.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewImage(e.target.result);
-      };
-      reader.readAsDataURL(file);
-
-      const side = captureStep === 1 ? "front" : "back";
-      processImageFile(file, side);
+      // Stop scanning
+      stopQRScanner();
+    } else {
+      console.error("Failed to parse QR:", result.error);
+      setStatus({ type: "error", message: result.error || "Failed to parse QR code" });
     }
   };
 
   const handleConfirm = () => {
-    if (combinedData) {
-      onDataExtracted(combinedData);
-      handleClose();
-    } else if (frontData) {
-      // If only front data available
-      onDataExtracted(frontData);
-      handleClose();
-    }
-  };
-
-  const handleSkipBackSide = () => {
-    // Use only front data
-    if (frontData) {
-      onDataExtracted(frontData);
+    if (extractedData) {
+      onDataExtracted(extractedData);
       handleClose();
     }
   };
 
   const handleClose = async () => {
-    stopCamera();
+    await stopQRScanner();
     setStatus(null);
-    setPreviewImage(null);
-    setActiveTab("scan");
-    setCaptureStep(1);
-    setFrontData(null);
-    setBackData(null);
-    setCombinedData(null);
+    setExtractedData(null);
     onClose();
   };
 
-  const handleRetry = async () => {
-    setStatus(null);
-    setPreviewImage(null);
-
-    if (activeTab === "scan") {
-      startCamera();
-    }
-  };
-
-  const handleStartOver = () => {
-    setCaptureStep(1);
-    setFrontData(null);
-    setBackData(null);
-    setCombinedData(null);
-    setPreviewImage(null);
-    setStatus(null);
-    startCamera();
-  };
-
   if (!isOpen) return null;
-
-  const dataToShow = combinedData || (frontData && backData ? { ...frontData, ...backData } : null);
 
   return (
     <Overlay onClick={handleClose}>
       <Modal onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle>Scan Aadhaar Card</ModalTitle>
+          <ModalTitle>Scan Aadhaar QR Code</ModalTitle>
           <CloseButton onClick={handleClose}>
             <X size={20} />
           </CloseButton>
         </ModalHeader>
 
         <ModalBody>
-          <TabContainer>
-            <Tab active={activeTab === "scan"} onClick={() => handleTabChange("scan")}>
-              <Camera />
-              Capture Card
-            </Tab>
-            <Tab active={activeTab === "upload"} onClick={() => handleTabChange("upload")}>
-              <Upload />
-              Upload Image
-            </Tab>
-          </TabContainer>
-
-          {/* Step Indicator */}
-          <StepIndicator>
-            <Step active={captureStep === 1} completed={captureStep > 1}>
-              <StepNumber active={captureStep === 1} completed={captureStep > 1}>
-                {captureStep > 1 ? "✓" : "1"}
-              </StepNumber>
-              Front Side
-            </Step>
-            <StepDivider completed={captureStep > 1} />
-            <Step active={captureStep === 2} completed={!!backData}>
-              <StepNumber active={captureStep === 2} completed={!!backData}>
-                {backData ? "✓" : "2"}
-              </StepNumber>
-              Back Side
-            </Step>
-          </StepIndicator>
-
-          {activeTab === "scan" && (
-            <ScannerContainer>
-              {previewImage ? (
-                <PreviewImage src={previewImage} alt="Captured Aadhaar" />
-              ) : (
-                <>
-                  <VideoPreview ref={videoRef} autoPlay playsInline muted />
-                  {cameraReady && (
-                    <>
-                      <CaptureHint>
-                        {captureStep === 1 ? "Capture FRONT side" : "Capture BACK side (Address)"}
-                      </CaptureHint>
-                      <CaptureButton onClick={captureImage}>
-                        <Camera />
-                      </CaptureButton>
-                    </>
-                  )}
-                </>
-              )}
-              <HiddenCanvas ref={canvasRef} />
-            </ScannerContainer>
-          )}
-
-          {activeTab === "upload" && (
-            <>
-              {previewImage ? (
-                <ScannerContainer style={{ backgroundColor: "#f8f9fa" }}>
-                  <PreviewImage src={previewImage} alt="Aadhaar preview" />
-                </ScannerContainer>
-              ) : (
-                <UploadArea
-                  isDragging={isDragging}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <UploadIcon>
-                    <Upload />
-                  </UploadIcon>
-                  <UploadText>
-                    {captureStep === 1
-                      ? "Upload FRONT side of Aadhaar"
-                      : "Upload BACK side of Aadhaar"}
-                    <br />
-                    <UploadHint>Supports JPG, PNG (max 5MB)</UploadHint>
-                  </UploadText>
-                </UploadArea>
-              )}
-              <HiddenInput
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-              />
-            </>
-          )}
+          <ScannerContainer>
+            <div id="qr-reader" ref={qrReaderRef} style={{ width: "100%" }}></div>
+            <ScanHint>Position Aadhaar QR code within frame</ScanHint>
+          </ScannerContainer>
 
           {status && (
             <StatusMessage type={status.type}>
               {status.type === "loading" && <LoadingSpinner />}
               {status.type === "success" && <CheckCircle />}
               {status.type === "error" && <AlertCircle />}
-              {status.type === "info" && <AlertCircle />}
               {status.message}
             </StatusMessage>
           )}
 
-          {/* Skip back side option */}
-          {captureStep === 2 && !backData && frontData && (
-            <div style={{ textAlign: "center" }}>
-              <SkipButton onClick={handleSkipBackSide}>
-                Skip back side (continue without address)
-              </SkipButton>
-            </div>
-          )}
-
-          {/* Show extracted data */}
-          {(dataToShow || frontData) && (
+          {extractedData && (
             <ExtractedData>
-              {frontData && (
-                <DataSection>
-                  <DataSectionTitle>Front Side Data</DataSectionTitle>
-                  {frontData.firstName && (
-                    <DataRow>
-                      <DataLabel>Name</DataLabel>
-                      <DataValue>
-                        {[frontData.firstName, frontData.middleName, frontData.lastName]
-                          .filter(Boolean)
-                          .join(" ")}
-                      </DataValue>
-                    </DataRow>
-                  )}
-                  {frontData.uid && (
-                    <DataRow>
-                      <DataLabel>Aadhaar Number</DataLabel>
-                      <DataValue>{frontData.uid}</DataValue>
-                    </DataRow>
-                  )}
-                  {frontData.dateOfBirth && (
-                    <DataRow>
-                      <DataLabel>Date of Birth</DataLabel>
-                      <DataValue>{frontData.dateOfBirth}</DataValue>
-                    </DataRow>
-                  )}
-                  {frontData.gender && (
-                    <DataRow>
-                      <DataLabel>Gender</DataLabel>
-                      <DataValue>{frontData.gender}</DataValue>
-                    </DataRow>
-                  )}
-                </DataSection>
+              <DataSectionTitle>Extracted Aadhaar Data</DataSectionTitle>
+              {(extractedData.firstName || extractedData.middleName || extractedData.lastName) && (
+                <DataRow>
+                  <DataLabel>Name</DataLabel>
+                  <DataValue>
+                    {[extractedData.firstName, extractedData.middleName, extractedData.lastName]
+                      .filter(Boolean)
+                      .join(" ")}
+                  </DataValue>
+                </DataRow>
               )}
-
-              {backData && (
-                <DataSection>
-                  <DataSectionTitle>Back Side Data (Address)</DataSectionTitle>
-                  {backData.address && (
-                    <DataRow>
-                      <DataLabel>Address</DataLabel>
-                      <DataValue>{backData.address}</DataValue>
-                    </DataRow>
-                  )}
-                  {backData.pincode && (
-                    <DataRow>
-                      <DataLabel>Pincode</DataLabel>
-                      <DataValue>{backData.pincode}</DataValue>
-                    </DataRow>
-                  )}
-                  {backData.district && (
-                    <DataRow>
-                      <DataLabel>District</DataLabel>
-                      <DataValue>{backData.district}</DataValue>
-                    </DataRow>
-                  )}
-                  {backData.state && (
-                    <DataRow>
-                      <DataLabel>State</DataLabel>
-                      <DataValue>{backData.state}</DataValue>
-                    </DataRow>
-                  )}
-                </DataSection>
+              {extractedData.uid && (
+                <DataRow>
+                  <DataLabel>Aadhaar Number</DataLabel>
+                  <DataValue>{extractedData.uid}</DataValue>
+                </DataRow>
+              )}
+              {extractedData.dateOfBirth && (
+                <DataRow>
+                  <DataLabel>Date of Birth</DataLabel>
+                  <DataValue>{extractedData.dateOfBirth}</DataValue>
+                </DataRow>
+              )}
+              {extractedData.gender && (
+                <DataRow>
+                  <DataLabel>Gender</DataLabel>
+                  <DataValue>{extractedData.gender}</DataValue>
+                </DataRow>
+              )}
+              {extractedData.address && (
+                <DataRow>
+                  <DataLabel>Address</DataLabel>
+                  <DataValue>{extractedData.address}</DataValue>
+                </DataRow>
+              )}
+              {extractedData.pincode && (
+                <DataRow>
+                  <DataLabel>Pincode</DataLabel>
+                  <DataValue>{extractedData.pincode}</DataValue>
+                </DataRow>
               )}
             </ExtractedData>
           )}
         </ModalBody>
 
         <ModalFooter>
-          {(combinedData || backData) ? (
-            <>
-              <Button onClick={handleStartOver}>
-                <RotateCcw size={16} />
-                Start Over
-              </Button>
-              <Button variant="primary" onClick={handleConfirm}>
-                Use This Data
-              </Button>
-            </>
-          ) : status?.type === "error" ? (
-            <>
-              <Button onClick={handleRetry}>Try Again</Button>
-              <Button onClick={handleClose}>Cancel</Button>
-            </>
+          {extractedData ? (
+            <Button variant="primary" onClick={handleConfirm}>
+              Use This Data
+            </Button>
           ) : (
             <Button onClick={handleClose}>Cancel</Button>
           )}

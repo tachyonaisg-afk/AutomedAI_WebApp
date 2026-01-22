@@ -567,7 +567,7 @@ const PatientRegistration = () => {
     city: "",
     state: "",
     pincode: "",
-    country: "India",
+    country: "",
     allergies: "",
     existingConditions: "",
     visitType: "walk-in",
@@ -1431,14 +1431,14 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Country<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                    <FormLabel>Country{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
                     <FormInput
                       type="text"
                       name="country"
                       value={formData.country}
                       onChange={handleInputChange}
                       placeholder="Enter country"
-                      required
+                      required={hasAnyAddressValue}
                     />
                   </FormGroup>
                 </FormGrid>
