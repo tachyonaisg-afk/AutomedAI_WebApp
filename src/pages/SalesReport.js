@@ -376,42 +376,41 @@ const SalesReport = () => {
   const displayColumns = [
     { label: "POSTING DATE", fieldname: "posting_date" },
     { label: "ACCOUNT", fieldname: "account" },
-    { label: "AMOUNT BALANCE", fieldname: "credit" },
+    { label: "DEBIT", fieldname: "debit" },
+    { label: "CREDIT", fieldname: "credit" },
+    { label: "BALANCE", fieldname: "balance" },
     { label: "CUSTOMER", fieldname: "against" },
-    { label: "INVOICE NUMBER", fieldname: "against_voucher" },
+    { label: "INVOICE NUMBER", fieldname: "gl_entry" },
     { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
   ];
 
-  const getColumnIndex = (fieldname) => {
-    const index = columns.findIndex(col => col.fieldname === fieldname);
-    if (index === -1) {
-      console.warn(`Column '${fieldname}' not found in API response`);
-    }
-    return index;
-  };
-
   const getCellValue = (row, fieldname) => {
-    const index = getColumnIndex(fieldname);
-    if (index === -1) return "";
-    return row[index] ?? "";
+    return row[fieldname] ?? "";
   };
 
   const calculateTotals = () => {
-    if (!reportData || reportData.length === 0) return 0;
+    if (!reportData || reportData.length === 0) return { debit: 0, credit: 0, balance: 0 };
 
-    const creditIndex = getColumnIndex("credit");
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let totalBalance = 0;
 
-    let total = 0;
     reportData.forEach(row => {
-      if (creditIndex !== -1 && row[creditIndex]) {
-        total += parseFloat(row[creditIndex]) || 0;
+      if (row.debit) {
+        totalDebit += parseFloat(row.debit) || 0;
+      }
+      if (row.credit) {
+        totalCredit += parseFloat(row.credit) || 0;
+      }
+      if (row.balance) {
+        totalBalance += parseFloat(row.balance) || 0;
       }
     });
 
-    return total;
+    return { debit: totalDebit, credit: totalCredit, balance: totalBalance };
   };
 
-  const totalAmount = calculateTotals();
+  const totals = calculateTotals();
   const totalRecords = reportData.length;
   const startRecord = totalRecords > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
   const endRecord = Math.min(currentPage * rowsPerPage, totalRecords);
@@ -456,7 +455,12 @@ const SalesReport = () => {
         const { result, columns } = response.data.message;
         console.log("Columns from API:", columns);
         console.log("Sample row data:", result?.[0]);
-        setReportData(result || []);
+
+        // Filter to only include rows with gl_entry field
+        const filteredResults = result ? result.filter(row => row.gl_entry) : [];
+        console.log("Filtered results with gl_entry:", filteredResults);
+
+        setReportData(filteredResults);
         setColumns(columns || []);
         setCurrentPage(1); // Reset to first page
       }
@@ -612,16 +616,28 @@ const SalesReport = () => {
                             const cellValue = getCellValue(row, col.fieldname);
 
                             // Check if this is an invoice number column (make it a link)
-                            const isInvoiceLink = col.fieldname === "against_voucher";
+                            const isInvoiceLink = col.fieldname === "gl_entry";
 
                             // Format based on field type
                             let formattedValue = cellValue;
 
-                            if (col.fieldname === "credit" && cellValue) {
+                            // Format date to dd/mm/yyyy
+                            if (col.fieldname === "posting_date" && cellValue) {
+                              const date = new Date(cellValue);
+                              if (!isNaN(date.getTime())) {
+                                const day = String(date.getDate()).padStart(2, '0');
+                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                const year = date.getFullYear();
+                                formattedValue = `${day}/${month}/${year}`;
+                              }
+                            }
+
+                            // Format monetary values
+                            if ((col.fieldname === "debit" || col.fieldname === "credit" || col.fieldname === "balance") && cellValue !== null && cellValue !== undefined) {
                               const numValue = parseFloat(cellValue);
-                              formattedValue = !isNaN(numValue) ? `$${numValue.toFixed(2)}` : "$0.00";
-                            } else if (col.fieldname === "credit") {
-                              formattedValue = "$0.00";
+                              formattedValue = !isNaN(numValue) ? `₹${numValue.toFixed(2)}` : "₹0.00";
+                            } else if (col.fieldname === "debit" || col.fieldname === "credit" || col.fieldname === "balance") {
+                              formattedValue = "₹0.00";
                             }
 
                             return (
@@ -640,9 +656,11 @@ const SalesReport = () => {
                     {paginatedData.length > 0 && (
                       <TotalRow>
                         <TableCell>Total</TableCell>
-                        <TableCell colSpan={displayColumns.length - 1} style={{ textAlign: "right" }}>
-                          ${totalAmount.toFixed(2)}
-                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell>₹{totals.debit.toFixed(2)}</TableCell>
+                        <TableCell>₹{totals.credit.toFixed(2)}</TableCell>
+                        <TableCell>₹{totals.balance.toFixed(2)}</TableCell>
+                        <TableCell colSpan={3}></TableCell>
                       </TotalRow>
                     )}
                   </TableBody>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -541,6 +541,50 @@ const AadhaarDescription = styled.p`
   color: #666;
 `;
 
+const ItemSearchWrapper = styled.div`
+  position: relative;
+  min-width: 180px;
+  z-index: 10;
+`;
+
+const SearchResults = styled.div`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 9999;
+  margin-top: 4px;
+`;
+
+const SearchResultItem = styled.div`
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333333;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: #f5f8ff;
+  }
+`;
+
+const SearchResultEmpty = styled.div`
+  padding: 12px;
+  text-align: center;
+  color: #666666;
+  font-size: 14px;
+`;
+
 const PatientRegistration = () => {
   usePageTitle("Patient Registration");
   const navigate = useNavigate();
@@ -593,7 +637,6 @@ const PatientRegistration = () => {
     referringPractitioner: "",
     editPostingDate: false,
     discountPercent: 0,
-    paymentType: "Cash",
   });
 
   // Initialize items based on route - pathlab has no items, others have default consultation
@@ -617,6 +660,13 @@ const PatientRegistration = () => {
   const [practitioners, setPractitioners] = useState([]);
   const [disabledFields, setDisabledFields] = useState({});
   const [age, setAge] = useState(""); // UI-only field for age
+
+  // Item search state
+  const [itemSearchIndex, setItemSearchIndex] = useState(null);
+  const [itemSearch, setItemSearch] = useState("");
+  const [itemResults, setItemResults] = useState([]);
+  const [showItemResults, setShowItemResults] = useState(false);
+  const [searchingItem, setSearchingItem] = useState(false);
 
   // Check if any address field has a value - if yes, all address fields become required
   const hasAnyAddressValue = formData.address_line1 || formData.address_line2 || formData.city || formData.state || formData.pincode;
@@ -782,24 +832,18 @@ const PatientRegistration = () => {
 
     const fetchDefaultItem = async () => {
       try {
-        const response = await fetch("https://hms.automedai.in/api/resource/Item/STO-ITEM-2025-00539", {
-          headers: {
-            Accept: "application/json",
-          },
-          credentials: "include",
-        });
-        const data = await response.json();
-        console.log("Default item fetched:", data);
+        const response = await apiService.get(API_ENDPOINTS.ITEMS.GET_BY_ID("STO-ITEM-2025-00539"));
+        console.log("Default item fetched:", response.data);
 
-        if (data && data.data) {
-          const itemData = data.data;
+        if (response.data && response.data.data) {
+          const itemData = response.data.data;
           const defaultItem = {
             no: 1,
-            item: itemData.name || itemData.item_code || "",
+            item: itemData.name || itemData.item_code || "STO-ITEM-2025-00539",
             itemName: itemData.item_name || "",
             qty: 1,
-            rate: itemData.standard_rate || 0,
-            amount: itemData.standard_rate || 0,
+            rate: 20, // Fixed rate for default item
+            amount: 20,
           };
           setItems([defaultItem]);
         }
@@ -811,7 +855,12 @@ const PatientRegistration = () => {
     fetchGenderOptions();
     fetchCompanyOptions();
     fetchPractitioners();
-    fetchDefaultItem();
+
+    // Fetch default item only for non-pathlab routes
+    if (!isPathLabRoute) {
+      fetchDefaultItem();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInputChange = (e) => {
@@ -933,6 +982,77 @@ const PatientRegistration = () => {
     }));
   };
 
+  // Debounced item search
+  const searchItems = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setItemResults([]);
+      setShowItemResults(false);
+      return;
+    }
+
+    setSearchingItem(true);
+    try {
+      const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
+        doctype: "Item",
+        txt: query,
+        page_length: 10,
+      });
+      if (response.data?.results || response.data?.message) {
+        setItemResults(response.data.results || response.data.message || []);
+        setShowItemResults(true);
+      }
+    } catch (err) {
+      console.error("Error searching items:", err);
+    } finally {
+      setSearchingItem(false);
+    }
+  }, []);
+
+  // Debounce effect for item search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchItems(itemSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [itemSearch, searchItems]);
+
+  const handleItemSelect = async (item, index) => {
+    try {
+      // Fetch item details
+      const itemCode = item.value || item.name;
+      const response = await apiService.get(API_ENDPOINTS.ITEMS.GET_BY_ID(itemCode));
+      const itemData = response.data?.data;
+
+      const updatedItems = [...items];
+      const qty = updatedItems[index].qty || 1;
+      const rate = itemData?.standard_rate || itemData?.valuation_rate || 0;
+
+      updatedItems[index] = {
+        ...updatedItems[index],
+        no: index + 1,
+        item: itemCode,
+        itemName: itemData?.item_name || item.description || itemCode,
+        qty: qty,
+        rate: rate,
+        amount: rate * qty,
+      };
+      setItems(updatedItems);
+    } catch (err) {
+      console.error("Error fetching item details:", err);
+      const updatedItems = [...items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        item: item.value || item.name,
+        itemName: item.description || item.value || item.name,
+      };
+      setItems(updatedItems);
+    }
+
+    setItemSearch("");
+    setShowItemResults(false);
+    setItemSearchIndex(null);
+  };
+
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...items];
     updatedItems[index][field] = value;
@@ -982,6 +1102,7 @@ const PatientRegistration = () => {
       setCurrentStep(currentStep - 1);
     }
   };
+
 
   const createPatient = async () => {
     try {
@@ -1108,7 +1229,66 @@ const PatientRegistration = () => {
 
             if (invoiceResponse.ok) {
               console.log("Sales Invoice created successfully:", invoiceData);
-              alert("Patient registered and invoice created successfully!");
+
+              // Get invoice name and totals
+              const invoiceName = invoiceData.data?.name;
+              const totals = calculateTotals();
+              const netTotal = totals.netTotal;
+
+              // Create Payment Entry
+              try {
+                console.log("Creating Payment Entry...");
+
+                const paymentPayload = {
+                  doctype: "Payment Entry",
+                  docstatus: 1,
+                  payment_type: "Receive",
+                  posting_date: new Date().toISOString().split("T")[0],
+                  company: "Ramakrishna Mission Sargachi",
+                  mode_of_payment: "Cash",
+                  party_type: "Customer",
+                  party: patientName,
+                  paid_amount: netTotal,
+                  received_amount: netTotal,
+                  target_exchange_rate: 1,
+                  paid_to: "Cash - RKMS",
+                  paid_to_account_currency: "INR",
+                  references: [
+                    {
+                      reference_doctype: "Sales Invoice",
+                      reference_name: invoiceName,
+                      total_amount: netTotal,
+                      outstanding_amount: netTotal,
+                      allocated_amount: netTotal,
+                    }
+                  ]
+                };
+
+                console.log("Payment Entry payload:", paymentPayload);
+
+                const paymentResponse = await fetch("https://hms.automedai.in/api/resource/Payment%20Entry", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                  },
+                  credentials: "include",
+                  body: JSON.stringify(paymentPayload),
+                });
+
+                const paymentData = await paymentResponse.json();
+
+                if (paymentResponse.ok) {
+                  console.log("Payment Entry created successfully:", paymentData);
+                  alert("Patient registered, invoice created, and payment recorded successfully!");
+                } else {
+                  console.error("Error creating Payment Entry:", paymentData);
+                  alert(`Patient and invoice created, but payment recording failed: ${paymentData.message || "Unknown error"}`);
+                }
+              } catch (paymentError) {
+                console.error("Error creating Payment Entry:", paymentError);
+                alert("Patient and invoice created, but payment recording failed. Please record payment manually.");
+              }
             } else {
               console.error("Error creating Sales Invoice:", invoiceData);
               alert(`Patient registered but invoice creation failed: ${invoiceData.message || "Unknown error"}`);
@@ -1590,10 +1770,49 @@ const PatientRegistration = () => {
                       <TableRow key={index}>
                         <TableCell>{item.no}</TableCell>
                         <TableCell>
-                          <ItemInput type="text" value={item.item} onChange={(e) => handleItemChange(index, "item", e.target.value)} />
+                          <ItemSearchWrapper>
+                            {item.item ? (
+                              <ItemInput type="text" value={item.item} disabled />
+                            ) : (
+                              <>
+                                <ItemInput
+                                  type="text"
+                                  placeholder="Search item..."
+                                  value={itemSearchIndex === index ? itemSearch : ""}
+                                  onChange={(e) => {
+                                    setItemSearchIndex(index);
+                                    setItemSearch(e.target.value);
+                                  }}
+                                  onFocus={() => {
+                                    setItemSearchIndex(index);
+                                    if (itemSearch.length >= 2) setShowItemResults(true);
+                                  }}
+                                  onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                />
+                                {showItemResults && itemSearchIndex === index && (
+                                  <SearchResults>
+                                    {itemResults.length > 0 ? (
+                                      itemResults.map((itemResult, idx) => (
+                                        <SearchResultItem
+                                          key={idx}
+                                          onMouseDown={() => handleItemSelect(itemResult, index)}
+                                        >
+                                          {itemResult.value || itemResult.name} - {itemResult.description || ""}
+                                        </SearchResultItem>
+                                      ))
+                                    ) : (
+                                      <SearchResultEmpty>
+                                        {searchingItem ? "Searching..." : "No items found"}
+                                      </SearchResultEmpty>
+                                    )}
+                                  </SearchResults>
+                                )}
+                              </>
+                            )}
+                          </ItemSearchWrapper>
                         </TableCell>
                         <TableCell>
-                          <ItemInput type="text" value={item.itemName} onChange={(e) => handleItemChange(index, "itemName", e.target.value)} />
+                          <ItemInput type="text" value={item.itemName} disabled />
                         </TableCell>
                         <TableCell>
                           <ItemInput type="number" value={item.qty} onChange={(e) => handleItemChange(index, "qty", e.target.value)} />
@@ -1646,12 +1865,7 @@ const PatientRegistration = () => {
                   <CardTitle>Payment</CardTitle>
                   <FormGroup>
                     <FormLabel>Payment Type</FormLabel>
-                    <FormSelect name="paymentType" value={billingData.paymentType} onChange={handleBillingChange}>
-                      <option value="Cash">Cash</option>
-                      <option value="Card">Card</option>
-                      <option value="UPI">UPI</option>
-                      <option value="Insurance">Insurance</option>
-                    </FormSelect>
+                    <FormInput type="text" value="Cash" disabled />
                   </FormGroup>
                 </CalculationCard>
               </BottomSection>
