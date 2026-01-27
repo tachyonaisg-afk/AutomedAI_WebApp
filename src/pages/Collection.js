@@ -371,6 +371,22 @@ const Collection = () => {
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [employees, setEmployees] = useState([]);
 
+  // Fetch employees from API
+  const fetchEmployees = async () => {
+    try {
+      const fields = JSON.stringify(["name", "employee_name"]);
+      const response = await apiService.get(API_ENDPOINTS.EMPLOYEE.LIST, {
+        fields: fields,
+        limit_page_length: 0,
+      });
+      if (response.data?.data) {
+        setEmployees(response.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching employees:", err);
+    }
+  };
+
   // Fetch collections data from API
   const fetchCollections = async () => {
     try {
@@ -442,6 +458,7 @@ const Collection = () => {
   // Fetch data on component mount
   useEffect(() => {
     fetchCollections();
+    fetchEmployees();
   }, []);
 
   const columns = [
@@ -454,7 +471,6 @@ const Collection = () => {
     { key: "sample", label: "SAMPLE" },
     { key: "quantity_uom", label: "SAMPLE QUANTITY & UOM" },
     { key: "collection_datetime", label: "COLLECTION DATE AND TIME" },
-    { key: "collected_by", label: "COLLECTED BY" },
     { key: "actions", label: "ACTIONS" },
   ];
 

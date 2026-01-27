@@ -100,6 +100,11 @@ const API_ENDPOINTS = {
     COUNT: "/method/frappe.client.get_count",
   },
 
+  // Employee (ERPNext)
+  EMPLOYEE: {
+    LIST: "/resource/Employee",
+  },
+
   // Dashboard
   DASHBOARD: {
     STATS: "/dashboard/stats",

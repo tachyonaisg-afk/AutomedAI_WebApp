@@ -2,7 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { RotateCw, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { RotateCw, ChevronLeft, ChevronRight, Loader2, FileDown } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import usePageTitle from "../hooks/usePageTitle";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
@@ -154,6 +156,37 @@ const RefreshButton = styled.button`
   svg {
     width: 18px;
     height: 18px;
+  }
+`;
+
+const ExportButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: #f5f5f5;
+    border-color: #4a90e2;
+    color: #4a90e2;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 `;
 
@@ -376,8 +409,6 @@ const SalesReport = () => {
   const displayColumns = [
     { label: "POSTING DATE", fieldname: "posting_date" },
     { label: "ACCOUNT", fieldname: "account" },
-    { label: "DEBIT", fieldname: "debit" },
-    { label: "CREDIT", fieldname: "credit" },
     { label: "BALANCE", fieldname: "balance" },
     { label: "CUSTOMER", fieldname: "against" },
     { label: "INVOICE NUMBER", fieldname: "gl_entry" },
@@ -389,25 +420,17 @@ const SalesReport = () => {
   };
 
   const calculateTotals = () => {
-    if (!reportData || reportData.length === 0) return { debit: 0, credit: 0, balance: 0 };
+    if (!reportData || reportData.length === 0) return { balance: 0 };
 
-    let totalDebit = 0;
-    let totalCredit = 0;
     let totalBalance = 0;
 
     reportData.forEach(row => {
-      if (row.debit) {
-        totalDebit += parseFloat(row.debit) || 0;
-      }
-      if (row.credit) {
-        totalCredit += parseFloat(row.credit) || 0;
-      }
       if (row.balance) {
         totalBalance += parseFloat(row.balance) || 0;
       }
     });
 
-    return { debit: totalDebit, credit: totalCredit, balance: totalBalance };
+    return { balance: totalBalance };
   };
 
   const totals = calculateTotals();
@@ -480,6 +503,57 @@ const SalesReport = () => {
   const handleRefresh = () => {
     console.log("Refreshing report...");
     fetchReport();
+  };
+
+  const handleExportPDF = () => {
+    if (reportData.length === 0) return;
+
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(16);
+    doc.text("Sales Report", 14, 20);
+
+    // Date range
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Period: ${filters.fromDate} to ${filters.toDate}`, 14, 28);
+    doc.text(`Company: ${filters.company}`, 14, 34);
+
+    // Table headers and rows
+    const headers = displayColumns.map((col) => col.label);
+    const rows = reportData.map((row) =>
+      displayColumns.map((col) => {
+        const val = row[col.fieldname] ?? "";
+        if (col.fieldname === "posting_date" && val) {
+          const date = new Date(val);
+          if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, "0");
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+          }
+        }
+        if (col.fieldname === "balance") {
+          const num = parseFloat(val);
+          return !isNaN(num) ? `Rs. ${num.toFixed(2)}` : "Rs. 0.00";
+        }
+        return String(val);
+      })
+    );
+
+    // Total row
+    rows.push(["Total", "", `Rs. ${totals.balance.toFixed(2)}`, "", "", ""]);
+
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 40,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [74, 144, 226] },
+    });
+
+    doc.save(`Sales_Report_${filters.fromDate}_to_${filters.toDate}.pdf`);
   };
 
   const handleRowsPerPageChange = (e) => {
@@ -574,6 +648,10 @@ const SalesReport = () => {
             <RefreshButton onClick={handleRefresh}>
               <RotateCw />
             </RefreshButton>
+            <ExportButton onClick={handleExportPDF} disabled={reportData.length === 0}>
+              <FileDown />
+              Export PDF
+            </ExportButton>
           </ButtonGroup>
         </FiltersCard>
 
@@ -633,10 +711,10 @@ const SalesReport = () => {
                             }
 
                             // Format monetary values
-                            if ((col.fieldname === "debit" || col.fieldname === "credit" || col.fieldname === "balance") && cellValue !== null && cellValue !== undefined) {
+                            if (col.fieldname === "balance" && cellValue !== null && cellValue !== undefined) {
                               const numValue = parseFloat(cellValue);
                               formattedValue = !isNaN(numValue) ? `₹${numValue.toFixed(2)}` : "₹0.00";
-                            } else if (col.fieldname === "debit" || col.fieldname === "credit" || col.fieldname === "balance") {
+                            } else if (col.fieldname === "balance") {
                               formattedValue = "₹0.00";
                             }
 
@@ -657,8 +735,6 @@ const SalesReport = () => {
                       <TotalRow>
                         <TableCell>Total</TableCell>
                         <TableCell></TableCell>
-                        <TableCell>₹{totals.debit.toFixed(2)}</TableCell>
-                        <TableCell>₹{totals.credit.toFixed(2)}</TableCell>
                         <TableCell>₹{totals.balance.toFixed(2)}</TableCell>
                         <TableCell colSpan={3}></TableCell>
                       </TotalRow>

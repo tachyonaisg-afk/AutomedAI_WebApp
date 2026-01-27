@@ -668,8 +668,8 @@ const PatientRegistration = () => {
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
 
-  // Check if any address field has a value - if yes, all address fields become required
-  const hasAnyAddressValue = formData.address_line1 || formData.address_line2 || formData.city || formData.state || formData.pincode;
+  // If address line 1 has a value, other address fields (except line 2) become required
+  const hasAnyAddressValue = formData.address_line1;
 
   // Calculate age from date of birth
   const calculateAgeFromDOB = (dob) => {
@@ -920,6 +920,23 @@ const PatientRegistration = () => {
       }
     }
 
+    // Build distributed address fields from individual components
+    const addressLine1Parts = [
+      data.careOf ? `C/O ${data.careOf}` : "",
+      data.house,
+      data.street,
+      data.landmark,
+    ].filter((part) => part && part.trim());
+    const addressLine1 = addressLine1Parts.join(", ");
+
+    const addressLine2Parts = [
+      data.location || data.locality,
+      data.postOffice ? `PO: ${data.postOffice}` : "",
+      data.vtc,
+      data.subDistrict,
+    ].filter((part) => part && part.trim());
+    const addressLine2 = addressLine2Parts.join(", ");
+
     // Track which fields are being populated from Aadhaar
     const fieldsToDisable = {};
     if (data.firstName) fieldsToDisable.firstName = true;
@@ -928,12 +945,15 @@ const PatientRegistration = () => {
     if (data.uid) fieldsToDisable.uid = true;
     if (data.dateOfBirth) fieldsToDisable.dateOfBirth = true;
     if (matchedGender) fieldsToDisable.gender = true;
-    if (data.address) fieldsToDisable.address_line1 = true;
+    if (addressLine1 || data.address) fieldsToDisable.address_line1 = true;
+    if (addressLine2) fieldsToDisable.address_line2 = true;
+    if (data.district) fieldsToDisable.city = true;
+    if (data.state) fieldsToDisable.state = true;
+    if (data.pincode) fieldsToDisable.pincode = true;
+    if (data.state) fieldsToDisable.country = true;
 
     setDisabledFields(fieldsToDisable);
 
-    // If address is provided from Aadhaar, put it in address_line1
-    // User can manually split it into different fields later
     const newDOB = data.dateOfBirth || formData.dateOfBirth;
     setFormData((prev) => ({
       ...prev,
@@ -943,7 +963,12 @@ const PatientRegistration = () => {
       uid: data.uid || prev.uid,
       dateOfBirth: newDOB,
       gender: matchedGender || prev.gender,
-      address_line1: data.address || prev.address_line1,
+      address_line1: addressLine1 || data.address || prev.address_line1,
+      address_line2: addressLine2 || prev.address_line2,
+      city: data.district || prev.city,
+      state: data.state || prev.state,
+      pincode: data.pincode || prev.pincode,
+      country: data.state ? "India" : prev.country,
     }));
 
     // Calculate and set age if DOB is provided
@@ -1526,14 +1551,14 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Address Line 2{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
+                    <FormLabel>Address Line 2</FormLabel>
                     <FormInput
                       type="text"
                       name="address_line2"
                       value={formData.address_line2}
                       onChange={handleInputChange}
                       placeholder="Enter address line 2"
-                      required={hasAnyAddressValue}
+                      disabled={disabledFields.address_line2}
                     />
                   </FormGroup>
 
@@ -1546,12 +1571,13 @@ const PatientRegistration = () => {
                       onChange={handleInputChange}
                       placeholder="Enter district"
                       required={hasAnyAddressValue}
+                      disabled={disabledFields.city}
                     />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>State{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
-                    <FormSelect name="state" value={formData.state} onChange={handleInputChange} required={hasAnyAddressValue}>
+                    <FormSelect name="state" value={formData.state} onChange={handleInputChange} required={hasAnyAddressValue} disabled={disabledFields.state}>
                       <option value="">Select state</option>
                       <option value="Andhra Pradesh">Andhra Pradesh</option>
                       <option value="Arunachal Pradesh">Arunachal Pradesh</option>
@@ -1607,6 +1633,7 @@ const PatientRegistration = () => {
                       pattern="[0-9]{6}"
                       placeholder="Enter 6-digit pincode"
                       required={hasAnyAddressValue}
+                      disabled={disabledFields.pincode}
                     />
                   </FormGroup>
 
@@ -1619,6 +1646,7 @@ const PatientRegistration = () => {
                       onChange={handleInputChange}
                       placeholder="Enter country"
                       required={hasAnyAddressValue}
+                      disabled={disabledFields.country}
                     />
                   </FormGroup>
                 </FormGrid>
