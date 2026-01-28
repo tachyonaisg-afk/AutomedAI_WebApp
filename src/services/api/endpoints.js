@@ -97,6 +97,7 @@ const API_ENDPOINTS = {
   LAB_TEST: {
     LIST: "/resource/Lab Test",
     GET_BY_ID: (id) => `/resource/Lab Test/${id}`,
+    UPDATE: (id) => `/resource/Lab Test/${id}`,
     COUNT: "/method/frappe.client.get_count",
   },
 

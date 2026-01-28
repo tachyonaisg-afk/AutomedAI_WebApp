@@ -368,7 +368,7 @@ const SalesReport = () => {
     company: "Ramakrishna Mission Sargachi",
     fromDate: new Date().toISOString().split("T")[0],
     toDate: new Date().toISOString().split("T")[0],
-    account: ["Sales - RKMS", "Cash - RKMS"],
+    accountType: "Sales",
   });
 
   const [companies, setCompanies] = useState([]);
@@ -405,11 +405,15 @@ const SalesReport = () => {
     }
   };
 
+  // Determine the amount column based on account type
+  const amountField = filters.accountType === "Cash" ? "debit" : "credit";
+  const amountLabel = filters.accountType === "Cash" ? "DEBIT" : "CREDIT";
+
   // Define the columns we want to display
   const displayColumns = [
     { label: "POSTING DATE", fieldname: "posting_date" },
     { label: "ACCOUNT", fieldname: "account" },
-    { label: "BALANCE", fieldname: "balance" },
+    { label: amountLabel, fieldname: amountField },
     { label: "CUSTOMER", fieldname: "against" },
     { label: "INVOICE NUMBER", fieldname: "gl_entry" },
     { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
@@ -420,17 +424,17 @@ const SalesReport = () => {
   };
 
   const calculateTotals = () => {
-    if (!reportData || reportData.length === 0) return { balance: 0 };
+    if (!reportData || reportData.length === 0) return { amount: 0 };
 
-    let totalBalance = 0;
+    let totalAmount = 0;
 
     reportData.forEach(row => {
-      if (row.balance) {
-        totalBalance += parseFloat(row.balance) || 0;
+      if (row[amountField]) {
+        totalAmount += parseFloat(row[amountField]) || 0;
       }
     });
 
-    return { balance: totalBalance };
+    return { amount: totalAmount };
   };
 
   const totals = calculateTotals();
@@ -450,11 +454,12 @@ const SalesReport = () => {
 
     try {
       // Prepare filters for the API
+      const selectedAccount = filters.accountType === "Cash" ? "Cash - RKMS" : "Sales - RKMS";
       const apiFilters = {
         company: filters.company,
         from_date: filters.fromDate,
         to_date: filters.toDate,
-        account: filters.account,
+        account: [selectedAccount],
         party: [],
         categorize_by: "Categorize by Voucher (Consolidated)",
         cost_center: [],
@@ -534,7 +539,7 @@ const SalesReport = () => {
             return `${day}/${month}/${year}`;
           }
         }
-        if (col.fieldname === "balance") {
+        if (col.fieldname === "debit" || col.fieldname === "credit") {
           const num = parseFloat(val);
           return !isNaN(num) ? `Rs. ${num.toFixed(2)}` : "Rs. 0.00";
         }
@@ -543,7 +548,7 @@ const SalesReport = () => {
     );
 
     // Total row
-    rows.push(["Total", "", `Rs. ${totals.balance.toFixed(2)}`, "", "", ""]);
+    rows.push(["Total", "", `Rs. ${totals.amount.toFixed(2)}`, "", "", ""]);
 
     autoTable(doc, {
       head: [headers],
@@ -632,8 +637,13 @@ const SalesReport = () => {
 
             <FormGroup>
               <FormLabel>Account Type</FormLabel>
-              <FormSelect disabled>
-                <option>Sales & Cash Accounts</option>
+              <FormSelect
+                name="accountType"
+                value={filters.accountType}
+                onChange={handleFilterChange}
+              >
+                <option value="Sales">Sales</option>
+                <option value="Cash">Cash</option>
               </FormSelect>
             </FormGroup>
           </FiltersGrid>
@@ -711,10 +721,10 @@ const SalesReport = () => {
                             }
 
                             // Format monetary values
-                            if (col.fieldname === "balance" && cellValue !== null && cellValue !== undefined) {
+                            if ((col.fieldname === "debit" || col.fieldname === "credit") && cellValue !== null && cellValue !== undefined) {
                               const numValue = parseFloat(cellValue);
                               formattedValue = !isNaN(numValue) ? `₹${numValue.toFixed(2)}` : "₹0.00";
-                            } else if (col.fieldname === "balance") {
+                            } else if (col.fieldname === "debit" || col.fieldname === "credit") {
                               formattedValue = "₹0.00";
                             }
 
@@ -735,7 +745,7 @@ const SalesReport = () => {
                       <TotalRow>
                         <TableCell>Total</TableCell>
                         <TableCell></TableCell>
-                        <TableCell>₹{totals.balance.toFixed(2)}</TableCell>
+                        <TableCell>₹{totals.amount.toFixed(2)}</TableCell>
                         <TableCell colSpan={3}></TableCell>
                       </TotalRow>
                     )}

@@ -438,7 +438,7 @@ const Collection = () => {
           collection_datetime: item.creation
             ? new Date(item.creation).toLocaleString("en-IN")
             : "-",
-          collected_by: item.collected_by ? item.collected_by.split("@")[0] : "-",
+          collected_by: item.docstatus === 1 && item.collected_by ? item.collected_by.split("@")[0] : "",
           docstatus: item.docstatus,
           name: item.name,
         }));
@@ -471,6 +471,7 @@ const Collection = () => {
     { key: "sample", label: "SAMPLE" },
     { key: "quantity_uom", label: "SAMPLE QUANTITY & UOM" },
     { key: "collection_datetime", label: "COLLECTION DATE AND TIME" },
+    { key: "collected_by", label: "COLLECTED BY" },
     { key: "actions", label: "ACTIONS" },
   ];
 
@@ -541,18 +542,15 @@ const Collection = () => {
         return;
       }
 
-      console.log("Marking as collected:", row);
-      console.log("Selected employee:", selectedEmployee);
-
-      // TODO: API Call 1 - Mark as collected
-      await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {
-        docstatus: 1
+      // Step 1: Assign employee to Lab Test
+      await apiService.put(API_ENDPOINTS.LAB_TEST.UPDATE(row.name), {
+        employee: selectedEmployee,
       });
 
-      console.log("✅ Successfully marked as collected");
-
-      // TODO: API Call 2 - Assign employee (User will provide this API)
-      console.log("🔄 Need to call assign employee API here");
+      // Step 2: Mark sample as collected
+      await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {
+        docstatus: 1,
+      });
 
       // Reset editing state
       setEditingRowId(null);
@@ -563,7 +561,7 @@ const Collection = () => {
 
       alert("Sample marked as collected successfully!");
     } catch (error) {
-      console.error("❌ Error marking as collected:", error);
+      console.error("Error marking as collected:", error);
       alert("Failed to mark sample as collected. Please try again.");
     }
   };
