@@ -1202,7 +1202,7 @@ const PatientRegistration = () => {
         // Get patient details from response
         const patientId = data.data?.name;
         const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
-
+        const company =  formData.company;
         // Create Sales Invoice if there are billing items
         if (items.length > 0 && items.some(item => item.item)) {
           try {
@@ -1229,7 +1229,7 @@ const PatientRegistration = () => {
               docstatus: 1,
               doctype: "Sales Invoice",
               naming_series: "SINV-.YY.-",
-              company: "Ramakrishna Mission Sargachi",
+              company: company,
               posting_date: new Date().toISOString().split("T")[0],
               set_posting_time: 1,
               is_pos: 0,
