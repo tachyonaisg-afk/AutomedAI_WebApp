@@ -1066,13 +1066,13 @@ const AddBilling = () => {
         patient_name: billingData.patient_name,
         items: items.map((item) => ({
           item_code: item.item_code,
-          item_name: item.item_name,
-          description: item.description || item.item_name,
-          warehouse: item.warehouse,
-          income_account: "Sales - RKMS",
-          expense_account: "Cost of Goods Sold - RKMS",
-          cost_center: "Main - RKMS",
-          uom: item.uom || "Unit",
+          // item_name: item.item_name,
+          // description: item.description || item.item_name,
+          // warehouse: item.warehouse,
+          // income_account: "Sales - RKMS",
+          // expense_account: "Cost of Goods Sold - RKMS",
+          // cost_center: "Main - RKMS",
+          // uom: item.uom || "Unit",
           qty: parseFloat(item.qty) || 1,
           rate: parseFloat(item.rate) || 0,
         })),
@@ -1084,9 +1084,9 @@ const AddBilling = () => {
       if (billingData.ref_practitioner) {
         invoicePayload.ref_practitioner = billingData.ref_practitioner;
       }
-      if (billingData.service_unit) {
-        invoicePayload.service_unit = billingData.service_unit;
-      }
+      // if (billingData.service_unit) {
+      //   invoicePayload.service_unit = billingData.service_unit;
+      // }
 
       const invoiceResponse = await apiService.post(API_ENDPOINTS.BILLING.CREATE, invoicePayload);
 
