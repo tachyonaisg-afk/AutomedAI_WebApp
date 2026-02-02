@@ -607,7 +607,10 @@ const LabTestResult = () => {
             <InfoItem>
               <InfoLabel>Age & Gender</InfoLabel>
               <InfoValue>
-                {patientData.age || "N/A"} / {patientData.sex || "N/A"}
+                {patientData.patient_age?.match(/(\d+)\s*Year/)?.[1]
+                  ? `${patientData.patient_age.match(/(\d+)\s*Year/)[1]} yrs`
+                  : "N/A"} / {patientData.sex || "N/A"}
+
               </InfoValue>
             </InfoItem>
             <InfoItem>
