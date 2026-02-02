@@ -366,6 +366,7 @@ const SalesReport = () => {
 
   const [filters, setFilters] = useState({
     // company: "Ramakrishna Mission Sargachi",
+    company: "",
     fromDate: new Date().toISOString().split("T")[0],
     toDate: new Date().toISOString().split("T")[0],
     accountType: "Sales",
