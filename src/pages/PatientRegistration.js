@@ -1213,12 +1213,12 @@ const PatientRegistration = () => {
               .filter(item => item.item) // Only include items with item_code
               .map(item => ({
                 item_code: item.item,
-                item_name: item.itemName || item.item,
-                description: item.itemName || item.item,
-                warehouse: "Finished Goods - RKMS",
-                income_account: "Sales - RKMS",
-                expense_account: "Cost of Goods Sold - RKMS",
-                cost_center: "Main - RKMS",
+                // item_name: item.itemName || item.item,
+                // description: item.itemName || item.item,
+                // warehouse: "Finished Goods - RKMS",
+                // income_account: "Sales - RKMS",
+                // expense_account: "Cost of Goods Sold - RKMS",
+                // cost_center: "Main - RKMS",
                 uom: "Unit",
                 qty: parseFloat(item.qty) || 1,
                 rate: parseFloat(item.rate) || 0,
@@ -1245,7 +1245,7 @@ const PatientRegistration = () => {
               rounding_adjustment: 0,
               mode_of_transport: "Road",
               gst_vehicle_type: "Regular",
-              service_unit: "All Healthcare Service Units - RKMS",
+              // service_unit: "All Healthcare Service Units - RKMS",
             };
 
             // Add ref_practitioner if selected
