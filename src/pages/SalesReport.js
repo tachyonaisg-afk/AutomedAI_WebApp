@@ -365,7 +365,7 @@ const SalesReport = () => {
   const navigate = useNavigate();
 
   const [filters, setFilters] = useState({
-    company: "Ramakrishna Mission Sargachi",
+    // company: "Ramakrishna Mission Sargachi",
     fromDate: new Date().toISOString().split("T")[0],
     toDate: new Date().toISOString().split("T")[0],
     accountType: "Sales",
@@ -454,7 +454,7 @@ const SalesReport = () => {
 
     try {
       // Prepare filters for the API
-      const selectedAccount = filters.accountType === "Cash" ? "Cash - RKMS" : "Sales - RKMS";
+      const selectedAccount = filters.accountType === "Cash" ? (filters.company==="Ramakrishna Mission Sargachi" ? "Cash - RKMS" :"Cash - ADC&P" ): (filters.company==="Ramakrishna Mission Sargachi" ? "Sales - RKMS": "Sales - ADC&P");  //Todo make this dynamic and the accounts will be fetched from api
       const apiFilters = {
         company: filters.company,
         from_date: filters.fromDate,
