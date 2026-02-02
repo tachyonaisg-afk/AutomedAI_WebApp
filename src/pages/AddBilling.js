@@ -1120,7 +1120,7 @@ const AddBilling = () => {
         paid_amount: invoiceTotal,
         received_amount: invoiceTotal,
         target_exchange_rate: 1,
-        paid_to: billingData.payment_type === "Cash" ? "Cash - RKMS" : "Bank - RKMS",
+        paid_to: billingData.payment_type === "Cash" ?  (billingData.company==="Ramakrishna Mission Sargachi" ? "Cash - RKMS" :"Cash - ADC&P" ): (billingData.company==="Ramakrishna Mission Sargachi" ? "Bank - RKMS": "Bank - ADC&P") ,
         paid_to_account_currency: "INR",
         references: [
           {

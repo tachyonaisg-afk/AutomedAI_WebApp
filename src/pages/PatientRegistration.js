@@ -1284,14 +1284,14 @@ const PatientRegistration = () => {
                   docstatus: 1,
                   payment_type: "Receive",
                   posting_date: new Date().toISOString().split("T")[0],
-                  company: "Ramakrishna Mission Sargachi",
-                  mode_of_payment: "Cash",
+                  company: company,
+                  mode_of_payment: "Cash", // Todo This can be changed if needed
                   party_type: "Customer",
                   party: patientName,
                   paid_amount: netTotal,
                   received_amount: netTotal,
                   target_exchange_rate: 1,
-                  paid_to: "Cash - RKMS",
+                  paid_to: company === "Ramakrishna Mission Sargachi"? "Cash - RKMS" : "Cash - ADC&P",
                   paid_to_account_currency: "INR",
                   references: [
                     {
