@@ -1772,8 +1772,8 @@ const PatientRegistration = () => {
               <FormSection>
                 <SectionTitle>Patient Information</SectionTitle>
                 <FormGroup>
-                  <FormLabel>Referring Practitioner</FormLabel>
-                  <FormSelect name="referringPractitioner" value={billingData.referringPractitioner} onChange={handleBillingChange}>
+                  <FormLabel>Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                  <FormSelect name="referringPractitioner" value={billingData.referringPractitioner} onChange={handleBillingChange} required>
                     <option value="">Select practitioner</option>
                     {practitioners.map((p) => (
                       <option key={p.name} value={p.name}>

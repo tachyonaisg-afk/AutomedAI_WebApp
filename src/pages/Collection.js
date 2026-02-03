@@ -542,38 +542,43 @@ const Collection = () => {
         return;
       }
 
-      // Step 1: Get Lab Test ID using sample ID
-      const labTestResponse = await apiService.get(API_ENDPOINTS.LAB_TEST.LIST, {
-        params: {
-          fields: JSON.stringify(["name", "patient", "patient_name", "status"]),
-          filters: JSON.stringify([["sample", "=", row.name], ["docstatus", "=", 1]]),
-          limit_start: 0,
-          limit_page_length: 1,
-        },
-      });
+      const labTestResponse = await apiService.get(
+        API_ENDPOINTS.LAB_TEST.LIST,
+        {
+          params: {
+            fields: JSON.stringify(["name", "patient", "patient_name", "status"]),
+            filters: JSON.stringify([
+              ["sample", "=", row.name],
+              ["docstatus", "=", 1]
+            ]),
+            limit_start: 0,
+            limit_page_length: 1,
+          },
+        }
+      );
+      console.log("Lab test API response:", labTestResponse);
 
-      if (!labTestResponse.data || labTestResponse.data.length === 0) {
+      const labTests = labTestResponse?.data?.data;
+
+      if (!labTests || labTests.length === 0) {
         alert("No Lab Test found for this sample.");
         return;
       }
 
-      const labTestId = labTestResponse.data[0].name;
+      const labTestId = labTests[0].name;
 
-      // Step 2: Assign employee to Lab Test
+      // Assign employee
       await apiService.put(API_ENDPOINTS.LAB_TEST.UPDATE(labTestId), {
         employee: selectedEmployee,
       });
 
-      // Step 3: Mark sample as collected
+      // Mark sample as collected
       await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {
         docstatus: 1,
       });
 
-      // Reset editing state
       setEditingRowId(null);
       setSelectedEmployee("");
-
-      // Refresh the list
       await fetchCollections();
 
       alert("Sample marked as collected successfully!");
@@ -582,6 +587,7 @@ const Collection = () => {
       alert("Failed to mark sample as collected. Please try again.");
     }
   };
+
 
   const handleNewCollection = () => {
     navigate("/pathlab/collection/new");

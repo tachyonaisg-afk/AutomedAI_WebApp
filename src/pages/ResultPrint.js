@@ -346,9 +346,9 @@ const TestName = styled.h2`
 `;
 
 const TestCategory = styled.div`
-  font-size: 11px;
+  font-size: 16px;
   color: #999999;
-  text-align: right;
+  text-align: center;
 `;
 
 const ResultsTable = styled.table`
@@ -472,7 +472,7 @@ const ResultPrint = () => {
         setLoading(true);
         const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
           fields: '["name","patient_name","result_date","lab_test_name"]',
-          filters: JSON.stringify([["Lab Test", "patient", "=", patientId]]),
+          filters: JSON.stringify([["Lab Test", "patient", "=", patientId],["Lab Test","status","=","Completed"]]),
         });
 
         console.log("Lab Tests API Response:", response);
@@ -560,7 +560,7 @@ const ResultPrint = () => {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        pagebreak: { mode: [ 'css', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(element).save();
