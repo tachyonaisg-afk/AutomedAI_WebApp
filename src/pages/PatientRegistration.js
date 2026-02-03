@@ -7,6 +7,7 @@ import AadhaarScanner from "../components/shared/AadhaarScanner";
 import usePageTitle from "../hooks/usePageTitle";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
+import Select from "react-select";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -819,7 +820,7 @@ const PatientRegistration = () => {
       try {
         const practitionerRes = await apiService.get(API_ENDPOINTS.PRACTITIONERS.LIST, {
           fields: '["name", "practitioner_name"]',
-          limit_page_length: 100,
+          limit_page_length: 5000,
         });
         if (practitionerRes.data?.data) {
           setPractitioners(practitionerRes.data.data);
@@ -1202,7 +1203,7 @@ const PatientRegistration = () => {
         // Get patient details from response
         const patientId = data.data?.name;
         const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
-        const company =  formData.company;
+        const company = formData.company;
         // Create Sales Invoice if there are billing items
         if (items.length > 0 && items.some(item => item.item)) {
           try {
@@ -1291,7 +1292,7 @@ const PatientRegistration = () => {
                   paid_amount: netTotal,
                   received_amount: netTotal,
                   target_exchange_rate: 1,
-                  paid_to: company === "Ramakrishna Mission Sargachi"? "Cash - RKMS" : "Cash - ADC&P",
+                  paid_to: company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P",
                   paid_to_account_currency: "INR",
                   references: [
                     {
@@ -1772,15 +1773,24 @@ const PatientRegistration = () => {
               <FormSection>
                 <SectionTitle>Patient Information</SectionTitle>
                 <FormGroup>
-                  <FormLabel>Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                  <FormSelect name="referringPractitioner" value={billingData.referringPractitioner} onChange={handleBillingChange} required>
-                    <option value="">Select practitioner</option>
-                    {practitioners.map((p) => (
-                      <option key={p.name} value={p.name}>
-                        {p.practitioner_name || p.name}
-                      </option>
-                    ))}
-                  </FormSelect>
+                  <FormLabel>
+                    Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk>
+                  </FormLabel>
+
+                  <Select
+                    options={practitioners.map((p) => ({
+                      label: p.practitioner_name || p.name,
+                      value: p.name
+                    }))}
+                    onChange={(selected) =>
+                      setBillingData((prev) => ({
+                        ...prev,
+                        referringPractitioner: selected.value
+                      }))
+                    }
+                    placeholder="Search practitioner..."
+                    isSearchable
+                  />
                 </FormGroup>
               </FormSection>
 

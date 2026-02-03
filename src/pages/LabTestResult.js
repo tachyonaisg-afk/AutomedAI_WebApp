@@ -427,7 +427,7 @@ const LabTestResult = () => {
   useEffect(() => {
     if (labTestData && labTestData.normal_test_items) {
       const formattedResults = labTestData.normal_test_items.map((item) => ({
-        parameter: item.custom_display_name || "",
+        parameter: item.lab_test_name || "",
         value: item.result_value || "",
         unit: item.lab_test_uom || "",
         normalRange: item.normal_range || "",
@@ -586,6 +586,20 @@ const LabTestResult = () => {
     return flag === "high" || flag === "low";
   };
 
+  const calculateAgeFromDOB = (dob) => {
+    if (!dob) return "";
+    const birthDate = new Date(dob);
+    if (isNaN(birthDate)) return "";
+
+    const today = new Date();
+    let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      calculatedAge--;
+    }
+    return calculatedAge;
+  };
+
   return (
     <Layout>
       <ResultContainer>
@@ -607,8 +621,8 @@ const LabTestResult = () => {
             <InfoItem>
               <InfoLabel>Age & Gender</InfoLabel>
               <InfoValue>
-                {patientData.patient_age?.match(/(\d+)\s*Year/)?.[1]
-                  ? `${patientData.patient_age.match(/(\d+)\s*Year/)[1]} yrs`
+                {patientData.dob
+                  ? `${calculateAgeFromDOB(patientData.dob)} years`
                   : "N/A"} / {patientData.sex || "N/A"}
 
               </InfoValue>
