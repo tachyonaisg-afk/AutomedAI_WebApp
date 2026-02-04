@@ -570,9 +570,9 @@ const Collection = () => {
       const labTestId = labTests[0].name;
 
       // Assign employee
-      await apiService.put(API_ENDPOINTS.LAB_TEST.UPDATE(labTestId), {
-        employee: selectedEmployee,
-      });
+      // await apiService.put(API_ENDPOINTS.LAB_TEST.UPDATE(labTestId), {
+      //   employee: selectedEmployee,
+      // });
 
       const getISTDateTime = () => {
         const now = new Date();
@@ -582,7 +582,6 @@ const Collection = () => {
 
         return istTime.toISOString().slice(0, 19).replace("T", " ");
       };
-
 
       // Mark sample as collected
       await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {

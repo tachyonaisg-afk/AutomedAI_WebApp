@@ -1783,18 +1783,16 @@ const PatientRegistration = () => {
                       label: p.practitioner_name || p.name,
                       value: p.name,
                     }))}
-                    value={
-                      billingData.referringPractitioner
-                        ? {
-                          label: billingData.referringPractitioner,
-                          value: billingData.referringPractitioner,
-                        }
-                        : null
-                    }
+                    value={billingData.referringPractitioner}
                     onChange={(selected) =>
                       setBillingData((prev) => ({
                         ...prev,
-                        referringPractitioner: selected ? selected.value : "",
+                        referringPractitioner: selected
+                          ? {
+                            label: selected.label,
+                            value: selected.value,
+                          }
+                          : null,
                       }))
                     }
                     placeholder="Search practitioner..."
