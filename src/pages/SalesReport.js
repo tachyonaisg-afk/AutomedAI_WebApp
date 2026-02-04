@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -363,6 +363,7 @@ const BreadcrumbSeparator = styled.span`
 const SalesReport = () => {
   usePageTitle("Sales Report");
   const navigate = useNavigate();
+  const [appliedFilters, setAppliedFilters] = useState(null);
 
   const [filters, setFilters] = useState({
     // company: "Ramakrishna Mission Sargachi",
@@ -407,11 +408,25 @@ const SalesReport = () => {
   };
 
   // Determine the amount column based on account type
-  const amountField = filters.accountType === "Cash" ? "debit" : "credit";
-  const amountLabel = filters.accountType === "Cash" ? "DEBIT" : "CREDIT";
+  const appliedAccountType = appliedFilters?.accountType;
+
+  const amountField = appliedAccountType === "Cash" ? "debit" : "credit";
+  const amountLabel = appliedAccountType === "Cash" ? "DEBIT" : "CREDIT";
 
   // Define the columns we want to display
-  const displayColumns = [
+  // const displayColumns = [
+  //   { label: "POSTING DATE", fieldname: "posting_date" },
+  //   { label: "ACCOUNT", fieldname: "account" },
+  //   { label: amountLabel, fieldname: amountField },
+  //   { label: "CUSTOMER", fieldname: "against" },
+  //   { label: "INVOICE NUMBER", fieldname: "gl_entry" },
+  //   { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
+  // ];
+
+  const displayColumns = useMemo(() => {
+  if (!appliedFilters) return [];
+
+  return [
     { label: "POSTING DATE", fieldname: "posting_date" },
     { label: "ACCOUNT", fieldname: "account" },
     { label: amountLabel, fieldname: amountField },
@@ -419,6 +434,8 @@ const SalesReport = () => {
     { label: "INVOICE NUMBER", fieldname: "gl_entry" },
     { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
   ];
+}, [appliedFilters, amountField, amountLabel]);
+
 
   const getCellValue = (row, fieldname) => {
     return row[fieldname] ?? "";
@@ -449,17 +466,18 @@ const SalesReport = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const fetchReport = async () => {
+  const fetchReport = async (activeFilters) => {
+
     setLoading(true);
     setError("");
 
     try {
       // Prepare filters for the API
-      const selectedAccount = filters.accountType === "Cash" ? (filters.company==="Ramakrishna Mission Sargachi" ? "Cash - RKMS" :"Cash - ADC&P" ): (filters.company==="Ramakrishna Mission Sargachi" ? "Sales - RKMS": "Sales - ADC&P");  //Todo make this dynamic and the accounts will be fetched from api
+      const selectedAccount = activeFilters.accountType === "Cash" ? (activeFilters.company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P") : (activeFilters.company === "Ramakrishna Mission Sargachi" ? "Sales - RKMS" : "Sales - ADC&P");  //Todo make this dynamic and the accounts will be fetched from api
       const apiFilters = {
-        company: filters.company,
-        from_date: filters.fromDate,
-        to_date: filters.toDate,
+        company: activeFilters.company,
+        from_date: activeFilters.fromDate,
+        to_date: activeFilters.toDate,
         account: [selectedAccount],
         party: [],
         categorize_by: "Categorize by Voucher (Consolidated)",
@@ -501,15 +519,17 @@ const SalesReport = () => {
     }
   };
 
-  const handleRunReport = () => {
-    console.log("Running report with filters:", filters);
-    fetchReport();
-  };
+const handleRunReport = () => {
+  console.log("Running report with filters:", filters);
+  setAppliedFilters({ ...filters });
+  fetchReport({ ...filters });
+};
 
-  const handleRefresh = () => {
-    console.log("Refreshing report...");
-    fetchReport();
-  };
+const handleRefresh = () => {
+  if (!appliedFilters) return;
+  fetchReport(appliedFilters);
+};
+
 
   const handleExportPDF = () => {
     if (reportData.length === 0) return;
@@ -523,8 +543,8 @@ const SalesReport = () => {
     // Date range
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Period: ${filters.fromDate} to ${filters.toDate}`, 14, 28);
-    doc.text(`Company: ${filters.company}`, 14, 34);
+    doc.text(`Period: ${(appliedFilters || filters).fromDate} to ${filters.toDate}`, 14, 28);
+    doc.text(`Company: ${(appliedFilters || filters).company}`, 14, 34);
 
     // Table headers and rows
     const headers = displayColumns.map((col) => col.label);
@@ -758,34 +778,34 @@ const SalesReport = () => {
 
           {!loading && reportData.length > 0 && (
             <PaginationWrapper>
-            <RowsPerPage>
-              <span>Rows per page:</span>
-              <RowsSelect value={rowsPerPage} onChange={handleRowsPerPageChange}>
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </RowsSelect>
-            </RowsPerPage>
+              <RowsPerPage>
+                <span>Rows per page:</span>
+                <RowsSelect value={rowsPerPage} onChange={handleRowsPerPageChange}>
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </RowsSelect>
+              </RowsPerPage>
 
-            <PaginationInfo>
-              <span>{startRecord}-{endRecord} of {totalRecords} records</span>
-              <PaginationButtons>
-                <PaginationButton
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft />
-                </PaginationButton>
-                <PaginationButton
-                  onClick={handleNextPage}
-                  disabled={currentPage >= Math.ceil(totalRecords / rowsPerPage)}
-                >
-                  <ChevronRight />
-                </PaginationButton>
-              </PaginationButtons>
-            </PaginationInfo>
-          </PaginationWrapper>
+              <PaginationInfo>
+                <span>{startRecord}-{endRecord} of {totalRecords} records</span>
+                <PaginationButtons>
+                  <PaginationButton
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft />
+                  </PaginationButton>
+                  <PaginationButton
+                    onClick={handleNextPage}
+                    disabled={currentPage >= Math.ceil(totalRecords / rowsPerPage)}
+                  >
+                    <ChevronRight />
+                  </PaginationButton>
+                </PaginationButtons>
+              </PaginationInfo>
+            </PaginationWrapper>
           )}
         </TableCard>
 

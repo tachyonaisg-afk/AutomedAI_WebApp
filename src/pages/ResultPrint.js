@@ -740,9 +740,9 @@ const ResultPrint = () => {
               </TestSection>
             ))}
 
-            <ReportFooter>
-              {/* Space reserved for signature */}
-            </ReportFooter>
+            {/* <ReportFooter>
+               Space reserved for signature 
+            </ReportFooter> */}
 
             <EndOfReport>*** END OF REPORT ***</EndOfReport>
           </ReportPreview>

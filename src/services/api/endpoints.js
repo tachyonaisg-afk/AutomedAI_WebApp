@@ -94,6 +94,11 @@ const API_ENDPOINTS = {
     UPDATE: (id) => `/resource/Sample Collection/${id}`,
   },
 
+  //Sample Collectors
+  SAMPLE_COLLECTORS: {
+    LIST: "/resource/User",
+  },
+
   // Lab Test (ERPNext)
   LAB_TEST: {
     LIST: "/resource/Lab Test",

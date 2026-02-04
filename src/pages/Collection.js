@@ -374,8 +374,8 @@ const Collection = () => {
   // Fetch employees from API
   const fetchEmployees = async () => {
     try {
-      const fields = JSON.stringify(["name", "employee_name"]);
-      const response = await apiService.get(API_ENDPOINTS.EMPLOYEE.LIST, {
+      const fields = JSON.stringify(["name", "full_name"]);
+      const response = await apiService.get(API_ENDPOINTS.SAMPLE_COLLECTORS.LIST, {
         fields: fields,
         limit_page_length: 0,
       });
@@ -436,8 +436,8 @@ const Collection = () => {
           quantity_uom: item.sample_qty && item.sample_uom
             ? `${item.sample_qty} ${item.sample_uom}`
             : "-",
-          collection_datetime: item.creation
-            ? new Date(item.creation).toLocaleString("en-IN")
+          collection_datetime: item.docstatus === 1 && item.collected_time
+            ? new Date(item.collected_time).toLocaleString("en-IN")
             : "-",
           collected_by: item.docstatus === 1 && item.collected_by ? item.collected_by.split("@")[0] : "",
           docstatus: item.docstatus,
@@ -467,7 +467,7 @@ const Collection = () => {
     { key: "patient_id", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "gender", label: "GENDER" },
-    { key: "referring_practitioner", label: "REFERRING PRACTITIONER" },
+    { key: "referring_practitioner", label: "REFERRED BY" },
     { key: "date", label: "DATE" },
     { key: "status", label: "STATUS" },
     { key: "sample", label: "SAMPLE" },
@@ -495,7 +495,7 @@ const Collection = () => {
               <option value="">Select Employee</option>
               {employees.map((emp) => (
                 <option key={emp.name} value={emp.name}>
-                  {emp.employee_name || emp.name}
+                  {emp.full_name || emp.name}
                 </option>
               ))}
             </EmployeeSelect>
@@ -574,9 +574,21 @@ const Collection = () => {
         employee: selectedEmployee,
       });
 
+      const getISTDateTime = () => {
+        const now = new Date();
+
+        // Convert to IST (UTC +5:30)
+        const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+
+        return istTime.toISOString().slice(0, 19).replace("T", " ");
+      };
+
+
       // Mark sample as collected
       await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {
         docstatus: 1,
+        collected_by: selectedEmployee,
+        collected_time: getISTDateTime(),
       });
 
       setEditingRowId(null);
