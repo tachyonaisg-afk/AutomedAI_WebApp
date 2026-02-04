@@ -422,12 +422,17 @@ const LabTestResult = () => {
   }, [patientId, id]);
 
   const [testResults, setTestResults] = useState([]);
+      // Helper function to remove prefixes from test names
+  const removeTestPrefix = (testName) => {
+    if (!testName) return testName;
+    return testName.replace(/^(PHC-|LAB-|PLB-)\s*/i, '');
+  };
 
   // Populate test results from lab test data
   useEffect(() => {
     if (labTestData && labTestData.normal_test_items) {
       const formattedResults = labTestData.normal_test_items.map((item) => ({
-        parameter: item.lab_test_name || "",
+        parameter: removeTestPrefix(item.lab_test_name) || "",
         value: item.result_value || "",
         unit: item.lab_test_uom || "",
         normalRange: item.normal_range || "",

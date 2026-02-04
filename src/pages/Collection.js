@@ -424,6 +424,7 @@ const Collection = () => {
         // Transform API response to match table format
         const transformedData = response.data.data.map((item, index) => ({
           id: index + 1,
+          sample_id: item.name || "-",
           patient_id: item.patient || "-",
           patient_name: item.patient_name || "-",
           gender: item.patient_sex || "-",
@@ -462,6 +463,7 @@ const Collection = () => {
   }, []);
 
   const columns = [
+    { key: "sample_id", label: "SAMPLE ID" },
     { key: "patient_id", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "gender", label: "GENDER" },
@@ -587,7 +589,6 @@ const Collection = () => {
       alert("Failed to mark sample as collected. Please try again.");
     }
   };
-
 
   const handleNewCollection = () => {
     navigate("/pathlab/collection/new");

@@ -346,9 +346,9 @@ const TestName = styled.h2`
 `;
 
 const TestCategory = styled.div`
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
-  color: #999999;
+  color: #1a1a1a;
   text-align: center;
 `;
 
@@ -473,7 +473,7 @@ const ResultPrint = () => {
         setLoading(true);
         const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
           fields: '["name","patient_name","result_date","lab_test_name"]',
-          filters: JSON.stringify([["Lab Test", "patient", "=", patientId],["Lab Test","status","=","Completed"]]),
+          filters: JSON.stringify([["Lab Test", "patient", "=", patientId], ["Lab Test", "status", "=", "Completed"]]),
         });
 
         console.log("Lab Tests API Response:", response);
@@ -561,7 +561,7 @@ const ResultPrint = () => {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: [ 'css', 'legacy'] }
+        pagebreak: { mode: ['css', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(element).save();
@@ -709,10 +709,10 @@ const ResultPrint = () => {
             {selectedTestDetails.map((testDetail, index) => (
               <TestSection key={testDetail.name}>
                 <TestSectionHeader>
-                  <TestName>{removeTestPrefix(testDetail.lab_test_name) || "N/A"}</TestName>
                   <TestCategory>
                     {testDetail.department || "Laboratory Test"}
                   </TestCategory>
+                  <TestName>{removeTestPrefix(testDetail.lab_test_name) || "N/A"}</TestName>
                 </TestSectionHeader>
 
                 {testDetail.normal_test_items && testDetail.normal_test_items.length > 0 && (
