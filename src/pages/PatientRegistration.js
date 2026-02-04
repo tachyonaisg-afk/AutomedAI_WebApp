@@ -1772,7 +1772,6 @@ const PatientRegistration = () => {
             <>
               <FormSection>
                 <SectionTitle>Patient Information</SectionTitle>
-
                 <FormGroup>
                   <FormLabel>
                     Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk>
@@ -1781,18 +1780,12 @@ const PatientRegistration = () => {
                   <Select
                     options={practitioners.map((p) => ({
                       label: p.practitioner_name || p.name,
-                      value: p.name,
+                      value: p.name
                     }))}
-                    value={billingData.referringPractitioner}
                     onChange={(selected) =>
                       setBillingData((prev) => ({
                         ...prev,
-                        referringPractitioner: selected
-                          ? {
-                            label: selected.label,
-                            value: selected.value,
-                          }
-                          : null,
+                        referringPractitioner: selected.value
                       }))
                     }
                     placeholder="Search practitioner..."
@@ -1801,7 +1794,6 @@ const PatientRegistration = () => {
                   />
                 </FormGroup>
               </FormSection>
-
 
               <ItemsSection>
                 <ItemsHeader>
