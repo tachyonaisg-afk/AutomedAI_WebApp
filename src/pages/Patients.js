@@ -184,6 +184,7 @@ const Patients = () => {
   const selectedPatientId = location.state?.selectedPatientId;
 
   const columns = [
+    { key: "name", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "sex", label: "SEX" },
     { key: "mobile", label: "MOBILE" },

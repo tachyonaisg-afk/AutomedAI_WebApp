@@ -545,7 +545,6 @@ const AadhaarDescription = styled.p`
 const ItemSearchWrapper = styled.div`
   position: relative;
   min-width: 180px;
-  z-index: 10;
 `;
 
 const SearchResults = styled.div`
