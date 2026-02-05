@@ -714,6 +714,7 @@ const AddBilling = () => {
         ...prev,
         patient: preselectedPatient.name,
         patient_name: preselectedPatient.patient_name,
+        customer: preselectedPatient.customer_name
       }));
       setPatientSearch(preselectedPatient.patient_name);
       console.log("Preselected patient set:", preselectedPatient);
@@ -884,12 +885,14 @@ const AddBilling = () => {
     try {
       const response = await apiService.get(API_ENDPOINTS.PATIENTS.GET_BY_ID(patientId));
       const patientData = response.data?.data;
+      console.log(patientData, "patientData");
       const patientName = patientData?.patient_name || patient.description || patientId;
+      const customerName = patientData?.customer || patientName;
 
       setBillingData((prev) => ({
         ...prev,
         // Customer should be the linked customer or patient name
-        customer: patientData?.customer || patientName,
+        customer: customerName,
         // Patient field uses the patient ID (name field like "HLC-PAT-2025-00032")
         patient: patientId,
         patient_name: patientName,

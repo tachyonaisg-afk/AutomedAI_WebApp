@@ -297,6 +297,7 @@ const PatientDetail = () => {
         preselectedPatient: {
           name: patientData.name,
           patient_name: patientData.patient_name || `${patientData.first_name || ''} ${patientData.middle_name || ''} ${patientData.last_name || ''}`.trim(),
+          customer_name: patientData.customer || `${patientData.first_name || ''} ${patientData.middle_name || ''} ${patientData.last_name || ''}`.trim(),
         },
         defaultItemCode: "STO-ITEM-2025-00539"
       }
