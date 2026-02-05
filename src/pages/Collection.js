@@ -436,8 +436,8 @@ const Collection = () => {
           quantity_uom: item.sample_qty && item.sample_uom
             ? `${item.sample_qty} ${item.sample_uom}`
             : "-",
-          collection_datetime: item.docstatus === 1 && item.collected_time
-            ? new Date(item.collected_time).toLocaleString("en-IN")
+          collection_datetime: item.docstatus === 1 && item.modified
+            ? new Date(item.modified).toLocaleString("en-IN")
             : "-",
           collected_by: item.docstatus === 1 && item.collected_by ? item.collected_by.split("@")[0] : "",
           docstatus: item.docstatus,
