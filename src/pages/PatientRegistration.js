@@ -689,7 +689,24 @@ const PatientRegistration = () => {
   const [searchingItem, setSearchingItem] = useState(false);
 
   // If address line 1 has a value, other address fields (except line 2) become required
-  const hasAnyAddressValue = formData.address_line1;
+  const hasAnyAddressValue = formData.address_line1?.trim().length > 0;
+
+  useEffect(() => {
+  if (formData.address_line1?.trim()) {
+    // If address is entered, force country to India
+    setFormData((prev) => ({
+      ...prev,
+      country: "India",
+    }));
+  } else {
+    // If address is cleared, reset country (optional)
+    setFormData((prev) => ({
+      ...prev,
+      country: "",
+    }));
+  }
+}, [formData.address_line1]);
+
 
   // Calculate age from date of birth
   const calculateAgeFromDOB = (dob) => {
