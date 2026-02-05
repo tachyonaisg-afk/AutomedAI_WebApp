@@ -368,16 +368,18 @@ const Collection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingRowId, setEditingRowId] = useState(null);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employees, setEmployees] = useState([]);
 
   // Fetch employees from API
   const fetchEmployees = async () => {
     try {
-      const fields = JSON.stringify(["name","user_id","employee_name"]);
+      const fields = JSON.stringify(["name", "user_id", "employee_name"]);
       const response = await apiService.get(API_ENDPOINTS.SAMPLE_COLLECTORS.LIST, {
         fields: fields,
-        filter: JSON.stringify({ "designation": "Phlebotomist" }),
+        filters: JSON.stringify([
+          ["designation", "=", "Phlebotomist"]
+        ]),
         limit_page_length: 0,
       });
       if (response.data?.data) {
@@ -491,16 +493,22 @@ const Collection = () => {
         return (
           <ActionContainer>
             <EmployeeSelect
-              value={selectedEmployee}
-              onChange={(e) => setSelectedEmployee(e.target.value)}
+              value={selectedEmployee?.user_id || ""}
+              onChange={(e) => {
+                const emp = employees.find(
+                  (emp) => emp.user_id === e.target.value
+                );
+                setSelectedEmployee(emp);
+              }}
             >
               <option value="">Select Employee</option>
               {employees.map((emp) => (
                 <option key={emp.user_id} value={emp.user_id}>
-                  {emp.employee_name || emp.user_id}
+                  {emp.employee_name}
                 </option>
               ))}
             </EmployeeSelect>
+
             <IconButton
               variant="confirm"
               onClick={() => handleConfirmCollect(row)}
@@ -588,7 +596,7 @@ const Collection = () => {
       // Mark sample as collected
       await apiService.put(API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(row.name), {
         docstatus: 1,
-        collected_by: selectedEmployee,
+        collected_by: selectedEmployee.user_id,
         collected_time: getISTDateTime(),
       });
 
