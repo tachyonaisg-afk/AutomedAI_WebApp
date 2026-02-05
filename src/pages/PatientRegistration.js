@@ -1785,7 +1785,7 @@ const PatientRegistration = () => {
                     onChange={(selected) =>
                       setBillingData((prev) => ({
                         ...prev,
-                        referringPractitioner: selected.value
+                        referringPractitioner: selected ? selected.value : null
                       }))
                     }
                     placeholder="Search practitioner..."
