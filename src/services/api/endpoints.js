@@ -96,7 +96,7 @@ const API_ENDPOINTS = {
 
   //Sample Collectors
   SAMPLE_COLLECTORS: {
-    LIST: "/resource/User",
+    LIST: "/resource/Employee",
   },
 
   // Lab Test (ERPNext)

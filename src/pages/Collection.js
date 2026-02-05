@@ -374,9 +374,10 @@ const Collection = () => {
   // Fetch employees from API
   const fetchEmployees = async () => {
     try {
-      const fields = JSON.stringify(["name", "full_name"]);
+      const fields = JSON.stringify(["name","user_id","employee_name"]);
       const response = await apiService.get(API_ENDPOINTS.SAMPLE_COLLECTORS.LIST, {
         fields: fields,
+        filter: JSON.stringify({ "designation": "Phlebotomist" }),
         limit_page_length: 0,
       });
       if (response.data?.data) {
@@ -495,8 +496,8 @@ const Collection = () => {
             >
               <option value="">Select Employee</option>
               {employees.map((emp) => (
-                <option key={emp.name} value={emp.name}>
-                  {emp.full_name || emp.name}
+                <option key={emp.user_id} value={emp.user_id}>
+                  {emp.employee_name || emp.user_id}
                 </option>
               ))}
             </EmployeeSelect>
@@ -521,7 +522,7 @@ const Collection = () => {
       // Otherwise show the "Collected" button
       return (
         <ActionButton onClick={() => handleCollectClick(row)}>
-          Collected
+          Collect
         </ActionButton>
       );
     }
