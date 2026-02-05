@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Plus, Minus, CreditCard, Camera } from "lucide-react";
+import { Plus, Minus, CreditCard, Camera, X } from "lucide-react";
 import AadhaarScanner from "../components/shared/AadhaarScanner";
 import usePageTitle from "../hooks/usePageTitle";
 import apiService from "../services/api/apiService";
@@ -586,6 +586,26 @@ const SearchResultEmpty = styled.div`
   font-size: 14px;
 `;
 
+const DeleteItemButton = styled.button`
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #e53935;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #c62828;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
 const PatientRegistration = () => {
   usePageTitle("Patient Registration");
   const navigate = useNavigate();
@@ -1117,9 +1137,15 @@ const PatientRegistration = () => {
     setItems([...items, newItem]);
   };
 
-  const removeItem = () => {
-    if (items.length > 1) {
-      setItems(items.slice(0, -1));
+  // const removeItem = () => {
+  //   if (items.length > 1) {
+  //     setItems(items.slice(0, -1));
+  //   }
+  // };
+    const removeItem = (index) => {
+    if (items.length > 0) {
+      const updatedItems = items.filter((_, i) => i !== index);
+      setItems(updatedItems);
     }
   };
 
@@ -1802,9 +1828,9 @@ const PatientRegistration = () => {
                     <IconButton type="button" onClick={addItem}>
                       <Plus />
                     </IconButton>
-                    <IconButton type="button" onClick={removeItem}>
+                    {/* <IconButton type="button" onClick={removeItem}>
                       <Minus />
-                    </IconButton>
+                    </IconButton> */}
                   </ItemButtons>
                 </ItemsHeader>
 
@@ -1875,6 +1901,11 @@ const PatientRegistration = () => {
                           <ItemInput type="number" step="0.01" value={item.rate} onChange={(e) => handleItemChange(index, "rate", e.target.value)} />
                         </TableCell>
                         <TableCell>{item.amount.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <DeleteItemButton type="button" onClick={() => removeItem(index)}>
+                            <X />
+                          </DeleteItemButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

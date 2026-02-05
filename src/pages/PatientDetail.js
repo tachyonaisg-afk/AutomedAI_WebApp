@@ -364,7 +364,7 @@ const PatientDetail = () => {
           </PatientInfo>
           <ActionButtons>
             <EditButton onClick={handleEditProfile}>Edit Profile</EditButton>
-            <BookButton onClick={handleBookAppointment}>Book Appointment</BookButton>
+            <BookButton onClick={handleBookAppointment}>Book Appointment/Billing</BookButton>
             <PrescriptionButton onClick={handlePrescription}>Prescription</PrescriptionButton>
           </ActionButtons>
         </PatientHeader>

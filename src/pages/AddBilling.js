@@ -1078,6 +1078,7 @@ const AddBilling = () => {
         })),
         apply_discount_on: billingData.apply_discount_on,
         additional_discount_percentage: parseFloat(billingData.additional_discount_percentage) || 0,
+        due_date: billingData.due_date,
       };
 
       // Add optional fields if they have values
@@ -1415,8 +1416,8 @@ const AddBilling = () => {
                     <TableHeader>#</TableHeader>
                     <TableHeader>Item Code</TableHeader>
                     <TableHeader>Item Name</TableHeader>
-                    <TableHeader>Warehouse</TableHeader>
-                    <TableHeader>UOM</TableHeader>
+                    {/* <TableHeader>Warehouse</TableHeader> */}
+                    {/* <TableHeader>UOM</TableHeader> */}
                     <TableHeader>Qty</TableHeader>
                     <TableHeader>Rate</TableHeader>
                     <TableHeader>Amount</TableHeader>
@@ -1483,7 +1484,7 @@ const AddBilling = () => {
                             disabled
                           />
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <FormSelect
                             value={item.warehouse}
                             onChange={(e) => handleItemChange(index, "warehouse", e.target.value)}
@@ -1496,15 +1497,15 @@ const AddBilling = () => {
                             ))}
                             <option value="Finished Goods - RKMS">Finished Goods - RKMS</option>
                           </FormSelect>
-                        </TableCell>
-                        <TableCell>
+                        </TableCell> */}
+                        {/* <TableCell>
                           <ItemInput
                             type="text"
                             value={item.uom}
                             disabled
                             style={{ width: "60px" }}
                           />
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell>
                           <QtyControlWrapper>
                             <QtyButton
@@ -1560,7 +1561,7 @@ const AddBilling = () => {
             </ItemsTableWrapper>
 
             <ItemFooter>
-              <FooterItem>
+              {/* <FooterItem>
                 <FooterLabel>Apply Discount On</FooterLabel>
                 <FormSelect
                   name="apply_discount_on"
@@ -1571,7 +1572,7 @@ const AddBilling = () => {
                   <option value="Grand Total">Grand Total</option>
                   <option value="Net Total">Net Total</option>
                 </FormSelect>
-              </FooterItem>
+              </FooterItem> */}
               <FooterItem>
                 <FooterLabel>Discount %</FooterLabel>
                 <DiscountInput
