@@ -441,24 +441,25 @@ const ResultPrint = () => {
   };
 
   const formatDateTime = (dateString) => {
-  if (!dateString) return "-";
+    if (!dateString) return "-";
 
-  // Convert "2026-02-04 15:35:59.230416" → ISO-like
-  const isoString = dateString.replace(" ", "T");
+    const isoString = dateString.replace(" ", "T");
+    const date = new Date(isoString);
 
-  const date = new Date(isoString);
+    if (isNaN(date.getTime())) return "-";
 
-  if (isNaN(date.getTime())) return "-";
+    const formatted = date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
 
-  return date.toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-};
+    // Force AM / PM uppercase
+    return formatted.replace(/\b(am|pm)\b/, (match) => match.toUpperCase());
+  };
 
 
   // Helper function to format age (extract years only)
