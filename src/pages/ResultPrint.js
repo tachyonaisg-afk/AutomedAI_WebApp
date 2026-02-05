@@ -440,6 +440,27 @@ const ResultPrint = () => {
     }
   };
 
+  const formatDateTime = (dateString) => {
+  if (!dateString) return "-";
+
+  // Convert "2026-02-04 15:35:59.230416" → ISO-like
+  const isoString = dateString.replace(" ", "T");
+
+  const date = new Date(isoString);
+
+  if (isNaN(date.getTime())) return "-";
+
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+
   // Helper function to format age (extract years only)
   const formatAge = (ageString) => {
     if (!ageString) return "N/A";
@@ -702,7 +723,7 @@ const ResultPrint = () => {
               </InfoField>
               <InfoField>
                 <InfoLabel>Report Status Date</InfoLabel>
-                <InfoValue>{formatDate(selectedTestDetails[0]?.result_date)}</InfoValue>
+                <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
               </InfoField>
             </PatientInfoSection>
 
@@ -710,7 +731,7 @@ const ResultPrint = () => {
               <TestSection key={testDetail.name}>
                 <TestSectionHeader>
                   <TestCategory>
-                    {testDetail.department || "Laboratory Test"}
+                    Department of {testDetail.department || "Laboratory Test"}
                   </TestCategory>
                   <TestName>{removeTestPrefix(testDetail.lab_test_name) || "N/A"}</TestName>
                 </TestSectionHeader>

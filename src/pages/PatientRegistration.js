@@ -1859,6 +1859,7 @@ const PatientRegistration = () => {
                       <TableHeader>Qty</TableHeader>
                       <TableHeader>Rate</TableHeader>
                       <TableHeader>Amount</TableHeader>
+                      <TableHeader></TableHeader>
                     </TableRow>
                   </TableHead>
                   <TableBody>
