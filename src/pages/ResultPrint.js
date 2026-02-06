@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import api from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
+import { createGlobalStyle } from "styled-components";
 
 const Container = styled.div`
   display: flex;
@@ -405,6 +406,33 @@ const EndOfReport = styled.div`
     page-break-after: always;
   }
 `;
+const PrintStyles = createGlobalStyle`
+  @media print {
+    .pdf-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 120px;
+      background: white;
+      z-index: 1000;
+    }
+
+    .pdf-body {
+      margin-top: 140px;
+    }
+
+    .pdf-header {
+      display: table-header-group;
+    }
+
+    .pdf-footer {
+      display: table-footer-group;
+    }
+  }
+`;
+
+
 
 const ResultPrint = () => {
   usePageTitle("Result Print");
@@ -419,6 +447,7 @@ const ResultPrint = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedTestDetails, setSelectedTestDetails] = useState([]);
+  const [sampleDetails, setSampleDetails] = useState([]);
 
   // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
@@ -551,6 +580,24 @@ const ResultPrint = () => {
     fetchSelectedTestDetails();
   }, [tests]);
 
+  useEffect(() => {
+    console.log("Selected Test Details:", selectedTestDetails);
+    const sampleId = selectedTestDetails[0]?.sample;
+    if (sampleId) {
+      const fetchSampleDetails = async () => {
+        try {
+          const response = await api.get(`https://hms.automedai.in/api/resource/Sample Collection/${sampleId}`);
+          console.log("Sample Details API Response:", response);
+          const sampleDetails = response.data?.data;
+          setSampleDetails(sampleDetails);
+        } catch (err) {
+          console.error("Error fetching sample details:", err);
+        }
+      };
+      fetchSampleDetails();
+    }
+  }, [selectedTestDetails]);
+
   const toggleTestSelection = (testId) => {
     setTests(
       tests.map((test) =>
@@ -583,7 +630,7 @@ const ResultPrint = () => {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        pagebreak: { mode: ['css', 'avoid-all', 'legacy'] }
       };
 
       await html2pdf().set(opt).from(element).save();
@@ -693,80 +740,96 @@ const ResultPrint = () => {
               </DownloadButton>
             </ButtonGroup>
           </PreviewHeader>
+          
+          <PrintStyles />
 
           <ReportPreview data-pdf-content>
-            <ReportHeader>
-              {/* Space reserved for letterhead */}
-            </ReportHeader>
+            <div className="pdf-header">
+              <ReportHeader>
+                {/* Space reserved for letterhead */}
+              </ReportHeader>
+            </div>
+            <div className="pdf-body">
 
-            <PatientInfoSection>
-              <InfoField>
-                <InfoLabel>Patient Name</InfoLabel>
-                <InfoValue>{selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
-              </InfoField>
-              <InfoField>
-                <InfoLabel>Ref Doctor</InfoLabel>
-                <InfoValue>{selectedTestDetails[0]?.referring_practitioner || "N/A"}</InfoValue>
-              </InfoField>
-              <InfoField>
-                <InfoLabel>Patient ID</InfoLabel>
-                <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
-              </InfoField>
-              <InfoField>
-                <InfoLabel>Sample Date</InfoLabel>
-                <InfoValue>{formatDate(selectedTestDetails[0]?.submitted_date)}</InfoValue>
-              </InfoField>
-              <InfoField>
-                <InfoLabel>Age / Gender</InfoLabel>
-                <InfoValue>
-                  {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
-                </InfoValue>
-              </InfoField>
-              <InfoField>
-                <InfoLabel>Report Status Date</InfoLabel>
-                <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
-              </InfoField>
-            </PatientInfoSection>
+              <PatientInfoSection>
+                <InfoField>
+                  <InfoLabel>Patient Name</InfoLabel>
+                  <InfoValue>{selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Ref Doctor</InfoLabel>
+                  <InfoValue>{selectedTestDetails[0]?.referring_practitioner || "N/A"}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Patient ID</InfoLabel>
+                  <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Sample Date</InfoLabel>
+                  <InfoValue>{formatDateTime(sampleDetails?.collected_time)}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Age / Gender</InfoLabel>
+                  <InfoValue>
+                    {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
+                  </InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Report Status Date</InfoLabel>
+                  <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
+                </InfoField>
+              </PatientInfoSection>
 
-            {selectedTestDetails.map((testDetail, index) => (
-              <TestSection key={testDetail.name}>
-                <TestSectionHeader>
-                  <TestCategory>
-                    Department of {testDetail.department || "Laboratory Test"}
-                  </TestCategory>
-                  <TestName>{removeTestPrefix(testDetail.lab_test_name) || "N/A"}</TestName>
-                </TestSectionHeader>
+              {selectedTestDetails.map((testDetail, index) => {
+                const showDepartment =
+                  index === 0 ||
+                  selectedTestDetails[index - 1]?.department !== testDetail.department;
 
-                {testDetail.normal_test_items && testDetail.normal_test_items.length > 0 && (
-                  <ResultsTable>
-                    <thead>
-                      <tr>
-                        <TableHeader>Test Parameter</TableHeader>
-                        <TableHeader>Result</TableHeader>
-                        <TableHeader>Units</TableHeader>
-                        <TableHeader>Reference Interval</TableHeader>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {testDetail.normal_test_items.map((item, itemIndex) => (
-                        <TableRow key={itemIndex}>
-                          <TableCell>{removeTestPrefix(item.lab_test_name) || "N/A"}</TableCell>
-                          <TableCell>{item.result_value || "N/A"}</TableCell>
-                          <TableCell>{item.lab_test_uom || ""}</TableCell>
-                          <TableCell>{item.normal_range || "N/A"}</TableCell>
-                        </TableRow>
-                      ))}
-                    </tbody>
-                  </ResultsTable>
-                )}
-              </TestSection>
-            ))}
+                return (
+                  <TestSection key={testDetail.name}>
+                    <TestSectionHeader>
+                      {showDepartment && (
+                        <TestCategory>
+                          Department of {testDetail.department || "Laboratory Test"}
+                        </TestCategory>
+                      )}
+                      <TestName>
+                        {removeTestPrefix(testDetail.lab_test_name) || "N/A"}
+                      </TestName>
+                    </TestSectionHeader>
 
-            {/* <ReportFooter>
+                    {testDetail.normal_test_items && testDetail.normal_test_items.length > 0 && (
+                      <ResultsTable>
+                        <thead>
+                          <tr>
+                            <TableHeader>Test Parameter</TableHeader>
+                            <TableHeader>Result</TableHeader>
+                            <TableHeader>Units</TableHeader>
+                            <TableHeader>Reference Interval</TableHeader>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {testDetail.normal_test_items.map((item, itemIndex) => (
+                            <TableRow key={itemIndex}>
+                              <TableCell>{removeTestPrefix(item.lab_test_name) || "N/A"}</TableCell>
+                              <TableCell>{item.result_value || "N/A"}</TableCell>
+                              <TableCell>{item.lab_test_uom || ""}</TableCell>
+                              <TableCell>{item.normal_range || "N/A"}</TableCell>
+                            </TableRow>
+                          ))}
+                        </tbody>
+                      </ResultsTable>
+                    )}
+                  </TestSection>
+                );
+              })}
+
+              {/* <ReportFooter>
                Space reserved for signature 
             </ReportFooter> */}
 
-            <EndOfReport>*** END OF REPORT ***</EndOfReport>
+              <EndOfReport>*** END OF REPORT ***</EndOfReport>
+            </div>
           </ReportPreview>
         </PreviewCard>
       </MainContent>

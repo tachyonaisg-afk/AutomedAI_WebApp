@@ -2,127 +2,99 @@
  * API Service
  * Reusable HTTP methods (GET, POST, PUT, DELETE, PATCH)
  * All API calls go through this service
+ *
+ * ERPNext/Frappe:
+ * - Authentication handled via browser cookies (sid)
+ * - No Authorization / Cookie headers manually set
  */
 
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 class ApiService {
   /**
    * GET request
-   * @param {string} endpoint - API endpoint
-   * @param {object} params - Query parameters
-   * @param {object} headers - Additional headers
-   * @returns {Promise} API response
    */
   async get(endpoint, params = {}, headers = {}) {
     return apiClient.request({
-      method: 'GET',
+      method: "GET",
       endpoint,
       params,
       headers,
+      useCookieAuth: true,
     });
   }
 
   /**
    * POST request
-   * @param {string} endpoint - API endpoint
-   * @param {object} data - Request body data
-   * @param {object} headers - Additional headers
-   * @returns {Promise} API response
    */
   async post(endpoint, data = {}, headers = {}) {
     return apiClient.request({
-      method: 'POST',
+      method: "POST",
       endpoint,
       data,
       headers,
+      useCookieAuth: true,
     });
   }
 
   /**
    * PUT request
-   * @param {string} endpoint - API endpoint
-   * @param {object} data - Request body data
-   * @param {object} headers - Additional headers
-   * @returns {Promise} API response
    */
   async put(endpoint, data = {}, headers = {}) {
     return apiClient.request({
-      method: 'PUT',
+      method: "PUT",
       endpoint,
       data,
       headers,
+      useCookieAuth: true,
     });
   }
 
   /**
    * PATCH request
-   * @param {string} endpoint - API endpoint
-   * @param {object} data - Request body data
-   * @param {object} headers - Additional headers
-   * @returns {Promise} API response
    */
   async patch(endpoint, data = {}, headers = {}) {
     return apiClient.request({
-      method: 'PATCH',
+      method: "PATCH",
       endpoint,
       data,
       headers,
+      useCookieAuth: true,
     });
   }
 
   /**
    * DELETE request
-   * @param {string} endpoint - API endpoint
-   * @param {object} params - Query parameters
-   * @param {object} headers - Additional headers
-   * @returns {Promise} API response
    */
   async delete(endpoint, params = {}, headers = {}) {
     return apiClient.request({
-      method: 'DELETE',
+      method: "DELETE",
       endpoint,
       params,
       headers,
+      useCookieAuth: true,
     });
   }
 
   /**
-   * Upload file
-   * @param {string} endpoint - API endpoint
-   * @param {FormData} formData - FormData with file
-   * @param {Function} onProgress - Progress callback
-   * @returns {Promise} API response
+   * Upload file (ERPNext-safe)
    */
   async upload(endpoint, formData, onProgress = null) {
-    // Remove Content-Type header for FormData (browser will set it with boundary)
-    const headers = {};
-    
-    // Add auth token if available
-    const authToken = apiClient.getAuthToken();
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
-    
-    // Add API keys
-    const apiKeyHeaders = apiClient.getApiKeyHeaders();
-    Object.assign(headers, apiKeyHeaders);
-    
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      
-      // Handle progress
+
+      // Progress handler
       if (onProgress) {
-        xhr.upload.addEventListener('progress', (e) => {
+        xhr.upload.addEventListener("progress", (e) => {
           if (e.lengthComputable) {
             const percentComplete = (e.loaded / e.total) * 100;
             onProgress(percentComplete);
           }
         });
       }
-      
-      // Handle completion
-      xhr.addEventListener('load', () => {
+
+      // Load handler
+      xhr.addEventListener("load", () => {
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const response = JSON.parse(xhr.responseText);
@@ -131,7 +103,7 @@ class ApiService {
               status: xhr.status,
               statusText: xhr.statusText,
             });
-          } catch (e) {
+          } catch {
             resolve({
               data: xhr.responseText,
               status: xhr.status,
@@ -142,31 +114,28 @@ class ApiService {
           reject(new Error(`Upload failed with status ${xhr.status}`));
         }
       });
-      
-      // Handle errors
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload failed'));
-      });
-      
-      // Open and send request
-      const url = apiClient.buildURL(endpoint);
-      xhr.open('POST', url);
 
-      // Enable cookies for ERPNext session
+      // Error handler
+      xhr.addEventListener("error", () => {
+        reject(new Error("Upload failed"));
+      });
+
+      // Build URL
+      const url = apiClient.buildURL(endpoint);
+      xhr.open("POST", url);
+
+      // 🔥 CRITICAL: allow browser to send sid cookie
       xhr.withCredentials = true;
 
-      // Set headers
-      Object.keys(headers).forEach(key => {
-        xhr.setRequestHeader(key, headers[key]);
-      });
+      // ❌ DO NOT set Authorization / Cookie headers
+      // ❌ DO NOT set Content-Type (browser sets boundary)
 
       xhr.send(formData);
     });
   }
 }
 
-// Create singleton instance
+// Singleton
 const apiService = new ApiService();
 
 export default apiService;
-
