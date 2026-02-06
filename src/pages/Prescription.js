@@ -809,7 +809,7 @@ const Prescription = () => {
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>Age</PatientLabel>
-                <PatientValue>[{formatAge(patientData?.age)}]</PatientValue>
+                <PatientValue>[{formatAge(patientData?.dob)}]</PatientValue>
               </PatientInfoItem>
             </PatientInfoRow>
 
