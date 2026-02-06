@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
+import Select from "react-select";
 
 const Container = styled.div`
   display: flex;
@@ -109,21 +110,71 @@ const Label = styled.label`
   margin-bottom: 6px;
 `;
 
-const Select = styled.select`
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #333333;
-  background-color: #ffffff;
-  cursor: pointer;
+// const Select = styled.select`
+//   width: 100%;
+//   padding: 10px 12px;
+//   border: 1px solid #e0e0e0;
+//   border-radius: 6px;
+//   font-size: 14px;
+//   color: #333333;
+//   background-color: #ffffff;
+//   cursor: pointer;
 
-  &:focus {
-    outline: none;
+//   &:focus {
+//     outline: none;
+//     border-color: #4a90e2;
+//   }
+// `;
+const ReactSelect = styled(Select)`
+  .react-select__control {
+    min-height: 42px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+    box-shadow: none;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #4a90e2;
+    }
+  }
+
+  .react-select__control--is-focused {
     border-color: #4a90e2;
+    box-shadow: none;
+  }
+
+  .react-select__value-container {
+    padding: 2px 10px;
+  }
+
+  .react-select__single-value {
+    color: #333333;
+  }
+
+  .react-select__placeholder {
+    color: #999999;
+    font-size: 14px;
+  }
+
+  .react-select__menu {
+    z-index: 1000;
+    font-size: 14px;
+  }
+
+  .react-select__option {
+    cursor: pointer;
+  }
+
+  .react-select__option--is-focused {
+    background-color: #f0f6ff;
+  }
+
+  .react-select__option--is-selected {
+    background-color: #4a90e2;
   }
 `;
+
 
 const Input = styled.input`
   width: 100%;
@@ -496,7 +547,7 @@ const Prescription = () => {
       try {
         const response = await api.get("https://hms.automedai.in/api/resource/Healthcare Practitioner", {
           fields: '["name", "practitioner_name", "department", "designation"]',
-          limit_page_length: 100,
+          limit_page_length: 1500,
         });
 
         if (response.data?.data) {
@@ -509,6 +560,11 @@ const Prescription = () => {
 
     fetchPractitioners();
   }, []);
+  const doctorOptions = practitioners.map((p) => ({
+    value: p.name,
+    label: p.practitioner_name,
+  }));
+
 
   // Update selected doctor data when selection changes
   useEffect(() => {
@@ -540,19 +596,37 @@ const Prescription = () => {
     }));
   };
 
-  const formatAge = (ageString) => {
-    if (!ageString) return "00 Years 00 Month 00 Days";
+  const formatAge = (dob) => {
+    if (!dob) return "00 Years 00 Months 00 Days";
 
-    const yearMatch = ageString.match(/(\d+)\s*Year/i);
-    const monthMatch = ageString.match(/(\d+)\s*Month/i);
-    const dayMatch = ageString.match(/(\d+)\s*Day/i);
+    const birthDate = new Date(dob);
+    const today = new Date();
 
-    const years = yearMatch ? yearMatch[1] : "00";
-    const months = monthMatch ? monthMatch[1] : "00";
-    const days = dayMatch ? dayMatch[1] : "00";
+    if (isNaN(birthDate.getTime())) {
+      return "00 Years 00 Months 00 Days";
+    }
 
-    return `${years} Years ${months} Month ${days} Days`;
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
+    let days = today.getDate() - birthDate.getDate();
+
+    // Adjust days and months if negative
+    if (days < 0) {
+      months--;
+      const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    const pad = (num) => String(num).padStart(2, "0");
+
+    return `${pad(years)} Years ${pad(months)} Months ${pad(days)} Days`;
   };
+
 
   const handlePrint = () => {
     // Set print styles based on paper size
@@ -637,24 +711,32 @@ const Prescription = () => {
         <Title style={{ fontSize: '18px', marginTop: '16px' }}>Prescription</Title>
         <Subtitle>Fill in the details for the prescription</Subtitle>
 
-        <SidebarSection style={{ marginTop: '24px' }}>
+        <SidebarSection style={{ marginTop: "24px" }}>
           <SectionTitle>Doctor Selection</SectionTitle>
           <FormGroup>
             <Label>Select Doctor *</Label>
-            <Select
-              name="selectedDoctor"
-              value={formData.selectedDoctor}
-              onChange={handleFormChange}
-            >
-              <option value="">Choose a doctor</option>
-              {practitioners.map((p) => (
-                <option key={p.name} value={p.name}>
-                  {p.practitioner_name}
-                </option>
-              ))}
-            </Select>
+
+            <ReactSelect
+              classNamePrefix="react-select"
+              options={doctorOptions}
+              placeholder="Choose a doctor"
+              isClearable
+              isSearchable
+              value={doctorOptions.find(
+                (opt) => opt.value === formData.selectedDoctor
+              )}
+              onChange={(selectedOption) =>
+                handleFormChange({
+                  target: {
+                    name: "selectedDoctor",
+                    value: selectedOption ? selectedOption.value : "",
+                  },
+                })
+              }
+            />
           </FormGroup>
         </SidebarSection>
+
       </Sidebar>
 
       <MainContent>
