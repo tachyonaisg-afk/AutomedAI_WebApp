@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback  } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Download, IndianRupee, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
 import usePageTitle from "../hooks/usePageTitle";
 import api from "../services/api";
+import DataTable from "../components/shared/DataTable";
+import { Search,Printer } from "lucide-react";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -304,6 +306,87 @@ const ActionLabel = styled.span`
   font-weight: 500;
   color: #333333;
 `;
+const ActionsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+const ActionLink = styled.button`
+  background: none;
+  border: none;
+  color: #4a90e2;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #357abd;
+    text-decoration: underline;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+const ToolbarSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+const SearchContainer = styled.div`
+  position: relative;
+  flex: 1;
+  max-width: 400px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+`;
+const SearchIcon = styled.div`
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999999;
+  display: flex;
+  align-items: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+
+  &::placeholder {
+    color: #999999;
+  }
+`;
 
 const PathLabBilling = () => {
   usePageTitle("PathLab Billing");
@@ -311,6 +394,9 @@ const PathLabBilling = () => {
   const location = useLocation();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchCustomer, setSearchCustomer] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
 
   // Determine base path for navigation
@@ -355,44 +441,92 @@ const PathLabBilling = () => {
     },
   ];
 
-  const fetchInvoices = async () => {
-    try {
-      setLoading(true);
+const fetchInvoices = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      const params = {
-        fields: JSON.stringify([
-          "name",
-          "patient",
-          "patient_name",
-          "posting_date",
-          "company",
-          "status",
-          "total_qty",
-          "net_total",
-        ]),
-        order_by: "posting_date desc",
-        limit_page_length: 10,
-      };
+    let filters = [];
 
-      const res = await api.get("/resource/Sales Invoice", params);
-
-      setInvoices(res.data?.data || []);
-    } catch (err) {
-      console.error("❌ Error fetching invoices:", err);
-    } finally {
-      setLoading(false);
+    if (fromDate && toDate) {
+      filters.push([
+        "posting_date",
+        "between",
+        [fromDate, toDate],
+      ]);
     }
-  };
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
 
+    if (searchCustomer) {
+      filters.push([
+        "patient",
+        "=",
+        searchCustomer,
+      ]);
+    }
 
-  const quickActions = [
-    { label: "Generate Invoice", icon: FileText },
-    { label: "View Reports", icon: TrendingUp },
-    { label: "Payment History", icon: Calendar },
+    const params = {
+      fields: JSON.stringify([
+        "name",
+        "patient",
+        "patient_name",
+        "posting_date",
+        "company",
+        "status",
+        "total_qty",
+        "net_total",
+      ]),
+      order_by: "posting_date desc",
+      filters: filters.length ? JSON.stringify(filters) : undefined,
+      limit_page_length: 10,
+    };
+
+    const res = await api.get("/resource/Sales Invoice", params);
+    setInvoices(res.data?.data || []);
+  } catch (err) {
+    console.error("❌ Error fetching invoices:", err);
+  } finally {
+    setLoading(false);
+  }
+}, [fromDate, toDate, searchCustomer]);
+
+useEffect(() => {
+  fetchInvoices();
+}, [fetchInvoices]);
+
+  const columns = [
+    { key: "name", label: "INVOICE ID" },
+    { key: "patient", label: "PATIENT ID" },
+    { key: "patient_name", label: "PATIENT NAME" },
+    { key: "posting_date", label: "DATE" },
+    { key: "net_total", label: "AMOUNT" },
+    { key: "status", label: "STATUS" },
+    { key: "actions", label: "ACTION" },
   ];
+  const renderStatus = (status) => (
+    <InvoiceStatus variant={status.toLowerCase()}>
+      {status}
+    </InvoiceStatus>
+  );
+  const handlePrint = (row) => {
+    console.log("🖨️ Print invoice:", row.name);
+  };
+
+  const handleDownloadPDF = (row) => {
+    console.log("📄 Download PDF:", row.name);
+  };
+
+  const renderActions = (row) => (
+    <ActionsContainer>
+      <ActionLink onClick={() => handlePrint(row)}>
+        <Printer size={16} />
+        Print
+      </ActionLink>
+      <ActionLink onClick={() => handleDownloadPDF(row)}>
+        <Download size={16} />
+        PDF
+      </ActionLink>
+    </ActionsContainer>
+  );
+
 
   return (
     <Layout>
@@ -434,47 +568,43 @@ const PathLabBilling = () => {
             );
           })}
         </SummaryCards>
+        <ToolbarSection>
+          <SearchContainer>
+            <SearchIcon>
+              <Search />
+            </SearchIcon>
+            <SearchInput
+              placeholder="Search by Patient ID..."
+              value={searchCustomer}
+              onChange={(e) => setSearchCustomer(e.target.value)}
+            />
+          </SearchContainer>
+
+          <ButtonGroup>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </ButtonGroup>
+        </ToolbarSection>
+
 
         <BillingSection>
-          <RecentInvoices>
-            <SectionHeader>
-              <SectionTitle>Recent Invoices</SectionTitle>
-              <ViewAllLink>View All</ViewAllLink>
-            </SectionHeader>
-            <InvoiceList>
-              {loading && <div>Loading invoices...</div>}
+          <DataTable
+            columns={columns}
+            data={invoices}
+            renderStatus={renderStatus}
+            renderActions={renderActions}
+            loading={loading}
+            sortableColumns={["name", "patient_name", "posting_date"]}
+          />
 
-              {!loading &&
-                invoices.map((invoice) => (
-                  <InvoiceItem key={invoice.name}>
-                    <InvoiceLeft>
-                      <InvoiceId>{invoice.name}</InvoiceId>
-                      <InvoicePatient>{invoice.patient_name}</InvoicePatient>
-                    </InvoiceLeft>
-
-                    <InvoiceRight>
-                      <InvoiceAmount>₹{invoice.net_total.toFixed(2)}</InvoiceAmount>
-                      <InvoiceStatus variant={invoice.status.toLowerCase()}>
-                        {invoice.status}
-                      </InvoiceStatus>
-                    </InvoiceRight>
-                  </InvoiceItem>
-                ))}
-            </InvoiceList>
-          </RecentInvoices>
-
-          <QuickActions>
-            <SectionTitle>Quick Actions</SectionTitle>
-            {quickActions.map((action, index) => {
-              const IconComponent = action.icon;
-              return (
-                <ActionButton key={index}>
-                  <IconComponent />
-                  <ActionLabel>{action.label}</ActionLabel>
-                </ActionButton>
-              );
-            })}
-          </QuickActions>
         </BillingSection>
       </BillingContainer>
     </Layout>
