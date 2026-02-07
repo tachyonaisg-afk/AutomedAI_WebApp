@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -7,6 +7,8 @@ import usePageTitle from "../hooks/usePageTitle";
 import api from "../services/api";
 import DataTable from "../components/shared/DataTable";
 import { Search, Printer } from "lucide-react";
+import html2pdf from "html2pdf.js";
+import InvoiceTemplate from "../components/shared/InvoiceTemplate";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -335,7 +337,6 @@ const ActionLink = styled.button`
 `;
 const ToolbarSection = styled.div`
   display: flex;
-  // justify-content: space-between;
   align-items: center;
   gap: 16px;
 
@@ -413,6 +414,8 @@ const PathLabBilling = () => {
   const [searchCustomer, setSearchCustomer] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const invoiceRef = useRef();
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
 
   // Determine base path for navigation
@@ -526,9 +529,32 @@ const PathLabBilling = () => {
     console.log("🖨️ Print invoice:", row.name);
   };
 
-  const handleDownloadPDF = (row) => {
-    console.log("📄 Download PDF:", row.name);
+  const handleDownloadPDF = async (row) => {
+    setSelectedInvoice(row);
+
+    // wait for DOM to render
+    setTimeout(() => {
+      const element = invoiceRef.current;
+
+      const options = {
+        margin: 10,
+        filename: `${row.name}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+        },
+      };
+
+      html2pdf().set(options).from(element).save();
+    }, 100);
   };
+
 
   const renderActions = (row) => (
     <ActionsContainer>
@@ -634,6 +660,14 @@ const PathLabBilling = () => {
 
         </BillingSection>
       </BillingContainer>
+      {selectedInvoice && (
+        <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+          <InvoiceTemplate
+            ref={invoiceRef}
+            invoice={selectedInvoice}
+          />
+        </div>
+      )}
     </Layout>
   );
 };
