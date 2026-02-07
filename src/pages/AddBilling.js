@@ -6,6 +6,7 @@ import { Plus, Minus, Search, X, Loader2 } from "lucide-react";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import usePageTitle from "../hooks/usePageTitle";
+import Select from "react-select";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -650,6 +651,56 @@ const ErrorMessage = styled.div`
   font-size: 14px;
   margin-bottom: 16px;
 `;
+const ReactSelect = styled(Select)`
+  .react-select__control {
+    min-height: 42px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    font-size: 14px;
+    box-shadow: none;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #4a90e2;
+    }
+  }
+
+  .react-select__control--is-focused {
+    border-color: #4a90e2;
+    box-shadow: none;
+  }
+
+  .react-select__value-container {
+    padding: 2px 10px;
+  }
+
+  .react-select__single-value {
+    color: #333333;
+  }
+
+  .react-select__placeholder {
+    color: #999999;
+    font-size: 14px;
+  }
+
+  .react-select__menu {
+    z-index: 1000;
+    font-size: 14px;
+  }
+
+  .react-select__option {
+    cursor: pointer;
+  }
+
+  .react-select__option--is-focused {
+    background-color: #f0f6ff;
+  }
+
+  .react-select__option--is-selected {
+    background-color: #4a90e2;
+  }
+`;
+
 
 const AddBilling = () => {
   usePageTitle("Add Billing");
@@ -1124,7 +1175,7 @@ const AddBilling = () => {
         paid_amount: invoiceTotal,
         received_amount: invoiceTotal,
         target_exchange_rate: 1,
-        paid_to: billingData.payment_type === "Cash" ?  (billingData.company==="Ramakrishna Mission Sargachi" ? "Cash - RKMS" :"Cash - ADC&P" ): (billingData.company==="Ramakrishna Mission Sargachi" ? "Bank - RKMS": "Bank - ADC&P") ,
+        paid_to: billingData.payment_type === "Cash" ? (billingData.company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P") : (billingData.company === "Ramakrishna Mission Sargachi" ? "Bank - RKMS" : "Bank - ADC&P"),
         paid_to_account_currency: "INR",
         references: [
           {
@@ -1262,6 +1313,10 @@ const AddBilling = () => {
       setLoading(false);
     }
   };
+  const practitionerOptions = practitioners.map((p) => ({
+    value: p.name,
+    label: p.practitioner_name || p.name,
+  }));
 
   const totals = calculateTotals();
 
@@ -1368,19 +1423,27 @@ const AddBilling = () => {
             <FormGrid>
               <FormGroup>
                 <FormLabel>Referring Practitioner</FormLabel>
-                <FormSelect
-                  name="ref_practitioner"
-                  value={billingData.ref_practitioner}
-                  onChange={handleBillingChange}
-                >
-                  <option value="">Select practitioner</option>
-                  {practitioners.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.practitioner_name || p.name}
-                    </option>
-                  ))}
-                </FormSelect>
+
+                <ReactSelect
+                  classNamePrefix="react-select"
+                  options={practitionerOptions}
+                  placeholder="Select practitioner"
+                  isClearable
+                  isSearchable
+                  value={practitionerOptions.find(
+                    (opt) => opt.value === billingData.ref_practitioner
+                  )}
+                  onChange={(selectedOption) =>
+                    handleBillingChange({
+                      target: {
+                        name: "ref_practitioner",
+                        value: selectedOption ? selectedOption.value : "",
+                      },
+                    })
+                  }
+                />
               </FormGroup>
+
 
               <FormGroup>
                 <FormLabel>Service Unit</FormLabel>
