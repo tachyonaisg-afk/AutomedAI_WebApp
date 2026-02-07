@@ -374,7 +374,7 @@ const Billing = () => {
         limit_page_length: 10, 
       };
 
-      const res = await api.get("/api/resource/Sales Invoice", params);
+      const res = await api.get("/resource/Sales Invoice", params);
 
       setInvoices(res.data?.data || []);
     } catch (err) {

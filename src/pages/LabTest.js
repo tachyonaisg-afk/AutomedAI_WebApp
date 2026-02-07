@@ -285,7 +285,7 @@ const LabTest = () => {
       await Promise.all(
         uniqueSamples.map(async (sampleId) => {
           const res = await api.get(
-            `/api/resource/Sample Collection/${sampleId}`
+            `/resource/Sample Collection/${sampleId}`
           );
 
           const docstatus = res.data?.data?.docstatus ?? 0;
