@@ -231,6 +231,12 @@ const LabTest = () => {
       setTotalCount(0);
     }
   };
+  const formatTestName = (name = "") => {
+    return name.includes("-")
+      ? name.split("-").slice(1).join("-").trim()
+      : name;
+  };
+
 
   // Fetch lab tests from API
   const fetchLabTests = async (page, limit) => {
@@ -258,12 +264,17 @@ const LabTest = () => {
       console.log("📊 Lab Tests API Response:", response);
 
       if (response.data && response.data.data) {
-        const tests = response.data.data;
+        const tests = response.data.data.map((t) => ({
+          ...t,
+          lab_test_name: formatTestName(t.lab_test_name),
+        }));
+
         setLabTestsData(tests);
 
         const sampleIds = tests.map((t) => t.sample);
         await fetchSampleStatuses(sampleIds);
       }
+
 
     } catch (err) {
       console.error("❌ Error fetching lab tests:", err);
@@ -318,7 +329,7 @@ const LabTest = () => {
     { key: "patient", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "lab_test_name", label: "TEST NAME" },
-    { key: "status", label: "STATUS" },
+    { key: "status", label: "SAMPLE STATUS" },
     { key: "actions", label: "ACTION" },
   ];
 

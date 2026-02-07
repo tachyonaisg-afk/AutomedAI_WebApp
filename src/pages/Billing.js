@@ -312,7 +312,6 @@ const Billing = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
   // Determine base path for navigation (handles both /billing and /opd/billing)
   const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 

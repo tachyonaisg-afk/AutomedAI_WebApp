@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Download, IndianRupee, TrendingUp, FileText, Calendar, CheckCircle, Clock, XCircle, Plus } from "lucide-react";
 import usePageTitle from "../hooks/usePageTitle";
+import api from "../services/api";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -308,6 +309,9 @@ const PathLabBilling = () => {
   usePageTitle("PathLab Billing");
   const navigate = useNavigate();
   const location = useLocation();
+  const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
 
   // Determine base path for navigation
   const basePath = "/pathlab/billing";
@@ -351,13 +355,38 @@ const PathLabBilling = () => {
     },
   ];
 
-  const recentInvoices = [
-    { id: "INV-001", patient: "John Doe", amount: "₹150.00", status: "paid" },
-    { id: "INV-002", patient: "Jane Smith", amount: "₹85.50", status: "paid" },
-    { id: "INV-003", patient: "Michael Johnson", amount: "₹200.00", status: "pending" },
-    { id: "INV-004", patient: "Emily Davis", amount: "₹150.00", status: "paid" },
-    { id: "INV-005", patient: "Robert Brown", amount: "₹100.00", status: "overdue" },
-  ];
+  const fetchInvoices = async () => {
+    try {
+      setLoading(true);
+
+      const params = {
+        fields: JSON.stringify([
+          "name",
+          "patient",
+          "patient_name",
+          "posting_date",
+          "company",
+          "status",
+          "total_qty",
+          "net_total",
+        ]),
+        order_by: "posting_date desc",
+        limit_page_length: 10,
+      };
+
+      const res = await api.get("/resource/Sales Invoice", params);
+
+      setInvoices(res.data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching invoices:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
 
   const quickActions = [
     { label: "Generate Invoice", icon: FileText },
@@ -413,20 +442,24 @@ const PathLabBilling = () => {
               <ViewAllLink>View All</ViewAllLink>
             </SectionHeader>
             <InvoiceList>
-              {recentInvoices.map((invoice, index) => (
-                <InvoiceItem key={index}>
-                  <InvoiceLeft>
-                    <InvoiceId>{invoice.id}</InvoiceId>
-                    <InvoicePatient>{invoice.patient}</InvoicePatient>
-                  </InvoiceLeft>
-                  <InvoiceRight>
-                    <InvoiceAmount>{invoice.amount}</InvoiceAmount>
-                    <InvoiceStatus variant={invoice.status}>
-                      {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                    </InvoiceStatus>
-                  </InvoiceRight>
-                </InvoiceItem>
-              ))}
+              {loading && <div>Loading invoices...</div>}
+
+              {!loading &&
+                invoices.map((invoice) => (
+                  <InvoiceItem key={invoice.name}>
+                    <InvoiceLeft>
+                      <InvoiceId>{invoice.name}</InvoiceId>
+                      <InvoicePatient>{invoice.patient_name}</InvoicePatient>
+                    </InvoiceLeft>
+
+                    <InvoiceRight>
+                      <InvoiceAmount>₹{invoice.net_total.toFixed(2)}</InvoiceAmount>
+                      <InvoiceStatus variant={invoice.status.toLowerCase()}>
+                        {invoice.status}
+                      </InvoiceStatus>
+                    </InvoiceRight>
+                  </InvoiceItem>
+                ))}
             </InvoiceList>
           </RecentInvoices>
 
