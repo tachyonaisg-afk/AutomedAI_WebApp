@@ -150,21 +150,20 @@ const StatusBadge = styled.span`
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
+
   background-color: ${(props) => {
-    if (props.status === "Completed") return "#dcfce7";
-    if (props.status === "In Progress") return "#dbeafe";
-    if (props.status === "Pending") return "#fef3c7";
-    if (props.status === "Cancelled") return "#fee2e2";
+    if (props.status === "Collected") return "#dcfce7";
+    if (props.status === "Not Collected") return "#fee2e2";
     return "#f5f5f5";
   }};
+
   color: ${(props) => {
-    if (props.status === "Completed") return "#16a34a";
-    if (props.status === "In Progress") return "#2563eb";
-    if (props.status === "Pending") return "#d97706";
-    if (props.status === "Cancelled") return "#dc2626";
+    if (props.status === "Collected") return "#16a34a";
+    if (props.status === "Not Collected") return "#dc2626";
     return "#666666";
   }};
 `;
+
 
 const ActionsContainer = styled.div`
   display: flex;
@@ -207,6 +206,7 @@ const LabTest = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
+  const [sampleStatusMap, setSampleStatusMap] = useState({});
 
   // Fetch lab test count
   const fetchLabTestCount = async () => {
@@ -241,7 +241,7 @@ const LabTest = () => {
       const limitStart = (page - 1) * limit;
 
       const params = {
-        fields: '["name","patient","patient_name","status","lab_test_name"]',
+        fields: '["name","patient","patient_name","status","lab_test_name","sample"]',
         filters: '[["Lab Test","status","!=","Completed"]]',
         order_by: "creation desc",
         limit_start: limitStart,
@@ -258,13 +258,44 @@ const LabTest = () => {
       console.log("📊 Lab Tests API Response:", response);
 
       if (response.data && response.data.data) {
-        setLabTestsData(response.data.data);
+        const tests = response.data.data;
+        setLabTestsData(tests);
+
+        const sampleIds = tests.map((t) => t.sample);
+        await fetchSampleStatuses(sampleIds);
       }
+
     } catch (err) {
       console.error("❌ Error fetching lab tests:", err);
       setError(err.message || "Failed to load lab tests");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSampleStatuses = async (sampleIds = []) => {
+    try {
+      const uniqueSamples = [...new Set(sampleIds.filter(Boolean))];
+
+      if (uniqueSamples.length === 0) return;
+
+      const statusMap = {};
+
+      // If your backend DOES NOT support bulk fetch
+      await Promise.all(
+        uniqueSamples.map(async (sampleId) => {
+          const res = await api.get(
+            `/api/resource/Sample Collection/${sampleId}`
+          );
+
+          const docstatus = res.data?.data?.docstatus ?? 0;
+          statusMap[sampleId] = docstatus;
+        })
+      );
+
+      setSampleStatusMap(statusMap);
+    } catch (err) {
+      console.error("❌ Error fetching sample status:", err);
     }
   };
 
@@ -291,9 +322,18 @@ const LabTest = () => {
     { key: "actions", label: "ACTION" },
   ];
 
-  const renderStatus = (status) => {
-    return <StatusBadge status={status}>{status}</StatusBadge>;
+  const renderStatus = (_, row) => {
+    const docstatus = sampleStatusMap[row.sample];
+
+    const label = docstatus === 1 ? "Collected" : "Not Collected";
+
+    return (
+      <StatusBadge status={label}>
+        {label}
+      </StatusBadge>
+    );
   };
+
 
   const renderActions = (row) => {
     return (
