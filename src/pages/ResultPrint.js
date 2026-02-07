@@ -328,6 +328,7 @@ const InfoValue = styled.div`
 
 const TestSection = styled.div`
   margin-bottom: 40px;
+  page-break-inside: avoid;
 
   &:last-child {
     margin-bottom: 0;
@@ -415,23 +416,39 @@ const PrintStyles = createGlobalStyle`
       right: 0;
       height: 120px;
       background: white;
-      z-index: 1000;
     }
 
     .pdf-body {
       margin-top: 140px;
     }
 
-    .pdf-header {
+    /* ✅ KEY FIXES */
+    table {
+      page-break-inside: auto;
+    }
+
+    tr {
+      page-break-inside: avoid;
+      page-break-after: auto;
+    }
+
+    thead {
       display: table-header-group;
     }
 
-    .pdf-footer {
+    tfoot {
       display: table-footer-group;
+    }
+
+    .test-section {
+      page-break-inside: avoid;
+    }
+
+    .page-break {
+      page-break-before: always;
     }
   }
 `;
-
 
 
 const ResultPrint = () => {
@@ -625,13 +642,25 @@ const ResultPrint = () => {
       }
 
       const opt = {
-        margin: [10, 10, 10, 10],
+        margin: [15, 10, 15, 10],
         filename: `lab-report-${patientId || 'patient'}-${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css'] }
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollY: 0,
+          windowWidth: document.body.scrollWidth
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        },
+        pagebreak: {
+          mode: ['css', 'legacy']
+        }
       };
+
 
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
@@ -740,7 +769,7 @@ const ResultPrint = () => {
               </DownloadButton>
             </ButtonGroup>
           </PreviewHeader>
-          
+
           <PrintStyles />
 
           <ReportPreview data-pdf-content>
@@ -786,7 +815,7 @@ const ResultPrint = () => {
                   selectedTestDetails[index - 1]?.department !== testDetail.department;
 
                 return (
-                  <TestSection key={testDetail.name}>
+                  <TestSection key={testDetail.name} className="test-section">
                     <TestSectionHeader>
                       {showDepartment && (
                         <TestCategory>
