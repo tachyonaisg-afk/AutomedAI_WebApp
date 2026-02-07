@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useCallback  } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -6,7 +6,7 @@ import { Download, IndianRupee, TrendingUp, FileText, Calendar, CheckCircle, Clo
 import usePageTitle from "../hooks/usePageTitle";
 import api from "../services/api";
 import DataTable from "../components/shared/DataTable";
-import { Search,Printer } from "lucide-react";
+import { Search, Printer } from "lucide-react";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -152,8 +152,6 @@ const CardChange = styled.span`
 
 const BillingSection = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
@@ -337,7 +335,7 @@ const ActionLink = styled.button`
 `;
 const ToolbarSection = styled.div`
   display: flex;
-  justify-content: space-between;
+  // justify-content: space-between;
   align-items: center;
   gap: 16px;
 
@@ -355,18 +353,27 @@ const SearchContainer = styled.div`
     max-width: 100%;
   }
 `;
+const DateContainer = styled.div`
+  position: relative;
+  flex: 1;
+  max-width: 300px;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+  }
+`;
 const SearchIcon = styled.div`
   position: absolute;
   left: 12px;
-  top: 50%;
+  top: 60%;
   transform: translateY(-50%);
   color: #999999;
   display: flex;
   align-items: center;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 `;
 const SearchInput = styled.input`
@@ -386,6 +393,15 @@ const SearchInput = styled.input`
   &::placeholder {
     color: #999999;
   }
+`;
+const DateInput = styled(SearchInput)`
+  padding: 10px 12px;
+`;
+const DateLabel = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: #333333;
+  margin-right: 8px;
 `;
 
 const PathLabBilling = () => {
@@ -441,56 +457,56 @@ const PathLabBilling = () => {
     },
   ];
 
-const fetchInvoices = useCallback(async () => {
-  try {
-    setLoading(true);
+  const fetchInvoices = useCallback(async () => {
+    try {
+      setLoading(true);
 
-    let filters = [];
+      let filters = [];
 
-    if (fromDate && toDate) {
-      filters.push([
-        "posting_date",
-        "between",
-        [fromDate, toDate],
-      ]);
+      if (fromDate && toDate) {
+        filters.push([
+          "posting_date",
+          "between",
+          [fromDate, toDate],
+        ]);
+      }
+
+      if (searchCustomer) {
+        filters.push([
+          "patient",
+          "=",
+          searchCustomer,
+        ]);
+      }
+
+      const params = {
+        fields: JSON.stringify([
+          "name",
+          "patient",
+          "patient_name",
+          "posting_date",
+          "company",
+          "status",
+          "total_qty",
+          "net_total",
+        ]),
+        order_by: "posting_date desc",
+        filters: filters.length ? JSON.stringify(filters) : undefined,
+        limit_page_length: 10,
+      };
+
+      const res = await api.get("/resource/Sales Invoice", params);
+      setInvoices(res.data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching invoices:", err);
+    } finally {
+      setLoading(false);
     }
+  }, [fromDate, toDate, searchCustomer]);
 
-    if (searchCustomer) {
-      filters.push([
-        "patient",
-        "=",
-        searchCustomer,
-      ]);
-    }
-
-    const params = {
-      fields: JSON.stringify([
-        "name",
-        "patient",
-        "patient_name",
-        "posting_date",
-        "company",
-        "status",
-        "total_qty",
-        "net_total",
-      ]),
-      order_by: "posting_date desc",
-      filters: filters.length ? JSON.stringify(filters) : undefined,
-      limit_page_length: 10,
-    };
-
-    const res = await api.get("/resource/Sales Invoice", params);
-    setInvoices(res.data?.data || []);
-  } catch (err) {
-    console.error("❌ Error fetching invoices:", err);
-  } finally {
-    setLoading(false);
-  }
-}, [fromDate, toDate, searchCustomer]);
-
-useEffect(() => {
-  fetchInvoices();
-}, [fetchInvoices]);
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
 
   const columns = [
     { key: "name", label: "INVOICE ID" },
@@ -569,7 +585,9 @@ useEffect(() => {
           })}
         </SummaryCards>
         <ToolbarSection>
+          {/* Search */}
           <SearchContainer>
+            <DateLabel>Search:</DateLabel>
             <SearchIcon>
               <Search />
             </SearchIcon>
@@ -580,19 +598,28 @@ useEffect(() => {
             />
           </SearchContainer>
 
-          <ButtonGroup>
-            <input
+          {/* From Date */}
+          <DateContainer>
+
+            <DateLabel>From Date:</DateLabel>
+            <DateInput
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
             />
-            <input
+          </DateContainer>
+
+          {/* To Date */}
+          <DateContainer>
+            <DateLabel>To Date:</DateLabel>
+            <DateInput
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
             />
-          </ButtonGroup>
+          </DateContainer>
         </ToolbarSection>
+
 
 
         <BillingSection>
