@@ -526,8 +526,274 @@ const PathLabBilling = () => {
     </InvoiceStatus>
   );
   const handlePrint = (row) => {
-    console.log("🖨️ Print invoice:", row.name);
+    setSelectedInvoice(row);
+
+    setTimeout(() => {
+      const printContent = invoiceRef.current;
+
+      const printWindow = window.open("", "_blank");
+
+      printWindow.document.write(`
+      <!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Hospital Patient Invoice - Ramakrishna Mission Sargachi</title>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Material Symbols -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#137fec",
+            "primary-dark": "#0b5cb5",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "surface-light": "#ffffff",
+            "surface-dark": "#1a2632",
+            "text-main": "#111418",
+            "text-secondary": "#617589",
+            "border-light": "#dbe0e6",
+          },
+          fontFamily: {
+            "display": ["Manrope", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "2xl": "1rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* Print Styles */
+    @media print {
+      body {
+        background-color: white !important;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .print-container {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark font-display antialiased min-h-screen flex flex-col items-center py-8 px-4 sm:px-6">
+  <!-- Top Actions (No Print) -->
+  <div class="w-full max-w-[960px] flex justify-between items-center mb-6 no-print">
+    
+    
+  </div>
+  <!-- Invoice Container -->
+  <main
+    class="print-container w-full max-w-[960px] bg-white dark:bg-surface-dark shadow-xl rounded-xl overflow-hidden flex flex-col">
+    <!-- Header Section -->
+    <header class="p-8 md:p-12 border-b border-border-light dark:border-gray-700">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <!-- Hospital Branding -->
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="size-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined text-2xl">local_hospital</span>
+            </div>
+            <h1 class="text-2xl font-bold text-text-main dark:text-white leading-tight">Ramakrishna
+              Mission<br />Sargachi</h1>
+          </div>
+          <div class="text-sm text-text-secondary dark:text-gray-400 pl-[52px]">
+            <p>Sargachi, Murshidabad</p>
+            <p>West Bengal, India - 742134</p>
+            <p class="mt-1 flex items-center gap-1">
+              <span class="material-symbols-outlined text-[16px]">call</span> +91 3482 232222
+            </p>
+          </div>
+        </div>
+        <!-- Invoice Meta -->
+        <div class="flex flex-col items-start md:items-end text-left md:text-right">
+          <h2 class="text-4xl font-black text-text-main dark:text-white tracking-tight text-primary">INVOICE</h2>
+          <div class="mt-2 flex flex-col gap-1">
+            <p class="text-text-secondary dark:text-gray-400 text-sm font-medium">Invoice # <span
+                class="text-text-main dark:text-white font-bold">INV-2023-001</span></p>
+            <p class="text-text-secondary dark:text-gray-400 text-sm font-medium">Date: <span
+                class="text-text-main dark:text-white font-bold">Oct 24, 2023</span></p>
+          </div>
+          <div
+            class="mt-4 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-green-200 dark:border-green-800">
+            <span class="material-symbols-outlined text-[16px]">check_circle</span>
+            Paid
+          </div>
+        </div>
+      </div>
+    </header>
+    <!-- Patient Details Grid -->
+    <section
+      class="bg-background-light/50 dark:bg-gray-800/30 px-8 py-6 md:px-12 border-b border-border-light dark:border-gray-700">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+          <p class="text-xs uppercase tracking-wider text-text-secondary dark:text-gray-500 font-bold mb-1">Patient Name
+          </p>
+          <p class="text-lg font-bold text-text-main dark:text-white">Rahul Roy</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-text-secondary dark:text-gray-500 font-bold mb-1">Patient ID
+          </p>
+          <p class="text-lg font-bold text-text-main dark:text-white">P-99823</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-text-secondary dark:text-gray-500 font-bold mb-1">Posting Date
+          </p>
+          <p class="text-lg font-bold text-text-main dark:text-white">Oct 20, 2023</p>
+        </div>
+      </div>
+    </section>
+    <!-- Billing Table -->
+    <section class="p-8 md:p-12">
+      <div class="w-full overflow-hidden rounded-lg border border-border-light dark:border-gray-700">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="bg-background-light dark:bg-gray-800 border-b border-border-light dark:border-gray-700">
+              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 w-[45%]">Product Description</th>
+              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 text-center w-[15%]">Quantity</th>
+              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 text-right w-[20%]">Unit Rate</th>
+              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 text-right w-[20%]">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border-light dark:divide-gray-700">
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="px-6 py-4 font-medium text-text-main dark:text-white">Consultation Fee (Gen. Medicine)</td>
+              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
+              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 500.00</td>
+              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 500.00</td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="px-6 py-4 font-medium text-text-main dark:text-white">X-Ray (Chest PA View)</td>
+              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
+              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 350.00</td>
+              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 350.00</td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="px-6 py-4 font-medium text-text-main dark:text-white">Blood Test (CBC)</td>
+              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
+              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 250.00</td>
+              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 250.00</td>
+            </tr>
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <td class="px-6 py-4 font-medium text-text-main dark:text-white">Pharmacy Charges</td>
+              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
+              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 1,200.00</td>
+              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 1,200.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Summary & Payment Info -->
+      <div class="mt-8 flex flex-col md:flex-row justify-between gap-8">
+        <!-- Payment Information -->
+        <div
+          class="w-full md:w-1/2 p-6 rounded-lg bg-background-light dark:bg-gray-800/30 border border-border-light dark:border-gray-700">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-text-secondary dark:text-gray-400 mb-4">Payment
+            Details</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-text-secondary dark:text-gray-400">Payment Status</span>
+              <span class="font-bold text-green-600 dark:text-green-400">Paid</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-text-secondary dark:text-gray-400">Date Paid</span>
+              <span class="font-medium text-text-main dark:text-white">Oct 24, 2023 - 10:30 AM</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+              <span class="text-text-secondary dark:text-gray-400">Payment Method</span>
+              <span class="font-medium text-text-main dark:text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">credit_card</span>
+                Credit Card (**** 4242)
+              </span>
+            </div>
+          </div>
+        </div>
+        <!-- Totals -->
+        <div class="w-full md:w-5/12 flex flex-col justify-end">
+          <div class="flex justify-between py-2 text-text-secondary dark:text-gray-400 text-sm">
+            <span>Subtotal</span>
+            <span class="font-medium text-text-main dark:text-white">₹ 2,300.00</span>
+          </div>
+          <div
+            class="flex justify-between py-2 text-text-secondary dark:text-gray-400 text-sm border-b border-border-light dark:border-gray-700 pb-4">
+            <span>Taxes (GST 18%)</span>
+            <span class="font-medium text-text-main dark:text-white">₹ 414.00</span>
+          </div>
+          <div class="flex justify-between py-4 text-text-main dark:text-white">
+            <span class="font-bold text-lg">Total Amount</span>
+            <span class="font-black text-2xl text-primary">₹ 2,714.00</span>
+          </div>
+          <div
+            class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded border border-blue-100 dark:border-blue-800 text-center">
+            <p>Thank you for choosing Ramakrishna Mission Sargachi.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Footer Bar -->
+    <footer
+      class="bg-background-light dark:bg-gray-800 border-t border-border-light dark:border-gray-700 px-8 py-4 md:px-12 flex flex-col md:flex-row justify-between items-center text-xs text-text-secondary dark:text-gray-500 gap-4">
+      <p>© 2023 Ramakrishna Mission Sargachi. All rights reserved.</p>
+      <div class="flex gap-4">
+        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+        <a class="hover:text-primary transition-colors" href="#">Support</a>
+      </div>
+    </footer>
+  </main>
+</body>
+
+</html>
+    `);
+
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+
+      // Cleanup
+      setTimeout(() => {
+        printWindow.close();
+        setSelectedInvoice(null);
+      }, 500);
+    }, 100);
   };
+
 
   const handleDownloadPDF = async (row) => {
     console.log("📄 Download PDF:", row.name);
