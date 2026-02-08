@@ -535,250 +535,443 @@ const PathLabBilling = () => {
 
       printWindow.document.write(`
       <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
   <meta charset="utf-8" />
-  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hospital Patient Invoice - Ramakrishna Mission Sargachi</title>
+
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com" rel="preconnect" />
-  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap"
-    rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
   <!-- Material Symbols -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <!-- Tailwind Config -->
-  <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#137fec",
-            "primary-dark": "#0b5cb5",
-            "background-light": "#f6f7f8",
-            "background-dark": "#101922",
-            "surface-light": "#ffffff",
-            "surface-dark": "#1a2632",
-            "text-main": "#111418",
-            "text-secondary": "#617589",
-            "border-light": "#dbe0e6",
-          },
-          fontFamily: {
-            "display": ["Manrope", "sans-serif"]
-          },
-          borderRadius: {
-            "DEFAULT": "0.25rem",
-            "lg": "0.5rem",
-            "xl": "0.75rem",
-            "2xl": "1rem",
-            "full": "9999px"
-          },
-        },
-      },
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
   <style>
-    /* Print Styles */
+    :root {
+      --primary: #137fec;
+      --primary-dark: #0b5cb5;
+      --bg-light: #f6f7f8;
+      --surface: #ffffff;
+      --text-main: #111418;
+      --text-secondary: #617589;
+      --border-light: #dbe0e6;
+      --success: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      background: var(--bg-light);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .invoice-wrapper {
+      width: 100%;
+      max-width: 960px;
+      background: var(--surface);
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .invoice-header {
+      padding: 48px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 32px;
+    }
+
+    .hospital-info {
+      max-width: 60%;
+    }
+
+    .hospital-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .hospital-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(19,127,236,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+    }
+
+    .hospital-name {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .hospital-address {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-left: 52px;
+    }
+
+    .hospital-address p {
+      margin: 4px 0;
+    }
+
+    .invoice-meta {
+      text-align: right;
+    }
+
+    .invoice-title {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--primary);
+      margin: 0;
+    }
+
+    .invoice-meta p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 4px 0;
+    }
+
+    .paid-badge {
+      margin-top: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #dcfce7;
+      color: var(--success);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* Patient Info */
+    .patient-section {
+      background: #f1f3f5;
+      padding: 24px 48px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .patient-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+    }
+
+    .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .value {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    /* Table */
+    .table-section {
+      padding: 48px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #f6f7f8;
+    }
+
+    th, td {
+      padding: 16px;
+      font-size: 14px;
+    }
+
+    th {
+      text-align: left;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    th.center, td.center {
+      text-align: center;
+    }
+
+    th.right, td.right {
+      text-align: right;
+    }
+
+    tbody tr {
+      border-top: 1px solid var(--border-light);
+    }
+
+    tbody tr:hover {
+      background: #fafafa;
+    }
+
+    td strong {
+      font-weight: 700;
+    }
+
+    /* Summary */
+    .summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    .payment-box {
+      flex: 1;
+      padding: 24px;
+      background: #f6f7f8;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+    }
+
+    .payment-box h3 {
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .payment-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .totals {
+      flex: 0.6;
+      align-self: flex-end;
+    }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .totals-row strong {
+      color: var(--text-main);
+    }
+
+    .grand-total {
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--primary);
+    }
+
+    .thank-you {
+      margin-top: 16px;
+      padding: 12px;
+      text-align: center;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid #dbeafe;
+    }
+
+    /* Footer */
+    .invoice-footer {
+      padding: 16px 48px;
+      border-top: 1px solid var(--border-light);
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-links a {
+      margin-left: 16px;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      color: var(--primary);
+    }
+
+    /* Print */
     @media print {
       body {
-        background-color: white !important;
-        -webkit-print-color-adjust: exact;
+        background: #fff;
       }
-
-      .no-print {
-        display: none !important;
+      .invoice-wrapper {
+        box-shadow: none;
+        border: none;
       }
+    }
 
-      .print-container {
-        box-shadow: none !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        border: none !important;
+    @media (max-width: 768px) {
+      .invoice-header {
+        padding: 32px;
+      }
+      .table-section {
+        padding: 32px;
       }
     }
   </style>
 </head>
 
-<body
-  class="bg-background-light dark:bg-background-dark font-display antialiased min-h-screen flex flex-col items-center py-8 px-4 sm:px-6">
-  <!-- Top Actions (No Print) -->
-  <div class="w-full max-w-[960px] flex justify-between items-center mb-6 no-print">
-    
-    
-  </div>
-  <!-- Invoice Container -->
-  <main
-    class="print-container w-full max-w-[960px] bg-white dark:bg-surface-dark shadow-xl rounded-xl overflow-hidden flex flex-col">
-    <!-- Header Section -->
-    <header class="p-8 md:p-12 border-b border-border-light dark:border-gray-700">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <!-- Hospital Branding -->
-        <div class="flex flex-col gap-1">
-          <div class="flex items-center gap-3 mb-2">
-            <div class="size-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-              <span class="material-symbols-outlined text-2xl">local_hospital</span>
-            </div>
-            <h1 class="text-2xl font-bold text-text-main dark:text-white leading-tight">Ramakrishna
-              Mission<br />Sargachi</h1>
+<body>
+
+  <main class="invoice-wrapper">
+
+    <!-- Header -->
+    <header class="invoice-header">
+      <div class="hospital-info">
+        <div class="hospital-title">
+          <div class="hospital-icon">
+            <span class="material-symbols-outlined">local_hospital</span>
           </div>
-          <div class="text-sm text-text-secondary dark:text-gray-400 pl-[52px]">
-            <p>Sargachi, Murshidabad</p>
-            <p>West Bengal, India - 742134</p>
-            <p class="mt-1 flex items-center gap-1">
-              <span class="material-symbols-outlined text-[16px]">call</span> +91 3482 232222
-            </p>
+          <div class="hospital-name">
+            Ramakrishna Mission<br>Sargachi
           </div>
         </div>
-        <!-- Invoice Meta -->
-        <div class="flex flex-col items-start md:items-end text-left md:text-right">
-          <h2 class="text-4xl font-black text-text-main dark:text-white tracking-tight text-primary">INVOICE</h2>
-          <div class="mt-2 flex flex-col gap-1">
-            <p class="text-text-secondary dark:text-gray-400 text-sm font-medium">Invoice # <span
-                class="text-text-main dark:text-white font-bold">INV-2023-001</span></p>
-            <p class="text-text-secondary dark:text-gray-400 text-sm font-medium">Date: <span
-                class="text-text-main dark:text-white font-bold">Oct 24, 2023</span></p>
-          </div>
-          <div
-            class="mt-4 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 border border-green-200 dark:border-green-800">
-            <span class="material-symbols-outlined text-[16px]">check_circle</span>
-            Paid
-          </div>
+        <div class="hospital-address">
+          <p>Sargachi, Murshidabad</p>
+          <p>West Bengal, India - 742134</p>
+          <p>📞 +91 3482 232222</p>
+        </div>
+      </div>
+
+      <div class="invoice-meta">
+        <h1 class="invoice-title">INVOICE</h1>
+        <p>Invoice # <strong>INV-2023-001</strong></p>
+        <p>Date: <strong>Oct 24, 2023</strong></p>
+        <div class="paid-badge">
+          <span class="material-symbols-outlined">check_circle</span>
+          Paid
         </div>
       </div>
     </header>
-    <!-- Patient Details Grid -->
-    <section
-      class="bg-background-light/50 dark:bg-gray-800/30 px-8 py-6 md:px-12 border-b border-border-light dark:border-gray-700">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Patient -->
+    <section class="patient-section">
+      <div class="patient-grid">
         <div>
-          <p class="text-xs uppercase tracking-wider text-text-secondary dark:text-gray-500 font-bold mb-1">Patient Name
-          </p>
-          <p class="text-lg font-bold text-text-main dark:text-white">Rahul Roy</p>
+          <div class="label">Patient Name</div>
+          <div class="value">Rahul Roy</div>
         </div>
         <div>
-          <p class="text-xs uppercase tracking-wider text-text-secondary dark:text-gray-500 font-bold mb-1">Patient ID
-          </p>
-          <p class="text-lg font-bold text-text-main dark:text-white">P-99823</p>
+          <div class="label">Patient ID</div>
+          <div class="value">P-99823</div>
         </div>
         <div>
-          <p class="text-xs uppercase tracking-wider text-text-secondary dark:text-gray-500 font-bold mb-1">Posting Date
-          </p>
-          <p class="text-lg font-bold text-text-main dark:text-white">Oct 20, 2023</p>
+          <div class="label">Posting Date</div>
+          <div class="value">Oct 20, 2023</div>
         </div>
       </div>
     </section>
-    <!-- Billing Table -->
-    <section class="p-8 md:p-12">
-      <div class="w-full overflow-hidden rounded-lg border border-border-light dark:border-gray-700">
-        <table class="w-full text-left text-sm">
-          <thead>
-            <tr class="bg-background-light dark:bg-gray-800 border-b border-border-light dark:border-gray-700">
-              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 w-[45%]">Product Description</th>
-              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 text-center w-[15%]">Quantity</th>
-              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 text-right w-[20%]">Unit Rate</th>
-              <th class="px-6 py-4 font-bold text-text-secondary dark:text-gray-400 text-right w-[20%]">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border-light dark:divide-gray-700">
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-              <td class="px-6 py-4 font-medium text-text-main dark:text-white">Consultation Fee (Gen. Medicine)</td>
-              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
-              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 500.00</td>
-              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 500.00</td>
-            </tr>
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-              <td class="px-6 py-4 font-medium text-text-main dark:text-white">X-Ray (Chest PA View)</td>
-              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
-              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 350.00</td>
-              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 350.00</td>
-            </tr>
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-              <td class="px-6 py-4 font-medium text-text-main dark:text-white">Blood Test (CBC)</td>
-              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
-              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 250.00</td>
-              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 250.00</td>
-            </tr>
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-              <td class="px-6 py-4 font-medium text-text-main dark:text-white">Pharmacy Charges</td>
-              <td class="px-6 py-4 text-center text-text-secondary dark:text-gray-400">1</td>
-              <td class="px-6 py-4 text-right text-text-secondary dark:text-gray-400">₹ 1,200.00</td>
-              <td class="px-6 py-4 text-right font-semibold text-text-main dark:text-white">₹ 1,200.00</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- Summary & Payment Info -->
-      <div class="mt-8 flex flex-col md:flex-row justify-between gap-8">
-        <!-- Payment Information -->
-        <div
-          class="w-full md:w-1/2 p-6 rounded-lg bg-background-light dark:bg-gray-800/30 border border-border-light dark:border-gray-700">
-          <h3 class="text-sm font-bold uppercase tracking-wider text-text-secondary dark:text-gray-400 mb-4">Payment
-            Details</h3>
-          <div class="space-y-3">
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary dark:text-gray-400">Payment Status</span>
-              <span class="font-bold text-green-600 dark:text-green-400">Paid</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary dark:text-gray-400">Date Paid</span>
-              <span class="font-medium text-text-main dark:text-white">Oct 24, 2023 - 10:30 AM</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <span class="text-text-secondary dark:text-gray-400">Payment Method</span>
-              <span class="font-medium text-text-main dark:text-white flex items-center gap-2">
-                <span class="material-symbols-outlined text-[18px]">credit_card</span>
-                Credit Card (**** 4242)
-              </span>
-            </div>
-          </div>
+
+    <!-- Table -->
+    <section class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Product Description</th>
+            <th class="center">Quantity</th>
+            <th class="right">Unit Rate</th>
+            <th class="right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Consultation Fee</td>
+            <td class="center">1</td>
+            <td class="right">₹ 500.00</td>
+            <td class="right"><strong>₹ 500.00</strong></td>
+          </tr>
+          <tr>
+            <td>X-Ray (Chest PA View)</td>
+            <td class="center">1</td>
+            <td class="right">₹ 350.00</td>
+            <td class="right"><strong>₹ 350.00</strong></td>
+          </tr>
+          <tr>
+            <td>Blood Test (CBC)</td>
+            <td class="center">1</td>
+            <td class="right">₹ 250.00</td>
+            <td class="right"><strong>₹ 250.00</strong></td>
+          </tr>
+          <tr>
+            <td>Pharmacy Charges</td>
+            <td class="center">1</td>
+            <td class="right">₹ 1,200.00</td>
+            <td class="right"><strong>₹ 1,200.00</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="summary">
+        <div class="payment-box">
+          <h3>Payment Details</h3>
+          <div class="payment-row"><span>Status</span><strong>Paid</strong></div>
+          <div class="payment-row"><span>Date</span><strong>Oct 24, 2023</strong></div>
+          <div class="payment-row"><span>Method</span><strong>Credit Card</strong></div>
         </div>
-        <!-- Totals -->
-        <div class="w-full md:w-5/12 flex flex-col justify-end">
-          <div class="flex justify-between py-2 text-text-secondary dark:text-gray-400 text-sm">
-            <span>Subtotal</span>
-            <span class="font-medium text-text-main dark:text-white">₹ 2,300.00</span>
+
+        <div class="totals">
+          <div class="totals-row"><span>Subtotal</span><strong>₹ 2,300.00</strong></div>
+          <div class="totals-row"><span>GST (18%)</span><strong>₹ 414.00</strong></div>
+          <div class="totals-row">
+            <span>Total</span>
+            <span class="grand-total">₹ 2,714.00</span>
           </div>
-          <div
-            class="flex justify-between py-2 text-text-secondary dark:text-gray-400 text-sm border-b border-border-light dark:border-gray-700 pb-4">
-            <span>Taxes (GST 18%)</span>
-            <span class="font-medium text-text-main dark:text-white">₹ 414.00</span>
-          </div>
-          <div class="flex justify-between py-4 text-text-main dark:text-white">
-            <span class="font-bold text-lg">Total Amount</span>
-            <span class="font-black text-2xl text-primary">₹ 2,714.00</span>
-          </div>
-          <div
-            class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded border border-blue-100 dark:border-blue-800 text-center">
-            <p>Thank you for choosing Ramakrishna Mission Sargachi.</p>
+          <div class="thank-you">
+            Thank you for choosing Ramakrishna Mission Sargachi.
           </div>
         </div>
       </div>
     </section>
-    <!-- Footer Bar -->
-    <footer
-      class="bg-background-light dark:bg-gray-800 border-t border-border-light dark:border-gray-700 px-8 py-4 md:px-12 flex flex-col md:flex-row justify-between items-center text-xs text-text-secondary dark:text-gray-500 gap-4">
+
+    <!-- Footer -->
+    <footer class="invoice-footer">
       <p>© 2023 Ramakrishna Mission Sargachi. All rights reserved.</p>
-      <div class="flex gap-4">
-        <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
-        <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
-        <a class="hover:text-primary transition-colors" href="#">Support</a>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms</a>
+        <a href="#">Support</a>
       </div>
     </footer>
-  </main>
-</body>
 
+  </main>
+
+</body>
 </html>
     `);
 
@@ -794,48 +987,14 @@ const PathLabBilling = () => {
     }, 100);
   };
 
-
-  const handleDownloadPDF = async (row) => {
-    console.log("📄 Download PDF:", row.name);
-    // setSelectedInvoice(row);
-
-    // // wait for DOM to render
-    // setTimeout(() => {
-    //   const element = invoiceRef.current;
-
-    //   const options = {
-    //     margin: 10,
-    //     filename: `${row.name}.pdf`,
-    //     image: { type: "jpeg", quality: 0.98 },
-    //     html2canvas: {
-    //       scale: 2,
-    //       useCORS: true,
-    //     },
-    //     jsPDF: {
-    //       unit: "mm",
-    //       format: "a4",
-    //       orientation: "portrait",
-    //     },
-    //   };
-
-    //   html2pdf().set(options).from(element).save();
-    // }, 100);
-  };
-
-
   const renderActions = (row) => (
     <ActionsContainer>
       <ActionLink onClick={() => handlePrint(row)}>
         <Printer size={16} />
         Print
       </ActionLink>
-      <ActionLink onClick={() => handleDownloadPDF(row)}>
-        <Download size={16} />
-        PDF
-      </ActionLink>
     </ActionsContainer>
   );
-
 
   return (
     <Layout>
