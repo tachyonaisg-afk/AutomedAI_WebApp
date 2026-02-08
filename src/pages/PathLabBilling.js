@@ -534,7 +534,7 @@ const PathLabBilling = () => {
       const printWindow = window.open("", "_blank");
 
       printWindow.document.write(`
-      <!DOCTYPE html>
+     <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -871,7 +871,7 @@ const PathLabBilling = () => {
 
       <div class="invoice-meta">
         <h1 class="invoice-title">INVOICE</h1>
-        <p>Invoice # <strong>INV-2023-001</strong></p>
+        <p>Invoice # <strong>${row.name})</strong></p>
         <p>Date: <strong>Oct 24, 2023</strong></p>
         <div class="paid-badge">
           <span class="material-symbols-outlined">check_circle</span>
@@ -885,15 +885,11 @@ const PathLabBilling = () => {
       <div class="patient-grid">
         <div>
           <div class="label">Patient Name</div>
-          <div class="value">Rahul Roy</div>
+          <div class="value">${row.patient_name}</div>
         </div>
         <div>
           <div class="label">Patient ID</div>
-          <div class="value">P-99823</div>
-        </div>
-        <div>
-          <div class="label">Posting Date</div>
-          <div class="value">Oct 20, 2023</div>
+          <div class="value">${row.patient}</div>
         </div>
       </div>
     </section>
@@ -940,8 +936,8 @@ const PathLabBilling = () => {
       <div class="summary">
         <div class="payment-box">
           <h3>Payment Details</h3>
-          <div class="payment-row"><span>Status</span><strong>Paid</strong></div>
-          <div class="payment-row"><span>Date</span><strong>Oct 24, 2023</strong></div>
+          <div class="payment-row"><span>Status</span><strong>${row.status}</strong></div>
+          <div class="payment-row"><span>Date</span><strong>${row.posting_date}</strong></div>
           <div class="payment-row"><span>Method</span><strong>Credit Card</strong></div>
         </div>
 
