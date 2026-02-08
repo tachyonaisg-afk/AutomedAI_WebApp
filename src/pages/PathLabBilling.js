@@ -8,7 +8,7 @@ import api from "../services/api";
 import DataTable from "../components/shared/DataTable";
 import { Search, Printer } from "lucide-react";
 // import html2pdf from "html2pdf.js";
-import InvoiceTemplate from "../components/shared/InvoiceTemplate";
+// import InvoiceTemplate from "../components/shared/InvoiceTemplate";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -661,14 +661,14 @@ const PathLabBilling = () => {
 
         </BillingSection>
       </BillingContainer>
-      {selectedInvoice && (
+      {/* {selectedInvoice && (
         <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
           <InvoiceTemplate
             ref={invoiceRef}
             invoice={selectedInvoice}
           />
         </div>
-      )}
+      )} */}
     </Layout>
   );
 };
