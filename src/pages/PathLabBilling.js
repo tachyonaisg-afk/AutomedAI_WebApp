@@ -946,7 +946,7 @@ const PathLabBilling = () => {
           <div class="totals-row"><span>GST (18%)</span><strong>₹ 414.00</strong></div>
           <div class="totals-row">
             <span>Total</span>
-            <span class="grand-total">₹ 2,714.00</span>
+            <span class="grand-total">₹ ${row.net_total}</span>
           </div>
           <div class="thank-you">
             Thank you for choosing Ramakrishna Mission Sargachi.
