@@ -750,6 +750,22 @@ const LabTestResult = () => {
 
           <SideCard>
             <FormGroup>
+              <Label>Referred By</Label>
+              <Select
+                name="referredBy"
+                value={formData.practitioner_name}
+                onChange={handleFormChange}
+                disabled
+              >
+                <option value="">Choose a practitioner</option>
+                {practitioners.map((practitioner) => (
+                  <option key={practitioner.name} value={practitioner.name}>
+                    {practitioner.practitioner_name}
+                  </option>
+                ))}
+              </Select>
+            </FormGroup>
+            <FormGroup>
               <Label>Verified By</Label>
               <Select
                 name="verifiedBy"

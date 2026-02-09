@@ -880,7 +880,7 @@ useEffect(() => {
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Ref Doctor</InfoLabel>
-                  <InfoValue>{selectedTestDetails[0]?.referring_practitioner || "N/A"}</InfoValue>
+                  <InfoValue>{selectedTestDetails[0]?.practitioner_name || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Patient ID</InfoLabel>
@@ -888,7 +888,7 @@ useEffect(() => {
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Collection Location</InfoLabel>
-                  <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
+                  <InfoValue>-</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Sample Date and Time</InfoLabel>

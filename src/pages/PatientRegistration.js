@@ -665,6 +665,8 @@ const PatientRegistration = () => {
 
   const [billingData, setBillingData] = useState({
     referringPractitioner: "",
+    appointmentDate: new Date().toISOString().split("T")[0], 
+    appointmentTime: "",
     editPostingDate: false,
     discountPercent: 0,
   });
@@ -1848,7 +1850,7 @@ const PatientRegistration = () => {
                   </FormGroup>
                   <FormGroup>
                     <FormLabel>Appointment Date</FormLabel>
-                    <input
+                    <FormInput
                       type="date"
                       value={billingData.appointmentDate}
                       onChange={(e) =>
@@ -1862,7 +1864,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Appointment Time</FormLabel>
-                    <input
+                    <FormInput
                       type="time"
                       value={billingData.appointmentTime}
                       onChange={(e) =>
