@@ -604,6 +604,16 @@ const DeleteItemButton = styled.button`
     height: 18px;
   }
 `;
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
 
 const PatientRegistration = () => {
   usePageTitle("Patient Registration");
@@ -692,20 +702,20 @@ const PatientRegistration = () => {
   const hasAnyAddressValue = formData.address_line1?.trim().length > 0;
 
   useEffect(() => {
-  if (formData.address_line1?.trim()) {
-    // If address is entered, force country to India
-    setFormData((prev) => ({
-      ...prev,
-      country: "India",
-    }));
-  } else {
-    // If address is cleared, reset country (optional)
-    setFormData((prev) => ({
-      ...prev,
-      country: "",
-    }));
-  }
-}, [formData.address_line1]);
+    if (formData.address_line1?.trim()) {
+      // If address is entered, force country to India
+      setFormData((prev) => ({
+        ...prev,
+        country: "India",
+      }));
+    } else {
+      // If address is cleared, reset country (optional)
+      setFormData((prev) => ({
+        ...prev,
+        country: "",
+      }));
+    }
+  }, [formData.address_line1]);
 
 
   // Calculate age from date of birth
@@ -1158,7 +1168,7 @@ const PatientRegistration = () => {
   //     setItems(items.slice(0, -1));
   //   }
   // };
-    const removeItem = (index) => {
+  const removeItem = (index) => {
     if (items.length > 0) {
       const updatedItems = items.filter((_, i) => i !== index);
       setItems(updatedItems);
@@ -1814,27 +1824,56 @@ const PatientRegistration = () => {
             <>
               <FormSection>
                 <SectionTitle>Patient Information</SectionTitle>
-                <FormGroup>
-                  <FormLabel>
-                    Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk>
-                  </FormLabel>
+                <FormRow>
+                  <FormGroup>
+                    <FormLabel>
+                      Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk>
+                    </FormLabel>
 
-                  <Select
-                    options={practitioners.map((p) => ({
-                      label: p.practitioner_name || p.name,
-                      value: p.name
-                    }))}
-                    onChange={(selected) =>
-                      setBillingData((prev) => ({
-                        ...prev,
-                        referringPractitioner: selected ? selected.value : null
-                      }))
-                    }
-                    placeholder="Search practitioner..."
-                    isSearchable
-                    isClearable
-                  />
-                </FormGroup>
+                    <Select
+                      options={practitioners.map((p) => ({
+                        label: p.practitioner_name || p.name,
+                        value: p.name
+                      }))}
+                      onChange={(selected) =>
+                        setBillingData((prev) => ({
+                          ...prev,
+                          referringPractitioner: selected ? selected.value : null
+                        }))
+                      }
+                      placeholder="Search practitioner..."
+                      isSearchable
+                      isClearable
+                    />
+                  </FormGroup>
+                  <FormGroup>
+                    <FormLabel>Appointment Date</FormLabel>
+                    <input
+                      type="date"
+                      value={billingData.appointmentDate}
+                      onChange={(e) =>
+                        setBillingData((prev) => ({
+                          ...prev,
+                          appointmentDate: e.target.value,
+                        }))
+                      }
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Appointment Time</FormLabel>
+                    <input
+                      type="time"
+                      value={billingData.appointmentTime}
+                      onChange={(e) =>
+                        setBillingData((prev) => ({
+                          ...prev,
+                          appointmentTime: e.target.value,
+                        }))
+                      }
+                    />
+                  </FormGroup>
+                </FormRow>
               </FormSection>
 
               <ItemsSection>

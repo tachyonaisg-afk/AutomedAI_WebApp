@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Printer, Download, ArrowLeft } from "lucide-react";
-import api from "../services/api";
+import api, { API_ENDPOINTS, apiService } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 import { createGlobalStyle } from "styled-components";
 
@@ -302,7 +302,7 @@ const ReportHeader = styled.div`
 
 const PatientInfoSection = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   margin-bottom: 30px;
   padding: 20px;
@@ -465,7 +465,7 @@ const ResultPrint = () => {
   const [error, setError] = useState(null);
   const [selectedTestDetails, setSelectedTestDetails] = useState([]);
   const [sampleDetails, setSampleDetails] = useState([]);
-
+  const [employees, setEmployees] = useState([]);
   // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
     if (!testName) return testName;
@@ -485,6 +485,71 @@ const ResultPrint = () => {
       return dateString;
     }
   };
+
+  const normalizeRange = (range) => {
+    if (!range) return "";
+    return range
+      .replace(/[–—−â€“]/g, "-")
+      .replace(/≤/g, "<=")
+      .replace(/≥/g, ">=")
+      .toLowerCase()
+      .trim();
+  };
+  const extractGenderRange = (range, sex) => {
+    if (!range || !sex) return range;
+
+    const regex = new RegExp(
+      `${sex.toLowerCase()}\\s*:\\s*([^,]+)`,
+      "i"
+    );
+
+    const match = normalizeRange(range).match(regex);
+    return match ? match[1].trim() : range;
+  };
+  const isOutOfRange = (value, range, sex) => {
+    if (!value || !range) return false;
+
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return false;
+
+    const genderRange = extractGenderRange(range, sex);
+    const r = normalizeRange(genderRange);
+
+    // Text-only / qualitative results → never bold
+    if (
+      r.includes("negative") ||
+      r.includes("non-reactive") ||
+      r.includes("no growth") ||
+      r.includes("adequate") ||
+      r.includes("normal") ||
+      r.includes("report-based")
+    ) {
+      return false;
+    }
+
+    // < 140
+    const lessThan = r.match(/<\s*(\d+(\.\d+)?)/);
+    if (lessThan) {
+      return numValue > parseFloat(lessThan[1]);
+    }
+
+    // > 5
+    const greaterThan = r.match(/>\s*(\d+(\.\d+)?)/);
+    if (greaterThan) {
+      return numValue < parseFloat(greaterThan[1]);
+    }
+
+    // 70-99
+    const rangeMatch = r.match(/(\d+(\.\d+)?)\s*-\s*(\d+(\.\d+)?)/);
+    if (rangeMatch) {
+      const min = parseFloat(rangeMatch[1]);
+      const max = parseFloat(rangeMatch[3]);
+      return numValue < min || numValue > max;
+    }
+
+    return false;
+  };
+
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
@@ -597,23 +662,51 @@ const ResultPrint = () => {
     fetchSelectedTestDetails();
   }, [tests]);
 
-  useEffect(() => {
-    console.log("Selected Test Details:", selectedTestDetails);
-    const sampleId = selectedTestDetails[0]?.sample;
-    if (sampleId) {
-      const fetchSampleDetails = async () => {
-        try {
-          const response = await api.get(`https://hms.automedai.in/api/resource/Sample Collection/${sampleId}`);
-          console.log("Sample Details API Response:", response);
-          const sampleDetails = response.data?.data;
-          setSampleDetails(sampleDetails);
-        } catch (err) {
-          console.error("Error fetching sample details:", err);
+useEffect(() => {
+  if (!selectedTestDetails?.length) return;
+
+  const sampleId = selectedTestDetails[0]?.sample;
+  if (!sampleId) return;
+
+  const fetchSampleAndCollector = async () => {
+    try {
+      // 1️⃣ Fetch sample details
+      const sampleResponse = await api.get(
+        `https://hms.automedai.in/api/resource/Sample Collection/${sampleId}`
+      );
+
+      const sampleDetails = sampleResponse.data?.data;
+      setSampleDetails(sampleDetails);
+
+      const collectedByUserId = sampleDetails?.collected_by;
+      if (!collectedByUserId) return;
+
+      // 2️⃣ Fetch employee (phlebotomist) using collected_by
+      const fields = JSON.stringify(["name", "user_id", "employee_name"]);
+
+      const employeeResponse = await apiService.get(
+        API_ENDPOINTS.SAMPLE_COLLECTORS.LIST,
+        {
+          fields,
+          filters: JSON.stringify([
+            ["designation", "=", "Phlebotomist"],
+            ["user_id", "=", collectedByUserId],
+          ]),
+          limit_page_length: 0,
         }
-      };
-      fetchSampleDetails();
+      );
+
+      if (employeeResponse.data?.data) {
+        setEmployees(employeeResponse.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching sample / collector details:", err);
     }
-  }, [selectedTestDetails]);
+  };
+
+  fetchSampleAndCollector();
+}, [selectedTestDetails]);
+
 
   const toggleTestSelection = (testId) => {
     setTests(
@@ -794,7 +887,11 @@ const ResultPrint = () => {
                   <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
-                  <InfoLabel>Sample Date</InfoLabel>
+                  <InfoLabel>Collection Location</InfoLabel>
+                  <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Sample Date and Time</InfoLabel>
                   <InfoValue>{formatDateTime(sampleDetails?.collected_time)}</InfoValue>
                 </InfoField>
                 <InfoField>
@@ -806,6 +903,10 @@ const ResultPrint = () => {
                 <InfoField>
                   <InfoLabel>Report Status Date</InfoLabel>
                   <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Collected By</InfoLabel>
+                  <InfoValue>{employees[0]?.employee_name || "N/A"}</InfoValue>
                 </InfoField>
               </PatientInfoSection>
 
@@ -841,9 +942,20 @@ const ResultPrint = () => {
                           {testDetail.normal_test_items.map((item, itemIndex) => (
                             <TableRow key={itemIndex}>
                               <TableCell>{removeTestPrefix(item.lab_test_name) || "N/A"}</TableCell>
-                              <TableCell>{item.result_value || "N/A"}</TableCell>
+                              <TableCell>
+                                {isOutOfRange(
+                                  item.result_value,
+                                  item.normal_range,
+                                  selectedTestDetails[0]?.patient_sex
+                                ) ? (
+                                  <strong>{item.result_value}</strong>
+                                ) : (
+                                  item.result_value || "N/A"
+                                )}
+                              </TableCell>
+
                               <TableCell>{item.lab_test_uom || ""}</TableCell>
-                              <TableCell>{item.normal_range || "N/A"}</TableCell>
+                              <TableCell>{item.normal_range || ""}</TableCell>
                             </TableRow>
                           ))}
                         </tbody>
