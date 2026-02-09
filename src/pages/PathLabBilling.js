@@ -577,7 +577,7 @@ const PathLabBilling = () => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hospital Patient Invoice - Ramakrishna Mission Sargachi</title>
+  <title>Hospital Patient Invoice - Ramakrishna Mission Sargachi Hospital ${invoice.patient_name}</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -986,13 +986,7 @@ const PathLabBilling = () => {
     <!-- Footer -->
     <footer class="invoice-footer">
       <p>© 2023 Ramakrishna Mission Sargachi. All rights reserved.</p>
-      <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms</a>
-        <a href="#">Support</a>
-      </div>
     </footer>
-
   </main>
 
 </body>
