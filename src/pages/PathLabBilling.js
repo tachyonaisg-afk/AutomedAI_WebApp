@@ -555,7 +555,6 @@ const PathLabBilling = () => {
       .join("");
   };
 
-
   const handlePrint = (invoice) => {
     const itemsHTML = buildItemsRows(invoice.items);
 
@@ -609,10 +608,14 @@ const PathLabBilling = () => {
       justify-content: center;
       padding: 32px 16px;
     }
+    @page {
+      size: A4 portrait;
+      margin: 15mm;
+    }
 
     .invoice-wrapper {
       width: 100%;
-      max-width: 960px;
+      max-width: 148mm;
       background: var(--surface);
       border-radius: 12px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.08);
@@ -890,7 +893,11 @@ const PathLabBilling = () => {
       <div class="hospital-info">
         <div class="hospital-title">
           <div class="hospital-icon">
-            <span class="material-symbols-outlined">local_hospital</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
+              10-4.48 10-10S17.52 2 12 2zm1 
+              11h4v-2h-4V7h-2v4H7v2h4v4h2v-4z"/>
+            </svg>
           </div>
           <div class="hospital-name">
             Ramakrishna Mission<br>Sargachi
@@ -908,7 +915,13 @@ const PathLabBilling = () => {
         <p>Invoice # <strong>${invoice.name})</strong></p>
         <p>Date: <strong>${formattedDate}</strong></p>
         <div class="paid-badge">
-          <span class="material-symbols-outlined">check_circle</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 
+              10 10 10-4.48 10-10S17.52 2 
+              12 2zm-1.2 14.4L6.6 
+              12.2l1.4-1.4 2.8 2.8 
+              5.8-5.8 1.4 1.4-7.2 7.2z"/>
+            </svg>
            ${invoice.status}
         </div>
       </div>
@@ -1045,7 +1058,7 @@ const PathLabBilling = () => {
         <ToolbarSection>
           {/* Search */}
           <SearchContainer>
-            <DateLabel>Search:</DateLabel>
+            <DateLabel>Search by Patient ID:</DateLabel>
             <SearchIcon>
               <Search />
             </SearchIcon>
@@ -1074,6 +1087,17 @@ const PathLabBilling = () => {
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
+            />
+          </DateContainer>
+          <DateContainer>
+            <DateLabel>Reset Date Filter:</DateLabel>
+            <DateInput
+              type="button"
+              value="Reset"
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+              }}
             />
           </DateContainer>
         </ToolbarSection>
