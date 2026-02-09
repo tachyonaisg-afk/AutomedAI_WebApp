@@ -422,7 +422,7 @@ const LabTestResult = () => {
   }, [patientId, id]);
 
   const [testResults, setTestResults] = useState([]);
-      // Helper function to remove prefixes from test names
+  // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
     if (!testName) return testName;
     return testName.replace(/^(PHC-|LAB-|PLB-)\s*/i, '');
@@ -482,27 +482,90 @@ const LabTestResult = () => {
     }
   }, [labTestData]);
 
+  const normalizeRange = (range) => {
+    if (!range) return "";
+
+    return range
+      .replace(/[–—−â€“]/g, "-")   // normalize all dash types
+      .replace(/≤/g, "<=")
+      .replace(/≥/g, ">=")
+      .toLowerCase()
+      .trim();
+  };
+  const extractGenderRange = (range, sex) => {
+    if (!range || !sex) return range;
+
+    const normalized = normalizeRange(range);
+
+    // Match: Male: 7-20 ... OR Female: 7-20 ...
+    const regex = new RegExp(
+      `${sex.toLowerCase()}\\s*:\\s*([^,]+)`,
+      "i"
+    );
+
+    const match = normalized.match(regex);
+    return match ? match[1].trim() : range;
+  };
+
+  const getFlagFromRange = (value, range, sex) => {
+    if (value === "" || value === null) return "none";
+
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return "none";
+
+    // 👇 extract correct range first
+    const genderRange = extractGenderRange(range, sex);
+    const r = normalizeRange(genderRange);
+
+    // ---- Text-based tests ----
+    if (
+      r.includes("negative") ||
+      r.includes("non-reactive") ||
+      r.includes("no growth") ||
+      r.includes("adequate") ||
+      r.includes("normal") ||
+      r.includes("report-based")
+    ) {
+      return "none";
+    }
+
+    // ---- Less than ----
+    const lessThanMatch = r.match(/<\s*(\d+(\.\d+)?)/);
+    if (lessThanMatch) {
+      const max = parseFloat(lessThanMatch[1]);
+      return numValue > max ? "high" : "normal";
+    }
+
+    // ---- Greater than ----
+    const greaterThanMatch = r.match(/>\s*(\d+(\.\d+)?)/);
+    if (greaterThanMatch) {
+      const min = parseFloat(greaterThanMatch[1]);
+      return numValue < min ? "low" : "normal";
+    }
+
+    // ---- Standard range ----
+    const rangeMatch = r.match(/(\d+(\.\d+)?)\s*-\s*(\d+(\.\d+)?)/);
+    if (rangeMatch) {
+      const min = parseFloat(rangeMatch[1]);
+      const max = parseFloat(rangeMatch[3]);
+
+      if (numValue < min) return "low";
+      if (numValue > max) return "high";
+      return "normal";
+    }
+
+    return "none";
+  };
+
   const handleResultChange = (index, value) => {
     const updatedResults = [...testResults];
     updatedResults[index].value = value;
 
-    // Determine flag based on normal range
-    const range = updatedResults[index].normalRange.split(" - ");
-    const min = parseFloat(range[0]);
-    const max = parseFloat(range[1]);
-    const numValue = parseFloat(value);
-
-    if (!isNaN(numValue)) {
-      if (numValue < min) {
-        updatedResults[index].flag = "low";
-      } else if (numValue > max) {
-        updatedResults[index].flag = "high";
-      } else {
-        updatedResults[index].flag = "normal";
-      }
-    } else {
-      updatedResults[index].flag = "none";
-    }
+    updatedResults[index].flag = getFlagFromRange(
+      value,
+      updatedResults[index].normalRange,
+      patientData?.sex
+    );
 
     setTestResults(updatedResults);
   };
