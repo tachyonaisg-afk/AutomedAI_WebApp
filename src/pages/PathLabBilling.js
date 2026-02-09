@@ -540,12 +540,17 @@ const PathLabBilling = () => {
       console.error("❌ Failed to fetch invoice", err);
     }
   };
+  const formatTestName = (name = "") => {
+    return name.includes("-")
+      ? name.split("-").slice(1).join("-").trim()
+      : name;
+  };
   const buildItemsRows = (items = []) => {
     return items
       .map(
         (item) => `
       <tr>
-        <td>${item.item_name}</td>
+        <td>${formatTestName(item.item_name)}</td>
         <td class="center">${item.qty}</td>
         <td class="right">₹ ${item.rate.toFixed(2)}</td>
         <td class="right"><strong>₹ ${item.amount.toFixed(2)}</strong></td>
@@ -606,7 +611,7 @@ const PathLabBilling = () => {
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      padding: 32px 16px;
+      padding: 16px 16px;
     }
     @page {
       size: A4 portrait;
@@ -624,7 +629,7 @@ const PathLabBilling = () => {
 
     /* Header */
     .invoice-header {
-      padding: 48px;
+      padding: 30px;
       border-bottom: 1px solid var(--border-light);
       display: flex;
       flex-wrap: wrap;
@@ -705,7 +710,7 @@ const PathLabBilling = () => {
     /* Patient Info */
     .patient-section {
       background: #f1f3f5;
-      padding: 24px 48px;
+      padding: 12px 48px;
       border-bottom: 1px solid var(--border-light);
     }
 
@@ -724,13 +729,13 @@ const PathLabBilling = () => {
     }
 
     .value {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
     }
 
     /* Table */
     .table-section {
-      padding: 48px;
+      padding: 30px;
     }
 
     table {
