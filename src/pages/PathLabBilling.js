@@ -735,7 +735,7 @@ const PathLabBilling = () => {
 
     /* Table */
     .table-section {
-      padding: 30px;
+      padding: 25px;
     }
 
     table {
@@ -751,8 +751,8 @@ const PathLabBilling = () => {
     }
 
     th, td {
-      padding: 16px;
-      font-size: 14px;
+      padding: 14px;
+      font-size: 12px;
     }
 
     th {
