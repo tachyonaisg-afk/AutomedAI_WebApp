@@ -525,13 +525,47 @@ const PathLabBilling = () => {
       {status}
     </InvoiceStatus>
   );
-  const handlePrint = (row) => {
-    setSelectedInvoice(row);
+  const printInvoice = async (row) => {
+    try {
+      const res = await api.get(`/resource/Sales Invoice/${row.name}`);
+      const invoice = res.data?.data;
+
+      if (!invoice) {
+        console.error("Invoice not found");
+        return;
+      }
+
+      handlePrint(invoice);
+    } catch (err) {
+      console.error("❌ Failed to fetch invoice", err);
+    }
+  };
+  const buildItemsRows = (items = []) => {
+    return items
+      .map(
+        (item) => `
+      <tr>
+        <td>${item.item_name}</td>
+        <td class="center">${item.qty}</td>
+        <td class="right">₹ ${item.rate.toFixed(2)}</td>
+        <td class="right"><strong>₹ ${item.amount.toFixed(2)}</strong></td>
+      </tr>
+    `
+      )
+      .join("");
+  };
+
+
+  const handlePrint = (invoice) => {
+    const itemsHTML = buildItemsRows(invoice.items);
 
     setTimeout(() => {
       const printContent = invoiceRef.current;
 
       const printWindow = window.open("", "_blank");
+      const today = new Date();
+      const formattedDate = today.toLocaleDateString("en-GB");
+
 
       printWindow.document.write(`
      <!DOCTYPE html>
@@ -871,11 +905,11 @@ const PathLabBilling = () => {
 
       <div class="invoice-meta">
         <h1 class="invoice-title">INVOICE</h1>
-        <p>Invoice # <strong>${row.name})</strong></p>
-        <p>Date: <strong>Oct 24, 2023</strong></p>
+        <p>Invoice # <strong>${invoice.name})</strong></p>
+        <p>Date: <strong>${formattedDate}</strong></p>
         <div class="paid-badge">
           <span class="material-symbols-outlined">check_circle</span>
-          Paid
+           ${invoice.status}
         </div>
       </div>
     </header>
@@ -885,11 +919,11 @@ const PathLabBilling = () => {
       <div class="patient-grid">
         <div>
           <div class="label">Patient Name</div>
-          <div class="value">${row.patient_name}</div>
+          <div class="value">${invoice.patient_name}</div>
         </div>
         <div>
           <div class="label">Patient ID</div>
-          <div class="value">${row.patient}</div>
+          <div class="value">${invoice.patient}</div>
         </div>
       </div>
     </section>
@@ -906,47 +940,23 @@ const PathLabBilling = () => {
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>Consultation Fee</td>
-            <td class="center">1</td>
-            <td class="right">₹ 500.00</td>
-            <td class="right"><strong>₹ 500.00</strong></td>
-          </tr>
-          <tr>
-            <td>X-Ray (Chest PA View)</td>
-            <td class="center">1</td>
-            <td class="right">₹ 350.00</td>
-            <td class="right"><strong>₹ 350.00</strong></td>
-          </tr>
-          <tr>
-            <td>Blood Test (CBC)</td>
-            <td class="center">1</td>
-            <td class="right">₹ 250.00</td>
-            <td class="right"><strong>₹ 250.00</strong></td>
-          </tr>
-          <tr>
-            <td>Pharmacy Charges</td>
-            <td class="center">1</td>
-            <td class="right">₹ 1,200.00</td>
-            <td class="right"><strong>₹ 1,200.00</strong></td>
-          </tr>
+          ${itemsHTML}
         </tbody>
       </table>
 
       <div class="summary">
         <div class="payment-box">
           <h3>Payment Details</h3>
-          <div class="payment-row"><span>Status</span><strong>${row.status}</strong></div>
-          <div class="payment-row"><span>Date</span><strong>${row.posting_date}</strong></div>
-          <div class="payment-row"><span>Method</span><strong>Credit Card</strong></div>
+          <div class="payment-row"><span>Status</span><strong>${invoice.status}</strong></div>
+          <div class="payment-row"><span>Date</span><strong>${invoice.posting_date}</strong></div>
+          <div class="payment-row"><span>Method</span><strong>Cash</strong></div>
         </div>
 
         <div class="totals">
-          <div class="totals-row"><span>Subtotal</span><strong>₹ 2,300.00</strong></div>
-          <div class="totals-row"><span>GST (18%)</span><strong>₹ 414.00</strong></div>
+          
           <div class="totals-row">
             <span>Total</span>
-            <span class="grand-total">₹ ${row.net_total}</span>
+            <span class="grand-total">₹ ${invoice.net_total}</span>
           </div>
           <div class="thank-you">
             Thank you for choosing Ramakrishna Mission Sargachi.
@@ -985,7 +995,7 @@ const PathLabBilling = () => {
 
   const renderActions = (row) => (
     <ActionsContainer>
-      <ActionLink onClick={() => handlePrint(row)}>
+      <ActionLink onClick={() => printInvoice(row)}>
         <Printer size={16} />
         Print
       </ActionLink>
