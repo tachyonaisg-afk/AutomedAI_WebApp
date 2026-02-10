@@ -1286,49 +1286,51 @@ const PatientRegistration = () => {
         // ----------------------------
         // CREATE PATIENT APPOINTMENT
         // ----------------------------
-        try {
-          const appointmentPayload = {
-            appointment_for: "Practitioner",
-            appointment_based_on_check_in: 1,
-            company: formData.company,
-            appointment_type: "Doctor Consultation",
-            practitioner: billingData.referringPractitioner,
-            patient: patientId,
-            appointment_date: formData.appointmentDate,
-            appointment_time: formData.appointmentTime,
-            duration: "0",
-            status: "Confirmed",
-          };
+        if (requiresAppointment) {
+          try {
+            const appointmentPayload = {
+              appointment_for: "Practitioner",
+              appointment_based_on_check_in: 1,
+              company: formData.company,
+              appointment_type: "Doctor Consultation",
+              practitioner: billingData.referringPractitioner,
+              patient: patientId,
+              appointment_date: formData.appointmentDate,
+              appointment_time: formData.appointmentTime,
+              duration: "0",
+              status: "Confirmed",
+            };
 
-          console.log("Creating appointment:", appointmentPayload);
+            console.log("Creating appointment:", appointmentPayload);
 
-          const appointmentResponse = await fetch(
-            "https://hms.automedai.in/api/resource/Patient Appointment",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              credentials: "include",
-              body: JSON.stringify(appointmentPayload),
-            }
-          );
-
-          const appointmentData = await appointmentResponse.json();
-
-          if (appointmentResponse.ok) {
-            console.log("Appointment created successfully:", appointmentData);
-          } else {
-            console.error("Appointment creation failed:", appointmentData);
-            alert(
-              `Patient created, but appointment failed: ${appointmentData.message || "Unknown error"
-              }`
+            const appointmentResponse = await fetch(
+              "https://hms.automedai.in/api/resource/Patient Appointment",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify(appointmentPayload),
+              }
             );
+
+            const appointmentData = await appointmentResponse.json();
+
+            if (appointmentResponse.ok) {
+              console.log("Appointment created successfully:", appointmentData);
+            } else {
+              console.error("Appointment creation failed:", appointmentData);
+              alert(
+                `Patient created, but appointment failed: ${appointmentData.message || "Unknown error"
+                }`
+              );
+            }
+          } catch (appointmentError) {
+            console.error("Error creating appointment:", appointmentError);
+            alert("Patient created, but appointment could not be created.");
           }
-        } catch (appointmentError) {
-          console.error("Error creating appointment:", appointmentError);
-          alert("Patient created, but appointment could not be created.");
         }
 
         const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
@@ -1489,6 +1491,12 @@ const PatientRegistration = () => {
     if (currentStep < 3) {
       handleNextStep();
     } else {
+      if (requiresAppointment) {
+        if (!formData.appointmentDate || !formData.appointmentTime) {
+          alert("Please select Appointment Date and Time.");
+          return;
+        }
+      }
       // Final submission (Step 3 is now the last step)
       console.log("Form data:", formData);
       console.log("Medical History:", medicalHistory);
@@ -1499,6 +1507,10 @@ const PatientRegistration = () => {
       createPatient();
     }
   };
+  const requiresAppointment = items.some(
+    (item) => item.item === "STO-ITEM-2025-00539"
+  );
+
 
   return (
     <Layout>
@@ -1909,21 +1921,22 @@ const PatientRegistration = () => {
             <>
               <FormSection>
                 <SectionTitle>Patient Information</SectionTitle>
-                <FormRow>
+
+                <FormRow threeColumns={requiresAppointment}>
                   <FormGroup>
                     <FormLabel>
-                      Referring Practitioner<RequiredAsterisk>*</RequiredAsterisk>
+                      Practitioner<RequiredAsterisk>*</RequiredAsterisk>
                     </FormLabel>
 
                     <Select
                       options={practitioners.map((p) => ({
                         label: p.practitioner_name || p.name,
-                        value: p.name
+                        value: p.name,
                       }))}
                       onChange={(selected) =>
                         setBillingData((prev) => ({
                           ...prev,
-                          referringPractitioner: selected ? selected.value : null
+                          referringPractitioner: selected ? selected.value : null,
                         }))
                       }
                       placeholder="Search practitioner..."
@@ -1931,28 +1944,40 @@ const PatientRegistration = () => {
                       isClearable
                     />
                   </FormGroup>
-                  <FormGroup>
-                    <FormLabel>Appointment Date</FormLabel>
-                    <FormInput
-                      type="date"
-                      name="appointmentDate"
-                      value={formData.appointmentDate}
-                      min={new Date().toISOString().split("T")[0]}
-                      onChange={handleInputChange}
-                    />
-                  </FormGroup>
 
-                  <FormGroup>
-                    <FormLabel>Appointment Time</FormLabel>
-                    <FormInput
-                      type="time"
-                      name="appointmentTime"
-                      value={formData.appointmentTime || ""}
-                      onChange={handleInputChange}
-                    />
-                  </FormGroup>
+                  {requiresAppointment && (
+                    <>
+                      <FormGroup>
+                        <FormLabel>
+                          Appointment Date<RequiredAsterisk />
+                        </FormLabel>
+                        <FormInput
+                          type="date"
+                          name="appointmentDate"
+                          value={formData.appointmentDate}
+                          min={new Date().toISOString().split("T")[0]}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <FormLabel>
+                          Appointment Time<RequiredAsterisk />
+                        </FormLabel>
+                        <FormInput
+                          type="time"
+                          name="appointmentTime"
+                          value={formData.appointmentTime || ""}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </FormGroup>
+                    </>
+                  )}
                 </FormRow>
               </FormSection>
+
 
               <ItemsSection>
                 <ItemsHeader>
