@@ -651,6 +651,11 @@ const PatientRegistration = () => {
 
   const mobileInputRef = useRef(null);
   const occupationInputRef = useRef(null);
+  const getCurrentTimeHHMM = () => {
+    const now = new Date();
+    return now.toTimeString().slice(0, 5); // "14:30"
+  };
+
 
   // Check if we're on pathlab route
   const isPathLabRoute = location.pathname.includes("/pathlab");
@@ -674,7 +679,7 @@ const PatientRegistration = () => {
     existingConditions: "",
     visitType: "walk-in",
     assignedDoctor: "",
-    appointmentTime: "",
+    appointmentTime: getCurrentTimeHHMM(),
     appointmentDate: new Date().toISOString().split("T")[0],
   });
 
