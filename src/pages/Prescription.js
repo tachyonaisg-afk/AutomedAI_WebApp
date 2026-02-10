@@ -499,6 +499,7 @@ const Prescription = () => {
   const [error, setError] = useState(null);
   const [paperSize, setPaperSize] = useState('a5');
   const [appointmentId, setAppointmentId] = useState(null);
+  const [appointmentDoctor, setAppointmentDoctor] = useState(null);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
     ticketDate: new Date().toLocaleDateString('en-GB'),
@@ -542,35 +543,35 @@ const Prescription = () => {
   }, [id]);
 
   useEffect(() => {
-  const fetchPatientAppointment = async () => {
-    try {
-      if (!patientData?.name) return;
+    const fetchPatientAppointment = async () => {
+      try {
+        if (!patientData?.name) return;
 
-      const response = await api.get(
-        "https://{{web_address}}/api/resource/Patient Appointment",
-        {
-          params: {
-            filters: JSON.stringify([
-              ["patient", "=", patientData.name],
-            ]),
-            fields: JSON.stringify(["name"]),
-            limit_page_length: 1, // latest / first appointment
-          },
+        const response = await api.get(
+          "https://{{web_address}}/api/resource/Patient Appointment",
+          {
+            params: {
+              filters: JSON.stringify([
+                ["patient", "=", patientData.name],
+              ]),
+              fields: JSON.stringify(["name"]),
+              limit_page_length: 1, // latest / first appointment
+            },
+          }
+        );
+
+        if (response.data?.data?.length > 0) {
+          setAppointmentId(response.data.data[0].name);
+        } else {
+          setAppointmentId(null); // no appointment found
         }
-      );
-
-      if (response.data?.data?.length > 0) {
-        setAppointmentId(response.data.data[0].name);
-      } else {
-        setAppointmentId(null); // no appointment found
+      } catch (err) {
+        console.error("Error fetching patient appointment:", err);
       }
-    } catch (err) {
-      console.error("Error fetching patient appointment:", err);
-    }
-  };
+    };
 
-  fetchPatientAppointment();
-}, [patientData]);
+    fetchPatientAppointment();
+  }, [patientData]);
 
 
   // Fetch healthcare practitioners
@@ -597,6 +598,35 @@ const Prescription = () => {
     label: p.practitioner_name,
   }));
 
+  useEffect(() => {
+    const fetchAppointmentDoctor = async () => {
+      try {
+        if (!appointmentId) return;
+
+        const response = await api.get(
+          `https://{{web_address}}/api/resource/Patient Appointment/${appointmentId}`
+        );
+
+        const appointment = response.data?.data;
+        if (appointment?.practitioner && appointment?.practitioner_name) {
+          setAppointmentDoctor({
+            id: appointment.practitioner,
+            name: appointment.practitioner_name,
+          });
+
+          // 🔹 keep formData in sync if needed elsewhere
+          setFormData((prev) => ({
+            ...prev,
+            selectedDoctor: appointment.practitioner,
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching appointment doctor:", err);
+      }
+    };
+
+    fetchAppointmentDoctor();
+  }, [appointmentId]);
 
   // Update selected doctor data when selection changes
   useEffect(() => {
@@ -745,6 +775,7 @@ const Prescription = () => {
 
         <SidebarSection style={{ marginTop: "24px" }}>
           <SectionTitle>Doctor Selection</SectionTitle>
+
           <FormGroup>
             <Label>Select Doctor *</Label>
 
@@ -752,21 +783,20 @@ const Prescription = () => {
               classNamePrefix="react-select"
               options={doctorOptions}
               placeholder="Choose a doctor"
-              isClearable
               isSearchable
-              value={doctorOptions.find(
-                (opt) => opt.value === formData.selectedDoctor
-              )}
-              onChange={(selectedOption) =>
-                handleFormChange({
-                  target: {
-                    name: "selectedDoctor",
-                    value: selectedOption ? selectedOption.value : "",
-                  },
-                })
+              isClearable={false}
+              isDisabled={true}         
+              value={
+                appointmentDoctor
+                  ? {
+                    label: appointmentDoctor.name,
+                    value: appointmentDoctor.id,
+                  }
+                  : null
               }
             />
           </FormGroup>
+
         </SidebarSection>
 
       </Sidebar>
