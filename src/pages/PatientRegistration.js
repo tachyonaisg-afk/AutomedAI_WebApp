@@ -648,7 +648,6 @@ const PatientRegistration = () => {
     assignedDoctor: "",
     appointmentTime: "",
     appointmentDate: new Date().toISOString().split("T")[0],
-
   });
 
   const [medicalHistory, setMedicalHistory] = useState({
@@ -672,19 +671,6 @@ const PatientRegistration = () => {
     discountPercent: 0,
   });
 
-  // const [appointmentData, setAppointmentData] = useState({
-  //   appointment_for: "Practitioner",
-  //   appointment_based_on_check_in: 1,
-  //   company: "",
-  //   appointment_type: "Doctor Consultation",
-  //   practitioner: "",
-  //   patient: "",
-  //   appointment_date: new Date().toISOString().split("T")[0],
-  //   appointment_time: "",
-  //   duration: "0",
-  //   status: "Confirmed"
-  // });
-  // Initialize items based on route - pathlab has no items, others have default consultation
   const [items, setItems] = useState(() => {
     if (isPathLabRoute) {
       return [];
@@ -1061,13 +1047,6 @@ const PatientRegistration = () => {
       [name]: value,
     }));
   };
-  // const handleAppointmentChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setAppointmentData((prev) => ({
-  //     ...prev,
-  //     [name]: value,
-  //   }));
-  // };
 
   const toggleRiskFactor = (factor) => {
     setMedicalHistory((prev) => ({
@@ -1216,9 +1195,6 @@ const PatientRegistration = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
-  };
-  const getCurrentTime = () => {
-    return new Date().toTimeString().slice(0, 8); // "10:05:00"
   };
 
   const createPatient = async () => {
@@ -1924,12 +1900,8 @@ const PatientRegistration = () => {
                     <FormInput
                       type="date"
                       value={formData.appointmentDate}
-                      onChange={(e) =>
-                        setBillingData((prev) => ({
-                          ...prev,
-                          appointmentDate: e.target.value,
-                        }))
-                      }
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={handleInputChange}
                     />
                   </FormGroup>
 
@@ -1938,12 +1910,7 @@ const PatientRegistration = () => {
                     <FormInput
                       type="time"
                       value={formData.appointmentTime}
-                      onChange={(e) =>
-                        setBillingData((prev) => ({
-                          ...prev,
-                          appointmentTime: e.target.value,
-                        }))
-                      }
+                      onChange={handleInputChange}
                     />
                   </FormGroup>
                 </FormRow>
