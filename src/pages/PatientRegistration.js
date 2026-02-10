@@ -646,8 +646,8 @@ const PatientRegistration = () => {
     existingConditions: "",
     visitType: "walk-in",
     assignedDoctor: "",
-    appointment_time: "",
-    appointment_date: new Date().toISOString().split("T")[0],
+    appointmentTime: "",
+    appointmentDate: new Date().toISOString().split("T")[0],
 
   });
 
@@ -1289,8 +1289,8 @@ const PatientRegistration = () => {
             appointment_type: "Doctor Consultation",
             practitioner: billingData.referringPractitioner,
             patient: patientId, 
-            appointment_date: formData.appointment_date,
-            appointment_time: formData.appointment_time || getCurrentTime(), // billing time
+            appointment_date: formData.appointmentDate,
+            appointment_time: formData.appointmentTime,
             duration: "0",
             status: "Confirmed",
           };
