@@ -498,7 +498,7 @@ const Prescription = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [paperSize, setPaperSize] = useState('a5');
-
+  const [appointmentId, setAppointmentId] = useState(null);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
     ticketDate: new Date().toLocaleDateString('en-GB'),
@@ -540,6 +540,38 @@ const Prescription = () => {
       fetchPatientData();
     }
   }, [id]);
+
+  useEffect(() => {
+  const fetchPatientAppointment = async () => {
+    try {
+      if (!patientData?.name) return;
+
+      const response = await api.get(
+        "https://{{web_address}}/api/resource/Patient Appointment",
+        {
+          params: {
+            filters: JSON.stringify([
+              ["patient", "=", patientData.name],
+            ]),
+            fields: JSON.stringify(["name"]),
+            limit_page_length: 1, // latest / first appointment
+          },
+        }
+      );
+
+      if (response.data?.data?.length > 0) {
+        setAppointmentId(response.data.data[0].name);
+      } else {
+        setAppointmentId(null); // no appointment found
+      }
+    } catch (err) {
+      console.error("Error fetching patient appointment:", err);
+    }
+  };
+
+  fetchPatientAppointment();
+}, [patientData]);
+
 
   // Fetch healthcare practitioners
   useEffect(() => {
@@ -793,7 +825,7 @@ const Prescription = () => {
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
                 <div>SL NO:</div>
-                <div>Ticket No:</div>
+                <div>Appointment ID: {appointmentId}</div>
                 <div>Ticket Date: [{formData.ticketDate} - {formData.ticketTime}]</div>
               </TicketInfo>
             </TopRow>

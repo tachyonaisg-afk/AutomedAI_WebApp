@@ -1954,7 +1954,7 @@ const PatientRegistration = () => {
                     <>
                       <FormGroup>
                         <FormLabel>
-                          Appointment Date<RequiredAsterisk />
+                          Appointment Date<RequiredAsterisk>*</RequiredAsterisk>
                         </FormLabel>
                         <FormInput
                           type="date"
@@ -1968,7 +1968,7 @@ const PatientRegistration = () => {
 
                       <FormGroup>
                         <FormLabel>
-                          Appointment Time<RequiredAsterisk />
+                          Appointment Time<RequiredAsterisk>*</RequiredAsterisk>
                         </FormLabel>
                         <FormInput
                           type="time"
