@@ -613,6 +613,32 @@ const FormRow = styled.div`
     grid-template-columns: 1fr;
   }
 `;
+const PageOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+`;
+
+const Spinner = styled.div`
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #4a90e2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 
 const PatientRegistration = () => {
@@ -621,6 +647,8 @@ const PatientRegistration = () => {
   const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const mobileInputRef = useRef(null);
   const occupationInputRef = useRef(null);
 
@@ -1198,6 +1226,7 @@ const PatientRegistration = () => {
   };
 
   const createPatient = async () => {
+    setIsSubmitting(true);
     try {
       const payload = {
         doctype: "Patient",
@@ -1264,7 +1293,7 @@ const PatientRegistration = () => {
             company: formData.company,
             appointment_type: "Doctor Consultation",
             practitioner: billingData.referringPractitioner,
-            patient: patientId, 
+            patient: patientId,
             appointment_date: formData.appointmentDate,
             appointment_time: formData.appointmentTime,
             duration: "0",
@@ -1450,6 +1479,8 @@ const PatientRegistration = () => {
     } catch (error) {
       console.error("Error creating patient:", error);
       alert("Error creating patient. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -1471,6 +1502,11 @@ const PatientRegistration = () => {
 
   return (
     <Layout>
+      {isSubmitting && (
+        <PageOverlay>
+          <Spinner />
+        </PageOverlay>
+      )}
       <RegistrationContainer>
         <ProgressIndicator>
           <ProgressStepsContainer>
@@ -1899,6 +1935,7 @@ const PatientRegistration = () => {
                     <FormLabel>Appointment Date</FormLabel>
                     <FormInput
                       type="date"
+                      name="appointmentDate"
                       value={formData.appointmentDate}
                       min={new Date().toISOString().split("T")[0]}
                       onChange={handleInputChange}
@@ -1909,6 +1946,7 @@ const PatientRegistration = () => {
                     <FormLabel>Appointment Time</FormLabel>
                     <FormInput
                       type="time"
+                      name="appointmentTime"
                       value={formData.appointmentTime || ""}
                       onChange={handleInputChange}
                     />
@@ -2252,7 +2290,7 @@ const PatientRegistration = () => {
               <BackButton type="button" onClick={handlePreviousStep}>
                 Back
               </BackButton>
-              <NextButton type="submit">Submit and Send to Doctor</NextButton>
+              <NextButton type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit and Send to Doctor"}</NextButton>
             </ActionButtons>
           )}
 
