@@ -360,6 +360,15 @@ const Button = styled.button`
     }
   }
 `;
+const ReadOnlyField = styled.div`
+  padding: 10px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #f9f9f9;
+  font-size: 14px;
+  color: #333;
+`;
+
 
 const LabTestResult = () => {
   usePageTitle("Lab Test Result");
@@ -443,6 +452,7 @@ const LabTestResult = () => {
   }, [labTestData]);
 
   const [formData, setFormData] = useState({
+    practitioner_name: labTestData?.practitioner_name || "",
     technicianNotes: "",
     verifiedBy: "",
     reportDate: new Date().toISOString().split('T')[0],
@@ -751,20 +761,11 @@ const LabTestResult = () => {
           <SideCard>
             <FormGroup>
               <Label>Referred By</Label>
-              <Select
-                name="referredBy"
-                value={formData.practitioner_name}
-                onChange={handleFormChange}
-                disabled
-              >
-                <option value="">Choose a practitioner</option>
-                {practitioners.map((practitioner) => (
-                  <option key={practitioner.name} value={practitioner.name}>
-                    {practitioner.practitioner_name}
-                  </option>
-                ))}
-              </Select>
+              <ReadOnlyField>
+                {formData.practitioner_name || "N/A"}
+              </ReadOnlyField>
             </FormGroup>
+
             <FormGroup>
               <Label>Verified By</Label>
               <Select

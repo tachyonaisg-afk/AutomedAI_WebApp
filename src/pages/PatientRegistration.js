@@ -646,6 +646,9 @@ const PatientRegistration = () => {
     existingConditions: "",
     visitType: "walk-in",
     assignedDoctor: "",
+    appointment_time: "",
+    appointment_date: new Date().toISOString().split("T")[0],
+
   });
 
   const [medicalHistory, setMedicalHistory] = useState({
@@ -665,12 +668,22 @@ const PatientRegistration = () => {
 
   const [billingData, setBillingData] = useState({
     referringPractitioner: "",
-    appointmentDate: new Date().toISOString().split("T")[0], 
-    appointmentTime: "",
     editPostingDate: false,
     discountPercent: 0,
   });
 
+  // const [appointmentData, setAppointmentData] = useState({
+  //   appointment_for: "Practitioner",
+  //   appointment_based_on_check_in: 1,
+  //   company: "",
+  //   appointment_type: "Doctor Consultation",
+  //   practitioner: "",
+  //   patient: "",
+  //   appointment_date: new Date().toISOString().split("T")[0],
+  //   appointment_time: "",
+  //   duration: "0",
+  //   status: "Confirmed"
+  // });
   // Initialize items based on route - pathlab has no items, others have default consultation
   const [items, setItems] = useState(() => {
     if (isPathLabRoute) {
@@ -1048,6 +1061,13 @@ const PatientRegistration = () => {
       [name]: value,
     }));
   };
+  // const handleAppointmentChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setAppointmentData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
 
   const toggleRiskFactor = (factor) => {
     setMedicalHistory((prev) => ({
@@ -1197,7 +1217,9 @@ const PatientRegistration = () => {
       setCurrentStep(currentStep - 1);
     }
   };
-
+  const getCurrentTime = () => {
+    return new Date().toTimeString().slice(0, 8); // "10:05:00"
+  };
 
   const createPatient = async () => {
     try {
@@ -1256,6 +1278,54 @@ const PatientRegistration = () => {
 
         // Get patient details from response
         const patientId = data.data?.name;
+        // ----------------------------
+        // CREATE PATIENT APPOINTMENT
+        // ----------------------------
+        try {
+          const appointmentPayload = {
+            appointment_for: "Practitioner",
+            appointment_based_on_check_in: 1,
+            company: formData.company,
+            appointment_type: "Doctor Consultation",
+            practitioner: billingData.referringPractitioner,
+            patient: patientId, 
+            appointment_date: formData.appointment_date,
+            appointment_time: formData.appointment_time || getCurrentTime(), // billing time
+            duration: "0",
+            status: "Confirmed",
+          };
+
+          console.log("Creating appointment:", appointmentPayload);
+
+          const appointmentResponse = await fetch(
+            "https://hms.automedai.in/api/resource/Patient Appointment",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify(appointmentPayload),
+            }
+          );
+
+          const appointmentData = await appointmentResponse.json();
+
+          if (appointmentResponse.ok) {
+            console.log("Appointment created successfully:", appointmentData);
+          } else {
+            console.error("Appointment creation failed:", appointmentData);
+            alert(
+              `Patient created, but appointment failed: ${appointmentData.message || "Unknown error"
+              }`
+            );
+          }
+        } catch (appointmentError) {
+          console.error("Error creating appointment:", appointmentError);
+          alert("Patient created, but appointment could not be created.");
+        }
+
         const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
         const company = formData.company;
         // Create Sales Invoice if there are billing items
@@ -1416,6 +1486,7 @@ const PatientRegistration = () => {
       console.log("Form data:", formData);
       console.log("Medical History:", medicalHistory);
       console.log("Billing data:", billingData);
+      // console.log("Appointment data", appointmentData);
       console.log("Items:", items);
       console.log("Final submission");
       createPatient();
@@ -1852,7 +1923,7 @@ const PatientRegistration = () => {
                     <FormLabel>Appointment Date</FormLabel>
                     <FormInput
                       type="date"
-                      value={billingData.appointmentDate}
+                      value={formData.appointmentDate}
                       onChange={(e) =>
                         setBillingData((prev) => ({
                           ...prev,
@@ -1866,7 +1937,7 @@ const PatientRegistration = () => {
                     <FormLabel>Appointment Time</FormLabel>
                     <FormInput
                       type="time"
-                      value={billingData.appointmentTime}
+                      value={formData.appointmentTime}
                       onChange={(e) =>
                         setBillingData((prev) => ({
                           ...prev,
