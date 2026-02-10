@@ -1909,7 +1909,7 @@ const PatientRegistration = () => {
                     <FormLabel>Appointment Time</FormLabel>
                     <FormInput
                       type="time"
-                      value={formData.appointmentTime}
+                      value={formData.appointmentTime || ""}
                       onChange={handleInputChange}
                     />
                   </FormGroup>
