@@ -846,13 +846,13 @@ const Prescription = () => {
 
             <TopRow>
               <DoctorInfo paperSize={paperSize}>
-                [Dr. {selectedDoctorData?.practitioner_name || "Dlk, Biswas"}]<br />
+                [Dr. {selectedDoctorData?.practitioner_name || ""}]<br />
                 [Ex- H.M.o]<br />
                 PM]
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
                 <div>SL NO:</div>
-                <div>Appointment ID: {appointmentId ? appointmentId.slice(-3) : ""}</div>
+                <div>Appointment ID: {appointmentId ? appointmentId.slice(-3) : " "}</div>
                 <div>Ticket Date: [{formData.ticketDate} - {formData.ticketTime}]</div>
               </TicketInfo>
             </TopRow>
