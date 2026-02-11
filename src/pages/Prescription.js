@@ -548,7 +548,7 @@ const Prescription = () => {
         if (!patientData?.name) return;
 
         const response = await api.get(
-          "https://{{web_address}}/api/resource/Patient Appointment",
+          "https://hms.automedai.in/api/resource/Patient Appointment",
           {
             params: {
               filters: JSON.stringify([
@@ -604,7 +604,7 @@ const Prescription = () => {
         if (!appointmentId) return;
 
         const response = await api.get(
-          `https://{{web_address}}/api/resource/Patient Appointment/${appointmentId}`
+          `https://hms.automedai.in/api/resource/Patient Appointment/${appointmentId}`
         );
 
         const appointment = response.data?.data;
@@ -785,7 +785,7 @@ const Prescription = () => {
               placeholder="Choose a doctor"
               isSearchable
               isClearable={false}
-              isDisabled={true}         
+              isDisabled={true}
               value={
                 appointmentDoctor
                   ? {
