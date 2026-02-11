@@ -524,6 +524,7 @@ const Prescription = () => {
       try {
         setLoading(true);
         const response = await api.get(API_ENDPOINTS.PATIENTS.DETAIL(id));
+        console.log("Patient Data",response.data?.data);
         if (response.data?.data) {
           setPatientData(response.data.data);
         } else {
@@ -543,35 +544,90 @@ const Prescription = () => {
   }, [id]);
 
   useEffect(() => {
-    const fetchPatientAppointment = async () => {
+    const fetchAppointmentAndDoctor = async () => {
       try {
         if (!patientData?.name) return;
 
-        const response = await api.get(
-          "https://hms.automedai.in/api/resource/Patient Appointment",
+        // 1️⃣ Get latest appointment
+        const appointmentRes = await api.get(
+          "/resource/Patient Appointment",
           {
-            filters: JSON.stringify([
-              ["patient", "=", patientData.name],
-            ]),
-            fields: JSON.stringify(["name"]),
-            limit_page_length: 1,
+            params: {
+              filters: JSON.stringify([
+                ["patient", "=", patientData.name]
+              ]),
+              fields: JSON.stringify(["name"]),
+              order_by: "creation desc",
+              limit_page_length: 1
+            }
           }
         );
 
+        console.log("📊 Appointment API Response:", appointmentRes);
 
-        if (response.data?.data?.length > 0) {
-          setAppointmentId(response.data.data[0].name);
-        } else {
-          setAppointmentId(null); // no appointment found
+        const appointment =
+          appointmentRes.data?.data?.length > 0
+            ? appointmentRes.data.data[0]
+            : null;
+
+        if (!appointment) {
+          setAppointmentId(null);
+          return;
         }
+
+        setAppointmentId(appointment.name);
+
+        // 2️⃣ Fetch full appointment details
+        const appointmentDetailRes = await api.get(
+          `/resource/Patient Appointment/${appointment.name}`
+        );
+
+        const fullAppointment = appointmentDetailRes.data?.data;
+
+        console.log("📊 Full Appointment API Response:", fullAppointment);
+
+        if (fullAppointment?.practitioner) {
+          setAppointmentDoctor({
+            id: fullAppointment.practitioner,
+            name: fullAppointment.practitioner_name,
+          });
+
+          setFormData((prev) => ({
+            ...prev,
+            selectedDoctor: fullAppointment.practitioner,
+          }));
+        }
+
       } catch (err) {
-        console.error("Error fetching patient appointment:", err);
+        console.error("Error fetching appointment & doctor:", err);
       }
     };
 
-    fetchPatientAppointment();
+    fetchAppointmentAndDoctor();
   }, [patientData]);
 
+
+  // Update selected doctor data when selection changes
+  useEffect(() => {
+    const fetchDoctorDetails = async () => {
+      if (formData.selectedDoctor) {
+        try {
+          const response = await api.get(`https://hms.automedai.in/api/resource/Healthcare Practitioner/${formData.selectedDoctor}`);
+          console.log("Doctor Details Response:", response.data);
+          setSelectedDoctorData(response.data?.data);
+        } catch (err) {
+          console.error("Error fetching doctor details:", err);
+          // Fallback to basic info from practitioners list
+          const doctor = practitioners.find(p => p.name === formData.selectedDoctor);
+          setSelectedDoctorData(doctor);
+        }
+      } else {
+        setSelectedDoctorData(null);
+      }
+    };
+
+    fetchDoctorDetails();
+  }, [formData.selectedDoctor, practitioners]);
   // Fetch healthcare practitioners
   useEffect(() => {
     const fetchPractitioners = async () => {
@@ -595,57 +651,6 @@ const Prescription = () => {
     value: p.name,
     label: p.practitioner_name,
   }));
-
-  useEffect(() => {
-    const fetchAppointmentDoctor = async () => {
-      try {
-        if (!appointmentId) return;
-
-        const response = await api.get(
-          `https://hms.automedai.in/api/resource/Patient Appointment/${appointmentId}`
-        );
-
-        const appointment = response.data?.data;
-        if (appointment?.practitioner && appointment?.practitioner_name) {
-          setAppointmentDoctor({
-            id: appointment.practitioner,
-            name: appointment.practitioner_name,
-          });
-
-          // 🔹 keep formData in sync if needed elsewhere
-          setFormData((prev) => ({
-            ...prev,
-            selectedDoctor: appointment.practitioner,
-          }));
-        }
-      } catch (err) {
-        console.error("Error fetching appointment doctor:", err);
-      }
-    };
-    fetchAppointmentDoctor();
-  }, [appointmentId]);
-
-  // Update selected doctor data when selection changes
-  useEffect(() => {
-    const fetchDoctorDetails = async () => {
-      if (formData.selectedDoctor) {
-        try {
-          const response = await api.get(`https://hms.automedai.in/api/resource/Healthcare Practitioner/${formData.selectedDoctor}`);
-          console.log("Doctor Details Response:", response.data);
-          setSelectedDoctorData(response.data?.data);
-        } catch (err) {
-          console.error("Error fetching doctor details:", err);
-          // Fallback to basic info from practitioners list
-          const doctor = practitioners.find(p => p.name === formData.selectedDoctor);
-          setSelectedDoctorData(doctor);
-        }
-      } else {
-        setSelectedDoctorData(null);
-      }
-    };
-
-    fetchDoctorDetails();
-  }, [formData.selectedDoctor, practitioners]);
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
