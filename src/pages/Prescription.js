@@ -857,7 +857,7 @@ const Prescription = () => {
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
                 <div>SL NO:</div>
-                <div>Appointment ID: {appointmentId}</div>
+                <div>Appointment ID: {appointmentId ? appointmentId.slice(-3) : ""}</div>
                 <div>Ticket Date: [{formData.ticketDate} - {formData.ticketTime}]</div>
               </TicketInfo>
             </TopRow>
