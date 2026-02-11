@@ -550,15 +550,14 @@ const Prescription = () => {
         const response = await api.get(
           "https://hms.automedai.in/api/resource/Patient Appointment",
           {
-            params: {
-              filters: JSON.stringify([
-                ["patient", "=", patientData.name],
-              ]),
-              fields: JSON.stringify(["name"]),
-              limit_page_length: 1, // latest / first appointment
-            },
+            filters: JSON.stringify([
+              ["patient", "=", patientData.name],
+            ]),
+            fields: JSON.stringify(["name"]),
+            limit_page_length: 1,
           }
         );
+
 
         if (response.data?.data?.length > 0) {
           setAppointmentId(response.data.data[0].name);
@@ -572,7 +571,6 @@ const Prescription = () => {
 
     fetchPatientAppointment();
   }, [patientData]);
-
 
   // Fetch healthcare practitioners
   useEffect(() => {
@@ -624,7 +622,6 @@ const Prescription = () => {
         console.error("Error fetching appointment doctor:", err);
       }
     };
-
     fetchAppointmentDoctor();
   }, [appointmentId]);
 
