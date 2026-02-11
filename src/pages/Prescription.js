@@ -524,7 +524,7 @@ const Prescription = () => {
       try {
         setLoading(true);
         const response = await api.get(API_ENDPOINTS.PATIENTS.DETAIL(id));
-        console.log("Patient Data",response.data?.data);
+        console.log("Patient Data", response.data?.data);
         if (response.data?.data) {
           setPatientData(response.data.data);
         } else {
@@ -552,16 +552,12 @@ const Prescription = () => {
         const appointmentRes = await api.get(
           "/resource/Patient Appointment",
           {
-            params: {
-              filters: JSON.stringify([
-                ["patient", "=", patientData.name]
-              ]),
-              fields: JSON.stringify(["name"]),
-              order_by: "creation desc",
-              limit_page_length: 1
-            }
-          }
-        );
+            filters: JSON.stringify([
+              ["patient", "=", patientData.name]
+            ]),
+            fields: JSON.stringify(["name"]),
+            limit_page_length: 1
+          });
 
         console.log("📊 Appointment API Response:", appointmentRes);
 
@@ -606,7 +602,6 @@ const Prescription = () => {
     fetchAppointmentAndDoctor();
   }, [patientData]);
 
-
   // Update selected doctor data when selection changes
   useEffect(() => {
     const fetchDoctorDetails = async () => {
@@ -628,6 +623,7 @@ const Prescription = () => {
 
     fetchDoctorDetails();
   }, [formData.selectedDoctor, practitioners]);
+
   // Fetch healthcare practitioners
   useEffect(() => {
     const fetchPractitioners = async () => {
@@ -644,7 +640,6 @@ const Prescription = () => {
         console.error("Error fetching practitioners:", err);
       }
     };
-
     fetchPractitioners();
   }, []);
   const doctorOptions = practitioners.map((p) => ({
