@@ -618,22 +618,27 @@ const Dashboard = () => {
             //     withCredentials: true,
             //   }
             // );
-            // 1. Create the form data using URLSearchParams (Matches 'application/x-www-form-urlencoded')
-            const formData = new URLSearchParams();
-            formData.append('practitioner', doc.name);
-            formData.append('date', todayDate);
-            formData.append('appointment', JSON.stringify({
+            // 1. Setup the data exactly like your working console test
+            const params = new URLSearchParams();
+            params.append("practitioner", doc.name);
+            params.append("date", todayDate);
+            params.append("appointment", JSON.stringify({
               doctype: "Patient Appointment",
               appointment_for: "Practitioner",
-              company: "Automed Ai"
+              company: "Automed Ai",
             }));
+            console.log("params",params.toString());
 
-            // 2. Send as POST request
-            const response = await api.post(
+            // 2. Use native 'fetch' instead of 'api.post' to guarantee correct headers/format
+            const response = await fetch(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-              formData,
               {
-                withCredentials: true
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: params, // fetch automatically handles the stringifying of URLSearchParams
+                credentials: "include", // equivalent to axios 'withCredentials: true'
               }
             );
 
