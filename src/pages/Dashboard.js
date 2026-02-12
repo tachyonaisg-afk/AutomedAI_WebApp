@@ -120,12 +120,12 @@ const NavItem = styled.div`
     transform: translateY(-2px);
     box-shadow: 0 4px 12px
       ${(props) => {
-        const color = props.borderColor || "#3b82f6";
-        const r = parseInt(color.slice(1, 3), 16);
-        const g = parseInt(color.slice(3, 5), 16);
-        const b = parseInt(color.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, 0.2)`;
-      }};
+    const color = props.borderColor || "#3b82f6";
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, 0.2)`;
+  }};
 
     ${IconCircle} {
       background: ${(props) => props.hoverBgColor || "#eff6ff"};
@@ -465,6 +465,18 @@ const InsightSkeletonCard = styled.div`
   flex-direction: column;
   gap: 10px;
 `;
+const thStyle = {
+  border: "1px solid #ddd",
+  padding: "8px",
+  backgroundColor: "#f5f5f5",
+  textAlign: "left",
+};
+
+const tdStyle = {
+  border: "1px solid #ddd",
+  padding: "8px",
+};
+
 
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(value);
@@ -504,6 +516,8 @@ const Dashboard = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchTimeoutRef = useRef(null);
+  const [availableDoctors, setAvailableDoctors] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
@@ -513,6 +527,10 @@ const Dashboard = () => {
     { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
     { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444", route: null },
   ];
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
 
   const insights = [
     {
@@ -552,10 +570,91 @@ const Dashboard = () => {
       iconColor: "#10b981",
     },
   ];
-
-  const [isLoading, setIsLoading] = useState(true);
   const [visibleSections, setVisibleSections] = useState({});
   const sectionRefs = useRef({});
+
+  useEffect(() => {
+    const fetchAvailableDoctors = async () => {
+      try {
+        setIsLoading(true);
+
+        const todayDate = getTodayDate();
+
+        // 1️⃣ Fetch doctor list
+        const doctorRes = await api.get(
+          "https://hms.automedai.in/api/resource/Healthcare Practitioner?limit_page_length=5000"
+        );
+
+        const doctors = doctorRes.data?.data || [];
+
+        if (!doctors.length) {
+          setAvailableDoctors([]);
+          setIsLoading(false);
+          return;
+        }
+
+        // 2️⃣ Check availability for each doctor
+        const availabilityPromises = doctors.map(async (doc) => {
+          try {
+            const formData = new URLSearchParams();
+            formData.append("practitioner", doc.name);
+            formData.append("date", todayDate);
+            formData.append(
+              "appointment",
+              JSON.stringify({
+                doctype: "Patient Appointment",
+                appointment_for: "Practitioner",
+                company: ["Automed Ai", "Ramkrishna Mission Sargachi"],
+              })
+            );
+
+            const response = await api.post(
+              "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
+              formData,
+              {
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                },
+              }
+            );
+
+            const slotDetails = response.data?.message?.slot_details;
+
+            if (slotDetails && slotDetails.length > 0) {
+              const validSlots = slotDetails.filter(
+                (slot) => slot.avail_slot && slot.avail_slot.length > 0
+              );
+
+              if (validSlots.length > 0) {
+                return {
+                  practitionerId: doc.name,
+                  slots: validSlots,
+                };
+              }
+            }
+
+            return null;
+          } catch (err) {
+            console.error("Availability error for", doc.name, err);
+            return null;
+          }
+        });
+
+        const results = await Promise.all(availabilityPromises);
+
+        const filteredDoctors = results.filter(Boolean);
+
+        setAvailableDoctors(filteredDoctors);
+      } catch (error) {
+        console.error("Doctor fetch error:", error);
+        setAvailableDoctors([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAvailableDoctors();
+  }, []);
 
   // Search patients function
   const searchPatients = async (query) => {
@@ -762,19 +861,45 @@ const Dashboard = () => {
         <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
           <Section>
             <SectionTitle>Doctor Availability</SectionTitle>
+
             {isLoading ? (
               <DoctorAvailabilityCard>
                 <SkeletonBlock height="120px" style={{ width: "100%" }} />
               </DoctorAvailabilityCard>
             ) : (
               <DoctorAvailabilityCard>
-                <PlaceholderIcon>
-                  <Mountain size={32} />
-                  <Sun size={32} />
-                </PlaceholderIcon>
+                {availableDoctors.length === 0 ? (
+                  <p>No doctors available today.</p>
+                ) : (
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        <th style={thStyle}>Doctor ID</th>
+                        <th style={thStyle}>Service Unit</th>
+                        <th style={thStyle}>Available From</th>
+                        <th style={thStyle}>Available To</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {availableDoctors.map((doctor, index) =>
+                        doctor.slots.map((slot, slotIndex) =>
+                          slot.avail_slot.map((time, timeIndex) => (
+                            <tr key={`${index}-${slotIndex}-${timeIndex}`}>
+                              <td style={tdStyle}>{doctor.practitionerId}</td>
+                              <td style={tdStyle}>{slot.service_unit}</td>
+                              <td style={tdStyle}>{time.from_time}</td>
+                              <td style={tdStyle}>{time.to_time}</td>
+                            </tr>
+                          ))
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                )}
               </DoctorAvailabilityCard>
             )}
           </Section>
+
         </FadeInWrapper>
       </PageWrapper>
     </Layout>
