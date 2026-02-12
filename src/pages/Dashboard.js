@@ -577,16 +577,13 @@ const Dashboard = () => {
     const fetchAvailableDoctors = async () => {
       try {
         setIsLoading(true);
-
         const todayDate = getTodayDate();
 
         // 1️⃣ Fetch doctor list
         const doctorRes = await api.get(
           "https://hms.automedai.in/api/resource/Healthcare Practitioner?limit_page_length=5000"
         );
-
         const doctors = doctorRes.data?.data || [];
-
         console.log("Doctors API Response:", doctors);
 
         if (!doctors.length) {
@@ -595,30 +592,10 @@ const Dashboard = () => {
           return;
         }
 
-        // 2️⃣ Check availability for each doctor
-        const availabilityPromises = doctors.map(async (doc) => {
+        // 2️⃣ Helper function to process a single doctor
+        const checkDoctorAvailability = async (doc) => {
           try {
-            // const body = new URLSearchParams({
-            //   practitioner: doc.name,
-            //   date: todayDate,
-            //   appointment: JSON.stringify({
-            //     doctype: "Patient Appointment",
-            //     appointment_for: "Practitioner",
-            //     company: "Automed Ai",
-            //   }),
-            // }).toString();
-
-            // const response = await api.post(
-            //   "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-            //   body,
-            //   {
-            //     headers: {
-            //       "Content-Type": "application/x-www-form-urlencoded",
-            //     },
-            //     withCredentials: true,
-            //   }
-            // );
-            // 1. Setup the data exactly like your working console test
+            // Using URLSearchParams standardizes the body for the server
             const params = new URLSearchParams();
             params.append("practitioner", doc.name);
             params.append("date", todayDate);
@@ -627,36 +604,28 @@ const Dashboard = () => {
               appointment_for: "Practitioner",
               company: "Automed Ai",
             }));
-            console.log("params",params.toString());
 
-            // 2. Use native 'fetch' instead of 'api.post' to guarantee correct headers/format
+            // Using native fetch to ensure headers are correct
             const response = await fetch(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                },
-                body: params, // fetch automatically handles the stringifying of URLSearchParams
-                credentials: "include", // equivalent to axios 'withCredentials: true'
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: params,
+                credentials: "include",
               }
             );
 
-            const slotDetails = response.data?.message?.slot_details;
+            if (!response.ok) return null;
 
-            console.log(
-              "Availability API Response for",
-              doc.name,
-              response.data,
-              response.message,
-              slotDetails
-            );
+            // 🚨 FIX: Must await .json() to get the actual data object
+            const data = await response.json();
+            const slotDetails = data.message?.slot_details;
 
             if (slotDetails && slotDetails.length > 0) {
               const validSlots = slotDetails.filter(
                 (slot) => slot.avail_slot && slot.avail_slot.length > 0
               );
-
               if (validSlots.length > 0) {
                 return {
                   practitionerId: doc.name,
@@ -664,19 +633,28 @@ const Dashboard = () => {
                 };
               }
             }
-
             return null;
           } catch (err) {
             console.error("Availability error for", doc.name, err);
             return null;
           }
-        });
+        };
 
-        const results = await Promise.all(availabilityPromises);
+        // 3️⃣ BATCHING: Process doctors in chunks of 5 to avoid server overload
+        // (Fixes the "1 success out of 126" issue)
+        const BATCH_SIZE = 5;
+        let allResults = [];
 
-        const filteredDoctors = results.filter(Boolean);
+        for (let i = 0; i < doctors.length; i += BATCH_SIZE) {
+          const batch = doctors.slice(i, i + BATCH_SIZE);
+          // Run 5 requests in parallel, then wait for them to finish
+          const batchResults = await Promise.all(batch.map(checkDoctorAvailability));
+          allResults = [...allResults, ...batchResults];
+        }
 
+        const filteredDoctors = allResults.filter(Boolean);
         setAvailableDoctors(filteredDoctors);
+
       } catch (error) {
         console.error("Doctor fetch error:", error);
         setAvailableDoctors([]);
