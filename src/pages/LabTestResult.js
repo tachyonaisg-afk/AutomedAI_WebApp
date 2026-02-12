@@ -762,7 +762,7 @@ const LabTestResult = () => {
             <FormGroup>
               <Label>Referred By</Label>
               <ReadOnlyField>
-                {labTestData.practitioner_name || "N/A"}
+                {labTestData?.practitioner_name || "N/A"}
               </ReadOnlyField>
             </FormGroup>
 
