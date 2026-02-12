@@ -587,6 +587,8 @@ const Dashboard = () => {
 
         const doctors = doctorRes.data?.data || [];
 
+        console.log("Doctors API Response:", doctors);
+
         if (!doctors.length) {
           setAvailableDoctors([]);
           setIsLoading(false);
@@ -610,7 +612,7 @@ const Dashboard = () => {
 
             const response = await api.post(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-              formData,
+              formData.toString(),
               {
                 headers: {
                   "Content-Type": "application/x-www-form-urlencoded",
@@ -619,6 +621,12 @@ const Dashboard = () => {
             );
 
             const slotDetails = response.data?.message?.slot_details;
+
+            console.log(
+              "Availability API Response for",
+              doc.name,
+              slotDetails
+            );
 
             if (slotDetails && slotDetails.length > 0) {
               const validSlots = slotDetails.filter(
@@ -724,10 +732,10 @@ const Dashboard = () => {
     }, 500); // Wait 500ms after user stops typing
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => setIsLoading(false), 600);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   useEffect(() => {
     const ids = ["nav", "search", "insights", "doctor"];
