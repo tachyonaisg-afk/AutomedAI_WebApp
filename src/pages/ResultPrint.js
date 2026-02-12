@@ -488,13 +488,17 @@ const ResultPrint = () => {
 
   const normalizeRange = (range) => {
     if (!range) return "";
+
     return range
       .replace(/[–—−â€“]/g, "-")
       .replace(/≤/g, "<=")
       .replace(/≥/g, ">=")
+      .replace(/,/g, "")
+      .replace(/\/.*$/, "")
       .toLowerCase()
       .trim();
   };
+  
   const extractGenderRange = (range, sex) => {
     if (!range || !sex) return range;
 

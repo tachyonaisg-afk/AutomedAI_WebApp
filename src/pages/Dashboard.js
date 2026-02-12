@@ -647,6 +647,8 @@ const Dashboard = () => {
             console.log(
               "Availability API Response for",
               doc.name,
+              response.data,
+              response.message,
               slotDetails
             );
 
