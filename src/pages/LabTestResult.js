@@ -496,12 +496,15 @@ const LabTestResult = () => {
     if (!range) return "";
 
     return range
-      .replace(/[–—−â€“]/g, "-")   // normalize all dash types
+      .replace(/[–—−â€“]/g, "-")
       .replace(/≤/g, "<=")
       .replace(/≥/g, ">=")
+      .replace(/,/g, "") 
+      .replace(/\/.*$/, "") 
       .toLowerCase()
       .trim();
   };
+
   const extractGenderRange = (range, sex) => {
     if (!range || !sex) return range;
 

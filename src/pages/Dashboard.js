@@ -612,11 +612,12 @@ const Dashboard = () => {
 
             const response = await api.post(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-              formData.toString(),
+              formData,
               {
                 headers: {
                   "Content-Type": "application/x-www-form-urlencoded",
                 },
+                withCredentials: true,
               }
             );
 
