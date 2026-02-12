@@ -618,22 +618,22 @@ const Dashboard = () => {
             //     withCredentials: true,
             //   }
             // );
-            const response = await api.get(
+            // 1. Create the form data using URLSearchParams (Matches 'application/x-www-form-urlencoded')
+            const formData = new URLSearchParams();
+            formData.append('practitioner', doc.name);
+            formData.append('date', todayDate);
+            formData.append('appointment', JSON.stringify({
+              doctype: "Patient Appointment",
+              appointment_for: "Practitioner",
+              company: "Automed Ai"
+            }));
+
+            // 2. Send as POST request
+            const response = await api.post(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
+              formData,
               {
-                // In Axios, 'params' adds these to the URL query string automatically
-                // e.g. ?practitioner=ID&date=2026-02-12...
-                params: {
-                  practitioner: doc.name,
-                  date: todayDate,
-                  // We still need to stringify the nested object
-                  appointment: JSON.stringify({
-                    doctype: "Patient Appointment",
-                    appointment_for: "Practitioner",
-                    company: "Automed Ai",
-                  }),
-                },
-                withCredentials: true,
+                withCredentials: true
               }
             );
 
