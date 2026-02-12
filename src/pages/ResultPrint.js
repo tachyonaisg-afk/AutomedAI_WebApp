@@ -348,8 +348,8 @@ const TestName = styled.h2`
 `;
 
 const TestCategory = styled.div`
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: #1a1a1a;
   text-align: center;
 `;
@@ -364,7 +364,7 @@ const TableHeader = styled.th`
   text-align: left;
   padding: 10px 12px;
   background-color: #f5f5f5;
-  font-size: 11px;
+  font-size: 9px;
   color: #666666;
   font-weight: 600;
   text-transform: uppercase;
@@ -382,7 +382,7 @@ const TableRow = styled.tr`
 
 const TableCell = styled.td`
   padding: 12px;
-  font-size: 13px;
+  font-size: 11px;
   color: #333333;
 `;
 
@@ -395,7 +395,7 @@ const ReportFooter = styled.div`
 
 const EndOfReport = styled.div`
   text-align: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #333333;
   margin-top: 40px;
@@ -662,50 +662,50 @@ const ResultPrint = () => {
     fetchSelectedTestDetails();
   }, [tests]);
 
-useEffect(() => {
-  if (!selectedTestDetails?.length) return;
+  useEffect(() => {
+    if (!selectedTestDetails?.length) return;
 
-  const sampleId = selectedTestDetails[0]?.sample;
-  if (!sampleId) return;
+    const sampleId = selectedTestDetails[0]?.sample;
+    if (!sampleId) return;
 
-  const fetchSampleAndCollector = async () => {
-    try {
-      // 1️⃣ Fetch sample details
-      const sampleResponse = await api.get(
-        `https://hms.automedai.in/api/resource/Sample Collection/${sampleId}`
-      );
+    const fetchSampleAndCollector = async () => {
+      try {
+        // 1️⃣ Fetch sample details
+        const sampleResponse = await api.get(
+          `https://hms.automedai.in/api/resource/Sample Collection/${sampleId}`
+        );
 
-      const sampleDetails = sampleResponse.data?.data;
-      setSampleDetails(sampleDetails);
+        const sampleDetails = sampleResponse.data?.data;
+        setSampleDetails(sampleDetails);
 
-      const collectedByUserId = sampleDetails?.collected_by;
-      if (!collectedByUserId) return;
+        const collectedByUserId = sampleDetails?.collected_by;
+        if (!collectedByUserId) return;
 
-      // 2️⃣ Fetch employee (phlebotomist) using collected_by
-      const fields = JSON.stringify(["name", "user_id", "employee_name"]);
+        // 2️⃣ Fetch employee (phlebotomist) using collected_by
+        const fields = JSON.stringify(["name", "user_id", "employee_name"]);
 
-      const employeeResponse = await apiService.get(
-        API_ENDPOINTS.SAMPLE_COLLECTORS.LIST,
-        {
-          fields,
-          filters: JSON.stringify([
-            ["designation", "=", "Phlebotomist"],
-            ["user_id", "=", collectedByUserId],
-          ]),
-          limit_page_length: 0,
+        const employeeResponse = await apiService.get(
+          API_ENDPOINTS.SAMPLE_COLLECTORS.LIST,
+          {
+            fields,
+            filters: JSON.stringify([
+              ["designation", "=", "Phlebotomist"],
+              ["user_id", "=", collectedByUserId],
+            ]),
+            limit_page_length: 0,
+          }
+        );
+
+        if (employeeResponse.data?.data) {
+          setEmployees(employeeResponse.data.data);
         }
-      );
-
-      if (employeeResponse.data?.data) {
-        setEmployees(employeeResponse.data.data);
+      } catch (err) {
+        console.error("Error fetching sample / collector details:", err);
       }
-    } catch (err) {
-      console.error("Error fetching sample / collector details:", err);
-    }
-  };
+    };
 
-  fetchSampleAndCollector();
-}, [selectedTestDetails]);
+    fetchSampleAndCollector();
+  }, [selectedTestDetails]);
 
 
   const toggleTestSelection = (testId) => {

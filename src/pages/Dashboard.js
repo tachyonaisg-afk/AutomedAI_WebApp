@@ -598,21 +598,19 @@ const Dashboard = () => {
         // 2️⃣ Check availability for each doctor
         const availabilityPromises = doctors.map(async (doc) => {
           try {
-            const formData = new URLSearchParams();
-            formData.append("practitioner", doc.name);
-            formData.append("date", todayDate);
-            formData.append(
-              "appointment",
-              JSON.stringify({
+            const body = new URLSearchParams({
+              practitioner: doc.name,
+              date: todayDate,
+              appointment: JSON.stringify({
                 doctype: "Patient Appointment",
                 appointment_for: "Practitioner",
                 company: "Automed Ai",
-              })
-            );
+              }),
+            }).toString();
 
             const response = await api.post(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-              formData,
+              body,
               {
                 headers: {
                   "Content-Type": "application/x-www-form-urlencoded",
