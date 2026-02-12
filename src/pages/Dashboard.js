@@ -598,22 +598,40 @@ const Dashboard = () => {
         // 2️⃣ Check availability for each doctor
         const availabilityPromises = doctors.map(async (doc) => {
           try {
-            const body = new URLSearchParams({
-              practitioner: doc.name,
-              date: todayDate,
-              appointment: JSON.stringify({
-                doctype: "Patient Appointment",
-                appointment_for: "Practitioner",
-                company: "Automed Ai",
-              }),
-            }).toString();
+            // const body = new URLSearchParams({
+            //   practitioner: doc.name,
+            //   date: todayDate,
+            //   appointment: JSON.stringify({
+            //     doctype: "Patient Appointment",
+            //     appointment_for: "Practitioner",
+            //     company: "Automed Ai",
+            //   }),
+            // }).toString();
 
-            const response = await api.post(
+            // const response = await api.post(
+            //   "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
+            //   body,
+            //   {
+            //     headers: {
+            //       "Content-Type": "application/x-www-form-urlencoded",
+            //     },
+            //     withCredentials: true,
+            //   }
+            // );
+            const response = await api.get(
               "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-              body,
               {
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
+                // In Axios, 'params' adds these to the URL query string automatically
+                // e.g. ?practitioner=ID&date=2026-02-12...
+                params: {
+                  practitioner: doc.name,
+                  date: todayDate,
+                  // We still need to stringify the nested object
+                  appointment: JSON.stringify({
+                    doctype: "Patient Appointment",
+                    appointment_for: "Practitioner",
+                    company: "Automed Ai",
+                  }),
                 },
                 withCredentials: true,
               }
