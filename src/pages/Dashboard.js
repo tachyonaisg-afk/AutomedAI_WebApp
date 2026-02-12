@@ -606,7 +606,7 @@ const Dashboard = () => {
               JSON.stringify({
                 doctype: "Patient Appointment",
                 appointment_for: "Practitioner",
-                company: ["Automed Ai", "Ramkrishna Mission Sargachi"],
+                company: "Automed Ai",
               })
             );
 
@@ -731,11 +731,6 @@ const Dashboard = () => {
       searchPatients(query);
     }, 500); // Wait 500ms after user stops typing
   };
-
-  // useEffect(() => {
-  //   const timer = setTimeout(() => setIsLoading(false), 600);
-  //   return () => clearTimeout(timer);
-  // }, []);
 
   useEffect(() => {
     const ids = ["nav", "search", "insights", "doctor"];
