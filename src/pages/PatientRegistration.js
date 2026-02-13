@@ -2116,6 +2116,11 @@ const PatientRegistration = () => {
                   <FormGroup>
                     <FormLabel>Payment Type</FormLabel>
                     <FormInput type="text" value="Cash" disabled />
+                    {/* <FormSelect name="paymentType" value={billingData.paymentType} onChange={handlePaymentType}>
+                      <option value="">Select payment type</option>
+                      <option value="Single">Cash</option>
+                      <option value="Married">UPI</option>
+                    </FormSelect> */}
                   </FormGroup>
                 </CalculationCard>
               </BottomSection>

@@ -7,6 +7,7 @@ import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import usePageTitle from "../hooks/usePageTitle";
 import Select from "react-select";
+import paymentQR from "../assets/paymentimg.jpeg";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -725,6 +726,8 @@ const AddBilling = () => {
     service_unit: "",
     payment_type: "Cash",
     due_date: new Date().toISOString().split("T")[0],
+    reference_no: "",
+    reference_date: "",
   });
 
   const [items, setItems] = useState([]);
@@ -923,11 +926,25 @@ const AddBilling = () => {
 
   const handleBillingChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setBillingData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
-    }));
+
+    setBillingData((prev) => {
+      // If payment type changes and it's NOT UPI → clear reference fields
+      if (name === "payment_type" && value !== "UPI") {
+        return {
+          ...prev,
+          payment_type: value,
+          reference_no: "",
+          reference_date: "",
+        };
+      }
+
+      return {
+        ...prev,
+        [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+      };
+    });
   };
+
 
   const handlePatientSelect = async (patient) => {
     const patientId = patient.value || patient.name;
@@ -1069,6 +1086,19 @@ const AddBilling = () => {
 
     return { totalQty, grossTotal, discountAmount, netTotal };
   };
+  const paidToMapping = {
+    Cash: {
+      "Ramakrishna Mission Sargachi": "Cash - RKMS",
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC Hosp": "Cash - ADC&P",
+      "Automed AI": "Cash - AMAI",
+    },
+    UPI: {
+      "Ramakrishna Mission Sargachi": "UPI-RKMS - RKMS",
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC Hosp": "UPI-ALFA - ADC&P",
+      "Automed AI": "UPI-AAI - AMAI",
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1162,6 +1192,9 @@ const AddBilling = () => {
 
       // ============ Step 3: Create Payment Entry ============
       console.log("Step 3: Creating Payment Entry...");
+      const paidToAccount =
+        paidToMapping[billingData.payment_type]?.[billingData.company] || "";
+
       const paymentPayload = {
         doctype: "Payment Entry",
         docstatus: 1,
@@ -1175,8 +1208,10 @@ const AddBilling = () => {
         paid_amount: invoiceTotal,
         received_amount: invoiceTotal,
         target_exchange_rate: 1,
-        paid_to: billingData.payment_type === "Cash" ? (billingData.company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P") : (billingData.company === "Ramakrishna Mission Sargachi" ? "Bank - RKMS" : "Bank - ADC&P"),
+        paid_to: paidToAccount,
         paid_to_account_currency: "INR",
+        reference_no: billingData.reference_no,
+        reference_date: billingData.reference_date,
         references: [
           {
             reference_doctype: "Sales Invoice",
@@ -1187,6 +1222,7 @@ const AddBilling = () => {
           }
         ]
       };
+      console.log("Payment Payload", paymentPayload);
 
       const paymentResponse = await apiService.post("/resource/Payment Entry", paymentPayload);
       const paymentEntryId = paymentResponse.data?.data?.name;
@@ -1690,7 +1726,7 @@ const AddBilling = () => {
                   onChange={handleBillingChange}
                 >
                   <option value="Cash">Cash</option>
-                  <option value="upi">UPI</option>
+                  <option value="UPI">UPI</option>
                 </FormSelect>
               </FormGroup>
               <FormGroup>
@@ -1702,6 +1738,41 @@ const AddBilling = () => {
                   onChange={handleBillingChange}
                 />
               </FormGroup>
+              {billingData.payment_type === "UPI" && (
+                <>
+                  {/* Dummy QR */}
+                  <div style={{ marginTop: "16px", textAlign: "center" }}>
+                    <img
+                      src={paymentQR}
+                      alt="UPI QR"
+                      style={{ width: "160px", height: "160px" }}
+                    />
+                  </div>
+
+                  <FormGroup>
+                    <FormLabel>UPI Reference No<RequiredStar>*</RequiredStar></FormLabel>
+                    <FormInput
+                      type="text"
+                      name="reference_no"
+                      value={billingData.reference_no || ""}
+                      onChange={handleBillingChange}
+                      required={billingData.payment_type === "UPI"}
+                    />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Reference Date<RequiredStar>*</RequiredStar></FormLabel>
+                    <FormInput
+                      type="date"
+                      name="reference_date"
+                      value={billingData.reference_date || ""}
+                      onChange={handleBillingChange}
+                      required={billingData.payment_type === "UPI"}
+                    />
+                  </FormGroup>
+                </>
+              )}
+
             </CalculationCard>
           </BottomSection>
 
