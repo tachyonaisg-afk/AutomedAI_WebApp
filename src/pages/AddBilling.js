@@ -1445,7 +1445,7 @@ const AddBilling = () => {
               </FormGroup>
 
 
-              <FormGroup>
+              {/* <FormGroup>
                 <FormLabel>Service Unit</FormLabel>
                 <FormSelect
                   name="service_unit"
@@ -1459,7 +1459,7 @@ const AddBilling = () => {
                     </option>
                   ))}
                 </FormSelect>
-              </FormGroup>
+              </FormGroup> */}
 
             </FormGrid>
           </FormSection>

@@ -1288,6 +1288,7 @@ const PatientRegistration = () => {
 
         // Get patient details from response
         const patientId = data.data?.name;
+        const customer=data.data?.customer;
         // ----------------------------
         // CREATE PATIENT APPOINTMENT
         // ----------------------------
@@ -1370,7 +1371,7 @@ const PatientRegistration = () => {
               posting_date: new Date().toISOString().split("T")[0],
               set_posting_time: 1,
               is_pos: 0,
-              customer: patientName,
+              customer: customer,
               patient: patientId,
               patient_name: patientName,
               currency: "INR",
