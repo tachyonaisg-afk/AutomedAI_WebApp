@@ -1690,6 +1690,7 @@ const AddBilling = () => {
                   onChange={handleBillingChange}
                 >
                   <option value="Cash">Cash</option>
+                  <option value="upi">UPI</option>
                 </FormSelect>
               </FormGroup>
               <FormGroup>

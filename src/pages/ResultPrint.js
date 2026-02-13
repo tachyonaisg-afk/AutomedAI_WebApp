@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
-import { Printer, Download, ArrowLeft } from "lucide-react";
+import { Printer, Download, ArrowLeft, MessageCircle } from "lucide-react";
 import api, { API_ENDPOINTS, apiService } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 import { createGlobalStyle } from "styled-components";
@@ -449,6 +449,14 @@ const PrintStyles = createGlobalStyle`
     }
   }
 `;
+const WhatsAppButton = styled(Button)`
+  background-color: #25D366;   /* WhatsApp green */
+  color: #ffffff;
+
+  &:hover {
+    background-color: #1ebe5d;
+  }
+`;
 
 
 const ResultPrint = () => {
@@ -498,7 +506,7 @@ const ResultPrint = () => {
       .toLowerCase()
       .trim();
   };
-  
+
   const extractGenderRange = (range, sex) => {
     if (!range || !sex) return range;
 
@@ -765,6 +773,10 @@ const ResultPrint = () => {
       alert('Failed to generate PDF. Please try again or use the Print option.');
     }
   };
+  const handleSendToWhatsapp = () => {
+    console.log("WhatsApp Message Sent");
+  };
+
 
   const selectedTests = tests.filter((test) => test.selected);
   const activeTests = tests.filter((test) => !test.disabled);
@@ -860,11 +872,18 @@ const ResultPrint = () => {
                 <Printer />
                 Print
               </PrintButton>
+
               <DownloadButton onClick={handleDownloadPDF}>
                 <Download />
                 Download PDF
               </DownloadButton>
+
+              <WhatsAppButton onClick={handleSendToWhatsapp}>
+                <MessageCircle />
+                Send to WhatsApp
+              </WhatsAppButton>
             </ButtonGroup>
+
           </PreviewHeader>
 
           <PrintStyles />
