@@ -967,7 +967,12 @@ const ResultPrint = () => {
                 {includeLetterhead && (
                   <>
                     <InfoLabel>Company Name</InfoLabel>
-                    <InfoValue>{selectedTestDetails[0]?.company || "N/A"}</InfoValue>
+                    <InfoValue>
+                      {typeof selectedTestDetails[0]?.company === "object"
+                        ? selectedTestDetails[0]?.company?.name
+                        : selectedTestDetails[0]?.company || "N/A"}
+                    </InfoValue>
+
                   </>
                 )}
               </ReportHeader>
@@ -1068,9 +1073,11 @@ const ResultPrint = () => {
               })}
 
               <ReportFooter>
-                {includeLetterhead && (
-                  {/* Footer / Signature / Address */ }
-                )}
+                {includeLetterhead ? (
+                  <div>
+                    {/* Footer / Signature / Address */}
+                  </div>
+                ) : null}
               </ReportFooter>
 
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
