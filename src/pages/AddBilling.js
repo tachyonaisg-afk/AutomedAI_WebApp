@@ -7,7 +7,7 @@ import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import usePageTitle from "../hooks/usePageTitle";
 import Select from "react-select";
-import paymentQR from "../assets/paymentimg.jpeg";
+import paymentQR from "../assets/paymentupi.jpeg";
 
 const BillingContainer = styled.div`
   display: flex;
@@ -1745,7 +1745,7 @@ const AddBilling = () => {
                     <img
                       src={paymentQR}
                       alt="UPI QR"
-                      style={{ width: "160px", height: "160px" }}
+                      style={{ width: "200px", height: "200px" }}
                     />
                   </div>
 
