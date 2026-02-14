@@ -382,8 +382,8 @@ const TableRow = styled.tr`
 
 const TableCell = styled.td`
   padding: 12px;
-  font-size: 11px;
-  color: #333333;
+  font-size: 12px;
+  color: #000000;
 `;
 
 const ReportFooter = styled.div`
@@ -749,9 +749,52 @@ const ResultPrint = () => {
     );
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    try {
+      const html2pdf = (await import("html2pdf.js")).default;
+
+      const element = document.querySelector("[data-pdf-content]");
+      if (!element) return;
+
+      const opt = {
+        margin: [15, 10, 15, 10],
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollY: 0,
+          windowWidth: document.body.scrollWidth,
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait",
+        },
+      };
+
+      // Generate PDF as Blob
+      const pdfBlob = await html2pdf()
+        .set(opt)
+        .from(element)
+        .outputPdf("blob");
+
+      const blobUrl = URL.createObjectURL(pdfBlob);
+
+      // Open new tab
+      const printWindow = window.open(blobUrl);
+
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.focus();
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error("Print Error:", error);
+      alert("Failed to generate printable PDF.");
+    }
   };
+
 
   const handleDownloadPDF = async () => {
     try {
@@ -919,13 +962,16 @@ const ResultPrint = () => {
           <PrintStyles />
 
           <ReportPreview data-pdf-content>
-            {includeLetterhead && (
-              <div className="pdf-header">
-                <ReportHeader>
-                  {/* Your actual header content here */}
-                </ReportHeader>
-              </div>
-            )}
+            <div className="pdf-header">
+              <ReportHeader>
+                {includeLetterhead && (
+                  <>
+                    <InfoLabel>Company Name</InfoLabel>
+                    <InfoValue>{selectedTestDetails[0]?.company || "N/A"}</InfoValue>
+                  </>
+                )}
+              </ReportHeader>
+            </div>
 
             <div className="pdf-body">
 
@@ -1021,11 +1067,11 @@ const ResultPrint = () => {
                 );
               })}
 
-              {includeLetterhead && (
-                <ReportFooter>
-                  {/* Footer / Signature / Address */}
-                </ReportFooter>
-              )}
+              <ReportFooter>
+                {includeLetterhead && (
+                  {/* Footer / Signature / Address */ }
+                )}
+              </ReportFooter>
 
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
             </div>
