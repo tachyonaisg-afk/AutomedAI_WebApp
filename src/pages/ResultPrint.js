@@ -295,7 +295,7 @@ const ReportPreview = styled.div`
 
 const ReportHeader = styled.div`
   margin-top: 120px;
-  margin-bottom: 40px;
+  // margin-bottom: 40px;
   padding-bottom: 20px;
   border-bottom: 1px solid #e0e0e0;
 `;
@@ -964,18 +964,21 @@ const ResultPrint = () => {
           <ReportPreview data-pdf-content>
             <div className="pdf-header">
               <ReportHeader>
-                {includeLetterhead && (
-                  <>
-                    <InfoLabel>Company Name</InfoLabel>
-                    <InfoValue>
-                      {typeof selectedTestDetails[0]?.company === "object"
-                        ? selectedTestDetails[0]?.company?.name
-                        : selectedTestDetails[0]?.company || "N/A"}
-                    </InfoValue>
-
-                  </>
-                )}
+                {includeLetterhead &&
+                  selectedTestDetails[0]?.company?.name ===
+                  "Ramakrishna Mission Sargachi" && (
+                    <img
+                      src="https://hms.automedai.in/files/rkma_ltrhd_hdr.jpg"
+                      alt="Letterhead"
+                      style={{
+                        width: "100%",
+                        height: "auto",
+                        display: "block",
+                      }}
+                    />
+                  )}
               </ReportHeader>
+
             </div>
 
             <div className="pdf-body">
