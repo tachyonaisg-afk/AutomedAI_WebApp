@@ -457,6 +457,25 @@ const WhatsAppButton = styled(Button)`
     background-color: #1ebe5d;
   }
 `;
+const LetterheadToggle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-right: 10px;
+
+  input {
+    cursor: pointer;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+`;
+
 
 
 const ResultPrint = () => {
@@ -467,7 +486,7 @@ const ResultPrint = () => {
   const patientId = location.state?.patientId;
   const labTestId = location.state?.labTestId;
   const patientName = location.state?.patientName;
-
+  const [includeLetterhead, setIncludeLetterhead] = useState(true);
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -867,6 +886,17 @@ const ResultPrint = () => {
         <PreviewCard>
           <PreviewHeader>
             <PreviewTitle>Combined Report Preview</PreviewTitle>
+            <LetterheadToggle>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={includeLetterhead}
+                  onChange={() => setIncludeLetterhead(prev => !prev)}
+                />
+                Include Letterhead in Print & PDF
+              </label>
+            </LetterheadToggle>
+
             <ButtonGroup>
               <PrintButton onClick={handlePrint}>
                 <Printer />
@@ -889,11 +919,14 @@ const ResultPrint = () => {
           <PrintStyles />
 
           <ReportPreview data-pdf-content>
-            <div className="pdf-header">
-              <ReportHeader>
-                {/* Space reserved for letterhead */}
-              </ReportHeader>
-            </div>
+            {includeLetterhead && (
+              <div className="pdf-header">
+                <ReportHeader>
+                  {/* Your actual header content here */}
+                </ReportHeader>
+              </div>
+            )}
+
             <div className="pdf-body">
 
               <PatientInfoSection>
@@ -988,9 +1021,11 @@ const ResultPrint = () => {
                 );
               })}
 
-              {/* <ReportFooter>
-               Space reserved for signature 
-            </ReportFooter> */}
+              {includeLetterhead && (
+                <ReportFooter>
+                  {/* Footer / Signature / Address */}
+                </ReportFooter>
+              )}
 
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
             </div>
