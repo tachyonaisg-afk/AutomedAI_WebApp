@@ -756,6 +756,30 @@ const Dashboard = () => {
 
     return () => observer.disconnect();
   }, []);
+  const formatTimeToAMPM = (timeString) => {
+    if (!timeString) return "";
+
+    const [hours, minutes] = timeString.split(":");
+    const date = new Date();
+    date.setHours(hours, minutes);
+
+    return date.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const formatSlotName = (slotName) => {
+    if (!slotName) return "";
+
+    const parts = slotName.split("_");
+
+    // Remove last part (RKMS)
+    parts.pop();
+
+    return parts.join(" ");
+  };
 
   return (
     <Layout>
@@ -880,6 +904,7 @@ const Dashboard = () => {
                     <thead>
                       <tr>
                         <th style={thStyle}>Doctor ID</th>
+                        <th style={thStyle}>Doctor Name</th>
                         <th style={thStyle}>Service Unit</th>
                         <th style={thStyle}>Available From</th>
                         <th style={thStyle}>Available To</th>
@@ -891,9 +916,10 @@ const Dashboard = () => {
                           slot.avail_slot.map((time, timeIndex) => (
                             <tr key={`${index}-${slotIndex}-${timeIndex}`}>
                               <td style={tdStyle}>{doctor.practitionerId}</td>
+                              <td style={tdStyle}>{formatSlotName(slot.slot_name)}</td>
                               <td style={tdStyle}>{slot.service_unit}</td>
-                              <td style={tdStyle}>{time.from_time}</td>
-                              <td style={tdStyle}>{time.to_time}</td>
+                              <td style={tdStyle}>{formatTimeToAMPM(time.from_time)}</td>
+                              <td style={tdStyle}>{formatTimeToAMPM(time.to_time)}</td>
                             </tr>
                           ))
                         )
