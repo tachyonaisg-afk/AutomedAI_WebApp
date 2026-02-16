@@ -333,7 +333,7 @@ const PrescriptionPreview = styled.div`
 
   @media print {
     border: none;
-    padding: 10mm;
+    padding: 5mm;
     min-height: auto;
     width: 100%;
     height: 100%;
@@ -342,8 +342,8 @@ const PrescriptionPreview = styled.div`
 
 const PrescriptionHeader = styled.div`
   text-align: center;
-  margin-bottom: 12px;
-  padding: 12px;
+  margin-bottom: 9px;
+  padding: 9px;
   border-bottom: 2px solid #000;
 `;
 
@@ -695,7 +695,7 @@ const Prescription = () => {
       @media print {
         @page {
           size: ${paperSize === 'a5' ? 'A5 landscape' : 'A4 landscape'};
-          margin: 5mm;
+          margin: 1mm;
         }
         body {
           -webkit-print-color-adjust: exact;
