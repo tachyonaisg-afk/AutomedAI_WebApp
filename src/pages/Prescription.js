@@ -325,7 +325,7 @@ const PaperSizeButton = styled.button`
 const PrescriptionPreview = styled.div`
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
-  padding: ${props => props.paperSize === 'a5' ? '5px' : '5px'};
+  padding: ${props => props.paperSize === 'a5' ? '3px' : '3px'};
   min-height: ${props => props.paperSize === 'a5' ? '420px' : '595px'};
   width: 100%;
   box-sizing: border-box;

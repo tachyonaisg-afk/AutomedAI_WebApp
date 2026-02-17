@@ -761,6 +761,7 @@ const PatientRegistration = () => {
     } else {
       return [{
         no: 1,
+        prefix: "",
         item: "STO-ITEM-2025-00539",
         itemName: "",
         qty: 1,
@@ -1207,24 +1208,34 @@ const PatientRegistration = () => {
   };
 
   // Debounced item search
-  const searchItems = useCallback(async (query) => {
-    if (!query || query.length < 2) {
+  const searchItems = useCallback(async (query, prefix) => {
+    if (!query || query.length < 2 || !prefix) {
       setItemResults([]);
       setShowItemResults(false);
       return;
     }
 
     setSearchingItem(true);
+
     try {
-      const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
-        doctype: "Item",
-        txt: query,
-        page_length: 10,
-      });
-      if (response.data?.results || response.data?.message) {
-        setItemResults(response.data.results || response.data.message || []);
-        setShowItemResults(true);
-      }
+      const finalQuery = `${prefix}- ${query}`;
+
+      const response = await apiService.get(
+        API_ENDPOINTS.ITEMS.SEARCH,
+        {
+          doctype: "Item",
+          txt: finalQuery,
+          page_length: 10,
+        }
+      );
+
+      const results =
+        response.data?.results ||
+        response.data?.message ||
+        [];
+
+      setItemResults(results);
+      setShowItemResults(true);
     } catch (err) {
       console.error("Error searching items:", err);
     } finally {
@@ -1235,10 +1246,18 @@ const PatientRegistration = () => {
   // Debounce effect for item search
   useEffect(() => {
     const timer = setTimeout(() => {
-      searchItems(itemSearch);
+      if (itemSearchIndex !== null) {
+        const selectedItem = items[itemSearchIndex];
+        if (selectedItem?.prefix) {
+          searchItems(itemSearch, selectedItem.prefix);
+        }
+      }
     }, 300);
+
     return () => clearTimeout(timer);
-  }, [itemSearch, searchItems]);
+  }, [itemSearch, itemSearchIndex, items, searchItems]);
+
+
 
   const handleItemSelect = async (item, index) => {
     try {
@@ -1306,6 +1325,7 @@ const PatientRegistration = () => {
   const addItem = () => {
     const newItem = {
       no: items.length + 1,
+      prefix: "",
       item: "",
       itemName: "",
       qty: 1,
@@ -1770,7 +1790,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Gender<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} >
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} required>
                       <option value="">Select</option>
                       {genderOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -2068,12 +2088,12 @@ const PatientRegistration = () => {
                       isClearable
                     />
                   </FormGroup>
-                    <AddDoctorButton
-                      type="button"
-                      onClick={() => setIsAddDoctorOpen(true)}
-                    >
-                      + Add New Doctor
-                    </AddDoctorButton>
+                  <AddDoctorButton
+                    type="button"
+                    onClick={() => setIsAddDoctorOpen(true)}
+                  >
+                    + Add New Doctor
+                  </AddDoctorButton>
 
                   {requiresAppointment && (
                     <>
@@ -2126,6 +2146,7 @@ const PatientRegistration = () => {
                   <TableHead>
                     <TableRow>
                       <TableHeader>No.</TableHeader>
+                      <TableHeader>Prefix</TableHeader>
                       <TableHeader>Item</TableHeader>
                       <TableHeader>Item Name</TableHeader>
                       <TableHeader>Qty</TableHeader>
@@ -2139,6 +2160,21 @@ const PatientRegistration = () => {
                       <TableRow key={index}>
                         <TableCell>{item.no}</TableCell>
                         <TableCell>
+                          <FormSelect
+                            value={item.prefix}
+                            onChange={(e) =>
+                              handleItemChange(index, "prefix", e.target.value)
+                            }
+                          >
+                            <option value="">Select</option>
+                            <option value="LAB">LAB</option>
+                            <option value="PLB">PLB</option>
+                            <option value="PHC">PHC</option>
+                          </FormSelect>
+                        </TableCell>
+
+                        {/* ITEM SEARCH COLUMN */}
+                        <TableCell>
                           <ItemSearchWrapper>
                             {item.item ? (
                               <ItemInput type="text" value={item.item} disabled />
@@ -2146,36 +2182,59 @@ const PatientRegistration = () => {
                               <>
                                 <ItemInput
                                   type="text"
-                                  placeholder="Search item..."
+                                  placeholder={
+                                    item.prefix
+                                      ? `Search ${item.prefix} item...`
+                                      : "Select prefix first"
+                                  }
+                                  disabled={!item.prefix}
                                   value={itemSearchIndex === index ? itemSearch : ""}
                                   onChange={(e) => {
                                     setItemSearchIndex(index);
                                     setItemSearch(e.target.value);
                                   }}
                                   onFocus={() => {
+                                    if (!item.prefix) return;
                                     setItemSearchIndex(index);
                                     if (itemSearch.length >= 2) setShowItemResults(true);
                                   }}
-                                  onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                  onBlur={() =>
+                                    setTimeout(() => setShowItemResults(false), 200)
+                                  }
                                 />
-                                {showItemResults && itemSearchIndex === index && (
-                                  <SearchResults>
-                                    {itemResults.length > 0 ? (
-                                      itemResults.map((itemResult, idx) => (
-                                        <SearchResultItem
-                                          key={idx}
-                                          onMouseDown={() => handleItemSelect(itemResult, index)}
-                                        >
-                                          {itemResult.value || itemResult.name} - {itemResult.description || ""}
-                                        </SearchResultItem>
-                                      ))
-                                    ) : (
-                                      <SearchResultEmpty>
-                                        {searchingItem ? "Searching..." : "No items found"}
-                                      </SearchResultEmpty>
-                                    )}
-                                  </SearchResults>
-                                )}
+
+                                {showItemResults &&
+                                  itemSearchIndex === index &&
+                                  item.prefix && (
+                                    <SearchResults>
+                                      {itemResults.length > 0 ? (
+                                        itemResults
+                                          // Strict prefix filtering for safety
+                                          .filter((r) =>
+                                            r.description?.startsWith(
+                                              `${item.prefix}-`
+                                            )
+                                          )
+                                          .map((itemResult, idx) => (
+                                            <SearchResultItem
+                                              key={idx}
+                                              onMouseDown={() =>
+                                                handleItemSelect(itemResult, index)
+                                              }
+                                            >
+                                              {itemResult.value} —{" "}
+                                              {itemResult.description}
+                                            </SearchResultItem>
+                                          ))
+                                      ) : (
+                                        <SearchResultEmpty>
+                                          {searchingItem
+                                            ? "Searching..."
+                                            : "No items found"}
+                                        </SearchResultEmpty>
+                                      )}
+                                    </SearchResults>
+                                  )}
                               </>
                             )}
                           </ItemSearchWrapper>
