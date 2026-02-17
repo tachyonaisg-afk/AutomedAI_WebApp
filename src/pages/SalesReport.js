@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { RotateCw, ChevronLeft, ChevronRight, Loader2, FileDown } from "lucide-react";
+import { RotateCw, ChevronLeft, ChevronRight, Loader2, FileDown, FileText } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import usePageTitle from "../hooks/usePageTitle";
@@ -632,6 +632,67 @@ const SalesReport = () => {
       setCurrentPage(currentPage + 1);
     }
   };
+  const handleExportCSV = () => {
+    if (reportData.length === 0) return;
+
+    const headers = displayColumns.map(col => col.label);
+
+    const rows = reportData.map((row) =>
+      displayColumns.map((col) => {
+        let value = row[col.fieldname] ?? "";
+
+        // Replace customer ID with name
+        if (col.fieldname === "against" && value) {
+          value = customerMap[value] || value;
+        }
+
+        // Format date
+        if (col.fieldname === "posting_date" && value) {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            const day = String(date.getDate()).padStart(2, "0");
+            const month = String(date.getMonth() + 1).padStart(2, "0");
+            const year = date.getFullYear();
+            value = `${day}/${month}/${year}`;
+          }
+        }
+        // Format amount
+        if (col.fieldname === "debit" || col.fieldname === "credit") {
+          const num = parseFloat(value);
+          value = !isNaN(num) ? num.toFixed(2) : "0.00";
+        }
+
+        return `"${String(value).replace(/"/g, '""')}"`;
+      })
+    );
+
+    // Add total row
+    rows.push([
+      `"Total"`,
+      `""`,
+      `"${totals.amount.toFixed(2)}"`,
+      `""`,
+      `""`,
+      `""`
+    ]);
+
+    const csvContent =
+      [headers.join(","), ...rows.map(row => row.join(","))].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `Sales_Report_${filters.fromDate}_to_${filters.toDate}.csv`
+    );
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Layout>
@@ -715,6 +776,10 @@ const SalesReport = () => {
             <ExportButton onClick={handleExportPDF} disabled={reportData.length === 0}>
               <FileDown />
               Export PDF
+            </ExportButton>
+            <ExportButton onClick={handleExportCSV} disabled={reportData.length === 0}>
+              <FileText />
+              Export CSV
             </ExportButton>
           </ButtonGroup>
         </FiltersCard>

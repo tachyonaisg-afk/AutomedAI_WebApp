@@ -380,14 +380,14 @@ const TopRow = styled.div`
 `;
 
 const DoctorInfo = styled.div`
-  font-size: ${props => props.paperSize === 'a5' ? '9px' : '11px'};
+  font-size: ${props => props.paperSize === 'a5' ? '12px' : '14px'};
   font-weight: 500;
   color: #000;
   line-height: 1.4;
 `;
 
 const TicketInfo = styled.div`
-  font-size: ${props => props.paperSize === 'a5' ? '8px' : '10px'};
+  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
   color: #000;
   text-align: right;
   line-height: 1.5;
@@ -411,13 +411,14 @@ const PatientInfoItem = styled.div`
 `;
 
 const PatientLabel = styled.span`
-  font-size: ${props => props.paperSize === 'a5' ? '8px' : '10px'};
+  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
   color: #000;
   font-weight: 500;
 `;
 
 const PatientValue = styled.span`
   font-weight: 400;
+  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
   color: #000;
 `;
 
@@ -517,6 +518,19 @@ const Prescription = () => {
   });
 
   const [selectedDoctorData, setSelectedDoctorData] = useState(null);
+  const [currentUser, setCurrentUser] = useState("");
+  useEffect(() => {
+    const fullName = getCookie("full_name");
+    if (fullName) {
+      setCurrentUser(fullName);
+    }
+  }, []);
+
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  };
 
   // Fetch patient data
   useEffect(() => {
@@ -850,6 +864,9 @@ const Prescription = () => {
                 [Ex- H.M.o]<br />
                 PM]
               </DoctorInfo>
+              <DoctorInfo paperSize={paperSize}>
+                [Done by : {currentUser}]<br />
+              </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
                 <div>SL NO:</div>
                 <div>Appointment ID: {appointmentId ? appointmentId.slice(-3) : " "}</div>
@@ -865,6 +882,10 @@ const Prescription = () => {
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[PT Name :</PatientLabel>
                 <PatientValue>{patientData?.patient_name || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}]</PatientValue>
+              </PatientInfoItem>
+              <PatientInfoItem>
+                <PatientLabel paperSize={paperSize}>[Mobile :</PatientLabel>
+                <PatientValue>{patientData?.mobile || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>Age</PatientLabel>
