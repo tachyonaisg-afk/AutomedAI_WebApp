@@ -371,7 +371,7 @@ const HeaderAddress = styled.p`
 
 const TopRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr 1fr auto;
   padding: 8px;
   border: 1px solid #000;
   border-bottom: 2px solid #000;
@@ -380,14 +380,14 @@ const TopRow = styled.div`
 `;
 
 const DoctorInfo = styled.div`
-  font-size: ${props => props.paperSize === 'a5' ? '12px' : '14px'};
+  font-size: ${props => props.paperSize === 'a5' ? '9px' : '11px'};
   font-weight: 500;
   color: #000;
   line-height: 1.4;
 `;
 
 const TicketInfo = styled.div`
-  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
+  font-size: ${props => props.paperSize === 'a5' ? '8px' : '10px'};
   color: #000;
   text-align: right;
   line-height: 1.5;
@@ -395,7 +395,7 @@ const TicketInfo = styled.div`
 
 const PatientInfoRow = styled.div`
   display: grid;
-  grid-template-columns: 1fr 2fr auto;
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   padding: 8px;
   border: 1px solid #000;
@@ -411,14 +411,14 @@ const PatientInfoItem = styled.div`
 `;
 
 const PatientLabel = styled.span`
-  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
+  font-size: ${props => props.paperSize === 'a5' ? '8px' : '10px'};
   color: #000;
   font-weight: 500;
 `;
 
 const PatientValue = styled.span`
   font-weight: 400;
-  font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
+  font-size: ${props => props.paperSize === 'a5' ? '8px' : '10px'};
   color: #000;
 `;
 
