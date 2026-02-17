@@ -451,7 +451,7 @@ const StaticInfoTitle = styled.div`
   color: #000;
   padding: 8px 10px;
   border-bottom: 1px solid #000;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
 `;
 
 const StaticInfoContent = styled.div`

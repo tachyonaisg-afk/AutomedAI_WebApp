@@ -242,7 +242,7 @@ const Button = styled.button`
 
 const PrintButton = styled(Button)`
   background-color: #ffffff;
-  color: #333333;
+  color: #000000;
   border: 1px solid #e0e0e0;
 
   &:hover {
@@ -271,7 +271,7 @@ const BackButton = styled.button`
   cursor: pointer;
   transition: all 0.2s;
   background-color: #ffffff;
-  color: #333333;
+  color: #000000;
   border: 1px solid #e0e0e0;
 
   &:hover {
@@ -306,7 +306,7 @@ const PatientInfoSection = styled.div`
   gap: 20px;
   margin-bottom: 30px;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   border-radius: 4px;
 `;
 
@@ -314,7 +314,7 @@ const InfoField = styled.div``;
 
 const InfoLabel = styled.div`
   font-size: 10px;
-  color: #999999;
+  color: #000000;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
@@ -322,7 +322,7 @@ const InfoLabel = styled.div`
 
 const InfoValue = styled.div`
   font-size: 13px;
-  color: #1a1a1a;
+  color: #000000;
   font-weight: 500;
 `;
 
@@ -342,7 +342,7 @@ const TestSectionHeader = styled.div`
 const TestName = styled.h2`
   font-size: 16px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #000000;
   margin: 0 0 4px 0;
   text-transform: uppercase;
 `;
@@ -350,7 +350,7 @@ const TestName = styled.h2`
 const TestCategory = styled.div`
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #000000;
   text-align: center;
 `;
 
@@ -363,9 +363,9 @@ const ResultsTable = styled.table`
 const TableHeader = styled.th`
   text-align: left;
   padding: 10px 12px;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
   font-size: 9px;
-  color: #666666;
+  color: #000000;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -397,7 +397,7 @@ const EndOfReport = styled.div`
   text-align: center;
   font-size: 12px;
   font-weight: 600;
-  color: #333333;
+  color: #000000;
   margin-top: 40px;
   padding: 20px 0;
   border-top: 2px solid #e0e0e0;

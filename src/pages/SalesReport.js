@@ -372,7 +372,7 @@ const SalesReport = () => {
     toDate: new Date().toISOString().split("T")[0],
     accountType: "Sales",
   });
-
+  const [customerMap, setCustomerMap] = useState({});
   const [companies, setCompanies] = useState([]);
   const [reportData, setReportData] = useState([]);
   const [columns, setColumns] = useState([]);
@@ -424,17 +424,17 @@ const SalesReport = () => {
   // ];
 
   const displayColumns = useMemo(() => {
-  if (!appliedFilters) return [];
+    if (!appliedFilters) return [];
 
-  return [
-    { label: "POSTING DATE", fieldname: "posting_date" },
-    { label: "ACCOUNT", fieldname: "account" },
-    { label: amountLabel, fieldname: amountField },
-    { label: "CUSTOMER", fieldname: "against" },
-    { label: "INVOICE NUMBER", fieldname: "gl_entry" },
-    { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
-  ];
-}, [appliedFilters, amountField, amountLabel]);
+    return [
+      { label: "POSTING DATE", fieldname: "posting_date" },
+      { label: "ACCOUNT", fieldname: "account" },
+      { label: amountLabel, fieldname: amountField },
+      { label: "CUSTOMER", fieldname: "against" },
+      { label: "INVOICE NUMBER", fieldname: "gl_entry" },
+      { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
+    ];
+  }, [appliedFilters, amountField, amountLabel]);
 
 
   const getCellValue = (row, fieldname) => {
@@ -508,6 +508,7 @@ const SalesReport = () => {
         console.log("Filtered results with gl_entry:", filteredResults);
 
         setReportData(filteredResults);
+        await fetchCustomerNames(filteredResults);
         setColumns(columns || []);
         setCurrentPage(1); // Reset to first page
       }
@@ -518,17 +519,49 @@ const SalesReport = () => {
       setLoading(false);
     }
   };
+  const fetchCustomerNames = async (rows) => {
+    try {
+      // Get unique customer IDs from "against"
+      const customerIds = [
+        ...new Set(
+          rows
+            .map(row => row.against)
+            .filter(id => id && id.startsWith("CUST"))
+        )
+      ];
 
-const handleRunReport = () => {
-  console.log("Running report with filters:", filters);
-  setAppliedFilters({ ...filters });
-  fetchReport({ ...filters });
-};
+      if (customerIds.length === 0) return;
 
-const handleRefresh = () => {
-  if (!appliedFilters) return;
-  fetchReport(appliedFilters);
-};
+      const customerPromises = customerIds.map(id =>
+        apiService.get(`/api/resource/Customer/${id}`)
+      );
+
+      const responses = await Promise.all(customerPromises);
+
+      const map = {};
+      responses.forEach(res => {
+        if (res.data?.data) {
+          map[res.data.data.name] = res.data.data.customer_name;
+        }
+      });
+
+      setCustomerMap(map);
+    } catch (err) {
+      console.error("Error fetching customer names:", err);
+    }
+  };
+
+
+  const handleRunReport = () => {
+    console.log("Running report with filters:", filters);
+    setAppliedFilters({ ...filters });
+    fetchReport({ ...filters });
+  };
+
+  const handleRefresh = () => {
+    if (!appliedFilters) return;
+    fetchReport(appliedFilters);
+  };
 
 
   const handleExportPDF = () => {
@@ -729,6 +762,9 @@ const handleRefresh = () => {
 
                             // Format based on field type
                             let formattedValue = cellValue;
+                            if (col.fieldname === "against" && cellValue) {
+                              formattedValue = customerMap[cellValue] || cellValue;
+                            }
 
                             // Format date to dd/mm/yyyy
                             if (col.fieldname === "posting_date" && cellValue) {
