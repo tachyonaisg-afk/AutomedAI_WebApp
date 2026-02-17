@@ -639,7 +639,50 @@ const Spinner = styled.div`
     }
   }
 `;
+const AddDoctorButton = styled.button`
+  margin-top: 28px;
+  margin-right: 250px;
+  background: none;
+  color: #4a90e2;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #4a90e2;
 
+  &:hover {
+    background-color: #4a90e2;
+    color: #fff;
+  }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 400px;
+`;
+
+const ModalHeader = styled.h3`
+  margin-bottom: 16px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+`;
 
 const PatientRegistration = () => {
   usePageTitle("Patient Registration");
@@ -648,7 +691,15 @@ const PatientRegistration = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
+  const [newDoctorData, setNewDoctorData] = useState({
+    first_name: "",
+    last_name: "",
+    gender: "",
+    practitioner_type: "Internal",
+    status: "Active",
+  });
+  const [creatingDoctor, setCreatingDoctor] = useState(false);
   const mobileInputRef = useRef(null);
   const occupationInputRef = useRef(null);
   const getCurrentTimeHHMM = () => {
@@ -859,6 +910,24 @@ const PatientRegistration = () => {
     }
   }, [companyOptions, formData.company]);
 
+  const fetchPractitioners = async () => {
+    try {
+      const practitionerRes = await apiService.get(
+        API_ENDPOINTS.PRACTITIONERS.LIST,
+        {
+          fields: '["name", "practitioner_name"]',
+          limit_page_length: 5000,
+        }
+      );
+
+      if (practitionerRes.data?.data) {
+        setPractitioners(practitionerRes.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching practitioners:", error);
+    }
+  };
+
   // Fetch gender and company options from API
   useEffect(() => {
     const fetchGenderOptions = async () => {
@@ -896,20 +965,7 @@ const PatientRegistration = () => {
       }
     };
 
-    const fetchPractitioners = async () => {
-      try {
-        const practitionerRes = await apiService.get(API_ENDPOINTS.PRACTITIONERS.LIST, {
-          fields: '["name", "practitioner_name"]',
-          limit_page_length: 5000,
-        });
-        if (practitionerRes.data?.data) {
-          setPractitioners(practitionerRes.data.data);
-          console.log("Practitioners loaded:", practitionerRes.data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching practitioners:", error);
-      }
-    };
+    fetchPractitioners();
 
     const fetchDefaultItem = async () => {
       try {
@@ -943,6 +999,68 @@ const PatientRegistration = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Function to create a new doctor
+  const createDoctor = async () => {
+    if (!newDoctorData.first_name || !newDoctorData.gender) {
+      alert("First Name and Gender are required.");
+      return;
+    }
+
+    setCreatingDoctor(true);
+
+    try {
+      const response = await fetch(
+        "https://hms.automedai.in/api/resource/Healthcare Practitioner",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            doctype: "Healthcare Practitioner",
+            ...newDoctorData,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const createdDoctor = data.data;
+
+        // Refresh list
+        await fetchPractitioners();
+
+        // Auto-select new doctor
+        setBillingData((prev) => ({
+          ...prev,
+          referringPractitioner: createdDoctor.name,
+        }));
+
+        // Reset modal
+        setIsAddDoctorOpen(false);
+        setNewDoctorData({
+          first_name: "",
+          last_name: "",
+          gender: "",
+          practitioner_type: "Internal",
+          status: "Active",
+        });
+
+        alert("Doctor created successfully!");
+      } else {
+        alert(data.message || "Failed to create doctor.");
+      }
+    } catch (error) {
+      console.error("Error creating doctor:", error);
+      alert("Error creating doctor.");
+    } finally {
+      setCreatingDoctor(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -1288,7 +1406,7 @@ const PatientRegistration = () => {
 
         // Get patient details from response
         const patientId = data.data?.name;
-        const customer=data.data?.customer;
+        const customer = data.data?.customer;
         // ----------------------------
         // CREATE PATIENT APPOINTMENT
         // ----------------------------
@@ -1652,7 +1770,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Gender<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} required>
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} >
                       <option value="">Select</option>
                       {genderOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -1950,6 +2068,12 @@ const PatientRegistration = () => {
                       isClearable
                     />
                   </FormGroup>
+                    <AddDoctorButton
+                      type="button"
+                      onClick={() => setIsAddDoctorOpen(true)}
+                    >
+                      + Add New Doctor
+                    </AddDoctorButton>
 
                   {requiresAppointment && (
                     <>
@@ -2343,6 +2467,89 @@ const PatientRegistration = () => {
           onClose={() => setIsAadhaarScannerOpen(false)}
           onDataExtracted={handleAadhaarDataExtracted}
         />
+        {isAddDoctorOpen && (
+          <ModalOverlay>
+            <ModalContent>
+              <ModalHeader>Add New Doctor</ModalHeader>
+
+              <FormGroup>
+                <FormLabel>First Name *</FormLabel>
+                <FormInput
+                  type="text"
+                  value={newDoctorData.first_name}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      first_name: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Last Name</FormLabel>
+                <FormInput
+                  type="text"
+                  value={newDoctorData.last_name}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      last_name: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Gender *</FormLabel>
+                <FormSelect
+                  value={newDoctorData.gender}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      gender: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup>
+                <FormLabel>Practitioner Type</FormLabel>
+                <FormSelect
+                  value={newDoctorData.practitioner_type}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      practitioner_type: e.target.value,
+                    })
+                  }
+                >
+                  <option value="Internal">Internal</option>
+                  <option value="External">External</option>
+                </FormSelect>
+              </FormGroup>
+
+              <ModalActions>
+                <BackButton type="button" onClick={() => setIsAddDoctorOpen(false)}>
+                  Cancel
+                </BackButton>
+                <NextButton
+                  type="button"
+                  onClick={createDoctor}
+                  disabled={creatingDoctor}
+                >
+                  {creatingDoctor ? "Creating..." : "Create Doctor"}
+                </NextButton>
+              </ModalActions>
+            </ModalContent>
+          </ModalOverlay>
+        )}
+
       </RegistrationContainer>
     </Layout>
   );
