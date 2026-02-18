@@ -1789,7 +1789,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Gender<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} >
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} required>
                       <option value="">Select</option>
                       {genderOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -2483,9 +2483,10 @@ const PatientRegistration = () => {
               <ModalHeader>Add New Doctor</ModalHeader>
 
               <FormGroup>
-                <FormLabel>First Name *</FormLabel>
+                <FormLabel>First Name <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                 <FormInput
                   type="text"
+                  placeholder="Enter first name (Include Dr.)"
                   value={newDoctorData.first_name}
                   onChange={(e) =>
                     setNewDoctorData({
@@ -2511,7 +2512,7 @@ const PatientRegistration = () => {
               </FormGroup>
 
               <FormGroup>
-                <FormLabel>Gender *</FormLabel>
+                <FormLabel>Gender <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                 <FormSelect
                   value={newDoctorData.gender}
                   onChange={(e) =>

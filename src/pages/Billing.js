@@ -306,11 +306,6 @@ const ActionLabel = styled.span`
   font-weight: 500;
   color: #333333;
 `;
-const ActionsContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
 const ActionLink = styled.button`
   background: none;
   border: none;
@@ -404,6 +399,44 @@ const DateLabel = styled.div`
   color: #333333;
   margin-right: 8px;
 `;
+
+const PrintDropdown = styled.div`
+  display: none;
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  padding: 5px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 100;
+
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.2s ease;
+`;
+
+const DropdownItem = styled.div`
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333333;
+  border-radius: 4px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+`;
+const ActionsContainer = styled.div`
+  position: relative;
+
+  &:hover ${PrintDropdown} {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 const Billing = () => {
   usePageTitle("Billing");
   const navigate = useNavigate();
@@ -558,15 +591,25 @@ const Billing = () => {
       .join("");
   };
 
-  const handlePrint = (invoice) => {
+  const handlePrint = (invoice, pageSize = "A4") => {
     const itemsHTML = buildItemsRows(invoice.items);
 
     setTimeout(() => {
-      const printContent = invoiceRef.current;
-
       const printWindow = window.open("", "_blank");
+
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");
+
+      // Decide page dimensions
+      const pageCSS =
+        pageSize === "A5"
+          ? "@page { size: A5 portrait; margin: 10mm; }"
+          : "@page { size: A4 portrait; margin: 15mm; }";
+
+      const wrapperWidth =
+        pageSize === "A5"
+          ? "100mm"
+          : "148mm";
 
 
       printWindow.document.write(`
@@ -618,7 +661,8 @@ const Billing = () => {
 
     .invoice-wrapper {
       width: 100%;
-      max-width: 148mm;
+      max-width: ${wrapperWidth};
+      margin:auto;
       background: var(--surface);
       border-radius: 12px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.08);
@@ -992,129 +1036,146 @@ const Billing = () => {
     `);
 
       printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
 
-      // Cleanup
-      setTimeout(() => {
-        printWindow.close();
-        setSelectedInvoice(null);
-      }, 500);
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+
+        setTimeout(() => {
+          printWindow.close();
+          setSelectedInvoice(null);
+        }, 500);
+      };
+
     }, 100);
   };
 
   const renderActions = (row) => (
     <ActionsContainer>
-      <ActionLink onClick={() => printInvoice(row)}>
+
+      <ActionLink>
         <Printer size={16} />
-        Print
+        Print ▾
       </ActionLink>
+
+      <PrintDropdown>
+
+        <DropdownItem onClick={() => printInvoice(row, "A4")}>
+          Print A4
+        </DropdownItem>
+
+        <DropdownItem onClick={() => printInvoice(row, "A5")}>
+          Print A5
+        </DropdownItem>
+
+      </PrintDropdown>
+
     </ActionsContainer>
   );
 
 
   return (
     <Layout>
-          <BillingContainer>
-            <HeaderSection>
-              <TitleSection>
-                <Title>OPD Billing</Title>
-                <Subtitle>Manage invoices, payments, and financial records.</Subtitle>
-              </TitleSection>
-              <ButtonGroup>
-                <AddButton onClick={() => navigate(`${basePath}/add`)}>
-                  <Plus />
-                  Add Billing
-                </AddButton>
-                <ExportButton>
-                  <Download />
-                  Export Report
-                </ExportButton>
-              </ButtonGroup>
-            </HeaderSection>
-    
-            <SummaryCards>
-              {summaryData.map((item, index) => {
-                const IconComponent = item.icon;
-                return (
-                  <SummaryCard key={index}>
-                    <CardHeader>
-                      <CardLabel>{item.label}</CardLabel>
-                      <CardIcon bgColor={item.bgColor} color={item.color}>
-                        <IconComponent />
-                      </CardIcon>
-                    </CardHeader>
-                    <CardValue>{item.value}</CardValue>
-                    <CardChange positive={item.positive}>
-                      <TrendingUp size={12} />
-                      {item.change}
-                    </CardChange>
-                  </SummaryCard>
-                );
-              })}
-            </SummaryCards>
-            <ToolbarSection>
-              {/* Search */}
-              <SearchContainer>
-                <DateLabel>Search by Patient ID:</DateLabel>
-                <SearchIcon>
-                  <Search />
-                </SearchIcon>
-                <SearchInput
-                  placeholder="Search by Patient ID..."
-                  value={searchCustomer}
-                  onChange={(e) => setSearchCustomer(e.target.value)}
-                />
-              </SearchContainer>
-    
-              {/* From Date */}
-              <DateContainer>
-    
-                <DateLabel>From Date:</DateLabel>
-                <DateInput
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </DateContainer>
-    
-              {/* To Date */}
-              <DateContainer>
-                <DateLabel>To Date:</DateLabel>
-                <DateInput
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </DateContainer>
-              <DateContainer>
-                <DateLabel>Reset Date Filter:</DateLabel>
-                <DateInput
-                  type="button"
-                  value="Reset"
-                  onClick={() => {
-                    setFromDate("");
-                    setToDate("");
-                  }}
-                />
-              </DateContainer>
-            </ToolbarSection>
-    
-    
-    
-            <BillingSection>
-              <DataTable
-                columns={columns}
-                data={invoices}
-                renderStatus={renderStatus}
-                renderActions={renderActions}
-                loading={loading}
-                sortableColumns={["name", "patient_name", "posting_date"]}
-              />
-    
-            </BillingSection>
-          </BillingContainer>
-          {/* {selectedInvoice && (
+      <BillingContainer>
+        <HeaderSection>
+          <TitleSection>
+            <Title>OPD Billing</Title>
+            <Subtitle>Manage invoices, payments, and financial records.</Subtitle>
+          </TitleSection>
+          <ButtonGroup>
+            <AddButton onClick={() => navigate(`${basePath}/add`)}>
+              <Plus />
+              Add Billing
+            </AddButton>
+            <ExportButton>
+              <Download />
+              Export Report
+            </ExportButton>
+          </ButtonGroup>
+        </HeaderSection>
+
+        <SummaryCards>
+          {summaryData.map((item, index) => {
+            const IconComponent = item.icon;
+            return (
+              <SummaryCard key={index}>
+                <CardHeader>
+                  <CardLabel>{item.label}</CardLabel>
+                  <CardIcon bgColor={item.bgColor} color={item.color}>
+                    <IconComponent />
+                  </CardIcon>
+                </CardHeader>
+                <CardValue>{item.value}</CardValue>
+                <CardChange positive={item.positive}>
+                  <TrendingUp size={12} />
+                  {item.change}
+                </CardChange>
+              </SummaryCard>
+            );
+          })}
+        </SummaryCards>
+        <ToolbarSection>
+          {/* Search */}
+          <SearchContainer>
+            <DateLabel>Search by Patient ID:</DateLabel>
+            <SearchIcon>
+              <Search />
+            </SearchIcon>
+            <SearchInput
+              placeholder="Search by Patient ID..."
+              value={searchCustomer}
+              onChange={(e) => setSearchCustomer(e.target.value)}
+            />
+          </SearchContainer>
+
+          {/* From Date */}
+          <DateContainer>
+
+            <DateLabel>From Date:</DateLabel>
+            <DateInput
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+            />
+          </DateContainer>
+
+          {/* To Date */}
+          <DateContainer>
+            <DateLabel>To Date:</DateLabel>
+            <DateInput
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+            />
+          </DateContainer>
+          <DateContainer>
+            <DateLabel>Reset Date Filter:</DateLabel>
+            <DateInput
+              type="button"
+              value="Reset"
+              onClick={() => {
+                setFromDate("");
+                setToDate("");
+              }}
+            />
+          </DateContainer>
+        </ToolbarSection>
+
+
+
+        <BillingSection>
+          <DataTable
+            columns={columns}
+            data={invoices}
+            renderStatus={renderStatus}
+            renderActions={renderActions}
+            loading={loading}
+            sortableColumns={["name", "patient_name", "posting_date"]}
+          />
+
+        </BillingSection>
+      </BillingContainer>
+      {/* {selectedInvoice && (
             <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
               <InvoiceTemplate
                 ref={invoiceRef}
@@ -1122,7 +1183,7 @@ const Billing = () => {
               />
             </div>
           )} */}
-        </Layout>
+    </Layout>
   );
 };
 

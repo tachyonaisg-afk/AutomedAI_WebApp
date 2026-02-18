@@ -891,12 +891,29 @@ const AddBilling = () => {
     }
 
     setSearchingItem(true);
+
     try {
+      let finalQuery = query.trim();
+
+      // If user types something like "plb tsh"
+      const words = finalQuery.split(" ");
+
+      if (words.length > 1) {
+        const firstWord = words[0];
+
+        // If first word does NOT already contain "-"
+        if (!firstWord.includes("-")) {
+          words[0] = `${firstWord}-`;
+          finalQuery = words.join(" ");
+        }
+      }
+
       const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
         doctype: "Item",
-        txt: query,
+        txt: finalQuery,
         page_length: 10,
       });
+
       if (response.data?.results || response.data?.message) {
         setItemResults(response.data.results || response.data.message || []);
         setShowItemResults(true);
@@ -907,7 +924,7 @@ const AddBilling = () => {
       setSearchingItem(false);
     }
   }, []);
-
+  
   // Debounce effect for patient search
   useEffect(() => {
     const timer = setTimeout(() => {

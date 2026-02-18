@@ -533,7 +533,7 @@ const SalesReport = () => {
       if (customerIds.length === 0) return;
 
       const customerPromises = customerIds.map(id =>
-        apiService.get(`/api/resource/Customer/${id}`)
+        apiService.get(`/resource/Customer/${id}`)
       );
 
       const responses = await Promise.all(customerPromises);

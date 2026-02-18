@@ -964,19 +964,20 @@ const ResultPrint = () => {
           <ReportPreview data-pdf-content>
             <div className="pdf-header">
               <ReportHeader>
-                {includeLetterhead &&
-                  selectedTestDetails[0]?.company?.name ===
-                  "Ramakrishna Mission Sargachi" && (
-                    <img
-                      src="https://hms.automedai.in/files/rkma_ltrhd_hdr.jpg"
-                      alt="Letterhead"
-                      style={{
-                        width: "100%",
-                        height: "auto",
-                        display: "block",
-                      }}
-                    />
-                  )}
+                {includeLetterhead && (
+                  <img
+                    src="https://hms.automedai.in/files/rkma_ltrhd_hdr.jpg"
+                    alt="Letterhead"
+                    style={{
+                      width: "100%",
+                      height: "140px",        // reduce height to crop bottom
+                      objectFit: "cover",
+                      objectPosition: "top",  // keeps top, cuts bottom
+                      display: "block",
+                    }}
+                  />
+
+                )}
               </ReportHeader>
 
             </div>
@@ -1076,11 +1077,17 @@ const ResultPrint = () => {
               })}
 
               <ReportFooter>
-                {includeLetterhead ? (
-                  <div>
-                    {/* Footer / Signature / Address */}
-                  </div>
-                ) : null}
+                {includeLetterhead && (
+                  <img
+                    src="https://hms.automedai.in/files/rkma_ltrhd_ftr.jpg"
+                    alt="Footer Letterhead"
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      display: "block",
+                    }}
+                  />
+                )}
               </ReportFooter>
 
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
