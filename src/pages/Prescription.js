@@ -519,18 +519,23 @@ const Prescription = () => {
 
   const [selectedDoctorData, setSelectedDoctorData] = useState(null);
   const [currentUser, setCurrentUser] = useState("");
+
   useEffect(() => {
-    const fullName = getCookie("full_name");
-    if (fullName) {
-      setCurrentUser(fullName);
+    try {
+      const userData = localStorage.getItem("user");
+
+      if (!userData) return;
+
+      const parsedUser = JSON.parse(userData);
+
+      if (parsedUser?.full_name) {
+        setCurrentUser(parsedUser.full_name);
+      }
+
+    } catch (error) {
+      console.error("Error reading user from localStorage:", error);
     }
   }, []);
-
-  const getCookie = (name) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(";").shift();
-  };
 
   // Fetch patient data
   useEffect(() => {
