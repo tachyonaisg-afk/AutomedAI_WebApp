@@ -1492,7 +1492,7 @@ const PatientRegistration = () => {
             console.log("Creating queue no:", queuePayload);
 
             const queueResponse = await fetch(
-              "http://localhost:3008/appointments/create",
+              "http://168.231.123.210:3008/appointments/create",
               {
                 method: "POST",
                 headers: {
