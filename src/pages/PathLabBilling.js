@@ -622,8 +622,23 @@ const PathLabBilling = () => {
       // Decide page dimensions
       const pageCSS =
         pageSize === "A5"
-          ? "@page { size: A5 portrait; margin: 10mm; }"
-          : "@page { size: A4 portrait; margin: 15mm; }";
+          ? `
+      @page { 
+        size: A5 landscape; 
+        margin: 8mm; 
+      }
+      html, body {
+        width: 210mm;
+        height: 148mm;
+      }
+    `
+          : `
+      @page { 
+        size: A4 portrait; 
+        margin: 15mm; 
+      }
+    `;
+
 
       const wrapperWidth =
         pageSize === "A5"
@@ -647,303 +662,258 @@ const PathLabBilling = () => {
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
   <style>
-    ${pageCSS}
-    
-    :root {
-      --primary: #137fec;
-      --primary-dark: #0b5cb5;
-      --bg-light: #f6f7f8;
-      --surface: #ffffff;
-      --text-main: #111418;
-      --text-secondary: #617589;
-      --border-light: #dbe0e6;
-      --success: #16a34a;
+  ${pageSize === "A5"
+    ? `
+    /* ===== A5 LANDSCAPE ===== */
+    @page { 
+      size: A5 landscape; 
+      margin: 8mm; 
     }
 
-    * {
-      box-sizing: border-box;
+    html, body {
+      width: 210mm;
+      height: 148mm;
     }
+  `
+    : `
+    /* ===== A4 PORTRAIT ===== */
+    @page { 
+      size: A4 portrait; 
+      margin: 15mm; 
+    }
+  `
+  }
 
+  :root {
+    --primary: #137fec;
+    --primary-dark: #0b5cb5;
+    --bg-light: #f6f7f8;
+    --surface: #ffffff;
+    --text-main: #111418;
+    --text-secondary: #617589;
+    --border-light: #dbe0e6;
+    --success: #16a34a;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: "Manrope", sans-serif;
+    background: ${pageSize === "A5" ? "#fff" : "var(--bg-light)"};
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+  }
+
+  .invoice-wrapper {
+    width: ${pageSize === "A5" ? "210mm" : "100%"};
+    height: ${pageSize === "A5" ? "148mm" : "auto"};
+    margin: auto;
+    background: var(--surface);
+    border-radius: ${pageSize === "A5" ? "6px" : "12px"};
+    box-shadow: ${pageSize === "A5" ? "none" : "0 20px 40px rgba(0,0,0,0.08)"};
+    overflow: hidden;
+    ${pageSize === "A5" ? "transform: scale(0.92); transform-origin: top left;" : ""}
+  }
+
+  /* ===== HEADER ===== */
+  .invoice-header {
+    padding: ${pageSize === "A5" ? "15px" : "30px"};
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .hospital-info {
+    max-width: 60%;
+  }
+
+  .hospital-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .hospital-name {
+    font-size: ${pageSize === "A5" ? "16px" : "22px"};
+    font-weight: 800;
+  }
+
+  .hospital-address {
+    font-size: ${pageSize === "A5" ? "11px" : "14px"};
+    color: var(--text-secondary);
+    margin-left: 42px;
+  }
+
+  .invoice-title {
+    font-size: ${pageSize === "A5" ? "22px" : "36px"};
+    font-weight: 900;
+    color: var(--primary);
+    margin: 0;
+  }
+
+  .invoice-meta p {
+    font-size: ${pageSize === "A5" ? "11px" : "14px"};
+    margin: 4px 0;
+    color: var(--text-secondary);
+  }
+
+  .paid-badge {
+    margin-top: 10px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #dcfce7;
+    color: var(--success);
+    font-size: ${pageSize === "A5" ? "9px" : "12px"};
+    font-weight: 700;
+    border: 1px solid #bbf7d0;
+  }
+
+  /* ===== PATIENT ===== */
+  .patient-section {
+    background: #f1f3f5;
+    padding: ${pageSize === "A5" ? "6px 20px" : "12px 48px"};
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .patient-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .label {
+    font-size: ${pageSize === "A5" ? "9px" : "11px"};
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .value {
+    font-size: ${pageSize === "A5" ? "13px" : "16px"};
+    font-weight: 700;
+  }
+
+  /* ===== TABLE ===== */
+  .table-section {
+    padding: ${pageSize === "A5" ? "10px" : "25px"};
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border-light);
+  }
+
+  thead {
+    background: #f6f7f8;
+  }
+
+  th, td {
+    padding: ${pageSize === "A5" ? "6px" : "14px"};
+    font-size: ${pageSize === "A5" ? "10px" : "12px"};
+  }
+
+  th {
+    text-align: left;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+
+  th.center, td.center { text-align: center; }
+  th.right, td.right { text-align: right; }
+
+  tbody tr {
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* ===== SUMMARY ===== */
+  .summary {
+    display: flex;
+    justify-content: space-between;
+    gap: ${pageSize === "A5" ? "12px" : "32px"};
+    margin-top: ${pageSize === "A5" ? "12px" : "32px"};
+  }
+
+  .payment-box {
+    flex: 1;
+    padding: ${pageSize === "A5" ? "10px" : "24px"};
+    background: #f6f7f8;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+  }
+
+  .payment-box h3 {
+    font-size: ${pageSize === "A5" ? "10px" : "13px"};
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    color: var(--text-secondary);
+  }
+
+  .payment-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: ${pageSize === "A5" ? "11px" : "14px"};
+    margin-bottom: 6px;
+  }
+
+  .totals {
+    width: ${pageSize === "A5" ? "180px" : "260px"};
+  }
+
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: ${pageSize === "A5" ? "12px" : "14px"};
+  }
+
+  .grand-total {
+    font-size: ${pageSize === "A5" ? "16px" : "20px"};
+    font-weight: 900;
+    color: var(--primary);
+  }
+
+  .thank-you {
+    margin-top: 8px;
+    padding: 6px;
+    text-align: center;
+    background: #eff6ff;
+    font-size: ${pageSize === "A5" ? "9px" : "12px"};
+    border-radius: 6px;
+    border: 1px solid #dbeafe;
+  }
+
+  /* ===== FOOTER ===== */
+  .invoice-footer {
+    padding: ${pageSize === "A5" ? "6px 20px" : "16px 48px"};
+    border-top: 1px solid var(--border-light);
+    font-size: ${pageSize === "A5" ? "9px" : "12px"};
+    color: var(--text-secondary);
+  }
+
+  /* ===== PRINT FIX ===== */
+  @media print {
     body {
-      margin: 0;
-      font-family: "Manrope", sans-serif;
-      background: var(--bg-light);
-      color: var(--text-main);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 16px 16px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    table, tr, td, th {
+      page-break-inside: avoid !important;
     }
 
     .invoice-wrapper {
-      width: 100%;
-      margin:auto;
-      background: var(--surface);
-      border-radius: 12px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-      overflow: hidden;
+      page-break-after: avoid;
     }
+  }
+</style>
 
-    /* Header */
-    .invoice-header {
-      padding: 30px;
-      border-bottom: 1px solid var(--border-light);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 32px;
-    }
-
-    .hospital-info {
-      max-width: 60%;
-    }
-
-    .hospital-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .hospital-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: rgba(19,127,236,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--primary);
-    }
-
-    .hospital-name {
-      font-size: 22px;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-
-    .hospital-address {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin-left: 52px;
-    }
-
-    .hospital-address p {
-      margin: 4px 0;
-    }
-
-    .invoice-meta {
-      text-align: right;
-    }
-
-    .invoice-title {
-      font-size: 36px;
-      font-weight: 900;
-      color: var(--primary);
-      margin: 0;
-    }
-
-    .invoice-meta p {
-      font-size: 14px;
-      color: var(--text-secondary);
-      margin: 4px 0;
-    }
-
-    .paid-badge {
-      margin-top: 16px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      background: #dcfce7;
-      color: var(--success);
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      border: 1px solid #bbf7d0;
-    }
-
-    /* Patient Info */
-    .patient-section {
-      background: #f1f3f5;
-      padding: 12px 48px;
-      border-bottom: 1px solid var(--border-light);
-    }
-
-    .patient-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 24px;
-    }
-
-    .label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .value {
-      font-size: 16px;
-      font-weight: 700;
-    }
-
-    /* Table */
-    .table-section {
-      padding: 25px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      border: 1px solid var(--border-light);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    thead {
-      background: #f6f7f8;
-    }
-
-    th, td {
-      padding: 14px;
-      font-size: 12px;
-    }
-
-    th {
-      text-align: left;
-      font-weight: 700;
-      color: var(--text-secondary);
-    }
-
-    th.center, td.center {
-      text-align: center;
-    }
-
-    th.right, td.right {
-      text-align: right;
-    }
-
-    tbody tr {
-      border-top: 1px solid var(--border-light);
-    }
-
-    tbody tr:hover {
-      background: #fafafa;
-    }
-
-    td strong {
-      font-weight: 700;
-    }
-
-    /* Summary */
-    .summary {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 32px;
-      margin-top: 32px;
-    }
-
-    .payment-box {
-      flex: 1;
-      padding: 24px;
-      background: #f6f7f8;
-      border-radius: 8px;
-      border: 1px solid var(--border-light);
-    }
-
-    .payment-box h3 {
-      font-size: 13px;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-      margin-bottom: 16px;
-    }
-
-    .payment-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    .totals {
-      flex: 0.6;
-      align-self: flex-end;
-    }
-
-    .totals-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-
-    .totals-row strong {
-      color: var(--text-main);
-    }
-
-    .grand-total {
-      font-size: 20px;
-      font-weight: 900;
-      color: var(--primary);
-    }
-
-    .thank-you {
-      margin-top: 16px;
-      padding: 12px;
-      text-align: center;
-      background: #eff6ff;
-      color: #1d4ed8;
-      font-size: 12px;
-      border-radius: 6px;
-      border: 1px solid #dbeafe;
-    }
-
-    /* Footer */
-    .invoice-footer {
-      padding: 16px 48px;
-      border-top: 1px solid var(--border-light);
-      font-size: 12px;
-      color: var(--text-secondary);
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .footer-links a {
-      margin-left: 16px;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .footer-links a:hover {
-      color: var(--primary);
-    }
-
-    /* Print */
-    @media print {
-      body {
-        background: #fff;
-      }
-      .invoice-wrapper {
-        box-shadow: none;
-        border: none;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .invoice-header {
-        padding: 32px;
-      }
-      .table-section {
-        padding: 32px;
-      }
-    }
-  </style>
 </head>
 
 <body>
