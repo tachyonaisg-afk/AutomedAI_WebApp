@@ -306,11 +306,7 @@ const ActionLabel = styled.span`
   font-weight: 500;
   color: #333333;
 `;
-const ActionsContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
+
 const ActionLink = styled.button`
   background: none;
   border: none;
@@ -403,6 +399,42 @@ const DateLabel = styled.div`
   font-weight: 500;
   color: #333333;
   margin-right: 8px;
+`;
+const PrintDropdown = styled.div`
+  display: none;
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #dddddd;
+  padding: 5px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 100;
+
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: all 0.2s ease;
+`;
+
+const DropdownItem = styled.div`
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333333;
+  border-radius: 4px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f0f0f0;
+  }
+`;
+const ActionsContainer = styled.div`
+  position: relative;
+
+  &:hover ${PrintDropdown} {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
 `;
 
 const PathLabBilling = () => {
@@ -560,16 +592,43 @@ const PathLabBilling = () => {
       .join("");
   };
 
-  const handlePrint = (invoice) => {
+  const handlePrint = (invoice, pageSize = "A4") => {
     const itemsHTML = buildItemsRows(invoice.items);
+    const companyAddressMap = {
+      "Ramakrishna Mission Sargachi": {
+        area: "Sargachi, Murshidabad",
+        state: "West Bengal, India - 742134",
+        phone: "+91 3482 232222",
+      },
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
+        area: "Hariharpara, Murshidabad",
+        state: "West Bengal, India - 742165",
+        phone: "+91 9475 353302",
+      },
+    };
+
+    const companyDetails = companyAddressMap[invoice.company] || {
+      area: "",
+      state: "",
+      phone: "",
+    };
 
     setTimeout(() => {
-      const printContent = invoiceRef.current;
-
       const printWindow = window.open("", "_blank");
+
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");
 
+      // Decide page dimensions
+      const pageCSS =
+        pageSize === "A5"
+          ? "@page { size: A5 portrait; margin: 10mm; }"
+          : "@page { size: A4 portrait; margin: 15mm; }";
+
+      const wrapperWidth =
+        pageSize === "A5"
+          ? "148mm"   // A5 width
+          : "210mm";  // A4 width
 
       printWindow.document.write(`
      <!DOCTYPE html>
@@ -577,7 +636,7 @@ const PathLabBilling = () => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hospital Patient Invoice - Ramakrishna Mission Sargachi Hospital ${invoice.patient_name}</title>
+  <title>Hospital Patient Invoice - ${invoice.patient_name}</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -588,6 +647,8 @@ const PathLabBilling = () => {
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
   <style>
+    ${pageCSS}
+    
     :root {
       --primary: #137fec;
       --primary-dark: #0b5cb5;
@@ -613,14 +674,10 @@ const PathLabBilling = () => {
       justify-content: center;
       padding: 16px 16px;
     }
-    @page {
-      size: A4 portrait;
-      margin: 15mm;
-    }
 
     .invoice-wrapper {
       width: 100%;
-      max-width: 148mm;
+      margin:auto;
       background: var(--surface);
       border-radius: 12px;
       box-shadow: 0 20px 40px rgba(0,0,0,0.08);
@@ -896,24 +953,25 @@ const PathLabBilling = () => {
     <!-- Header -->
     <header class="invoice-header">
       <div class="hospital-info">
-        <div class="hospital-title">
-          <div class="hospital-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
-              10-4.48 10-10S17.52 2 12 2zm1 
-              11h4v-2h-4V7h-2v4H7v2h4v4h2v-4z"/>
-            </svg>
-          </div>
-          <div class="hospital-name">
-            Ramakrishna Mission<br>Sargachi
-          </div>
-        </div>
-        <div class="hospital-address">
-          <p>Sargachi, Murshidabad</p>
-          <p>West Bengal, India - 742134</p>
-          <p>📞 +91 3482 232222</p>
-        </div>
-      </div>
+  <div class="hospital-title">
+    <div class="hospital-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
+          10-4.48 10-10S17.52 2 12 2zm1 
+          11h4v-2h-4V7h-2v4H7v2h4v4h2v-4z"/>
+      </svg>
+    </div>
+    <div class="hospital-name">
+      ${invoice.company}
+    </div>
+  </div>
+
+  <div class="hospital-address">
+    <p>${companyDetails.area}</p>
+    <p>${companyDetails.state}</p>
+    <p>📞 ${companyDetails.phone}</p>
+  </div>
+</div>
 
       <div class="invoice-meta">
         <h1 class="invoice-title">INVOICE</h1>
@@ -994,23 +1052,40 @@ const PathLabBilling = () => {
     `);
 
       printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
 
-      // Cleanup
-      setTimeout(() => {
-        printWindow.close();
-        setSelectedInvoice(null);
-      }, 500);
+      printWindow.onload = () => {
+        printWindow.focus();
+        printWindow.print();
+
+        setTimeout(() => {
+          printWindow.close();
+          setSelectedInvoice(null);
+        }, 500);
+      };
+
     }, 100);
   };
 
   const renderActions = (row) => (
     <ActionsContainer>
-      <ActionLink onClick={() => printInvoice(row)}>
+
+      <ActionLink>
         <Printer size={16} />
-        Print
+        Print ▾
       </ActionLink>
+
+      <PrintDropdown>
+
+        <DropdownItem onClick={() => printInvoice(row, "A4")}>
+          Print A4
+        </DropdownItem>
+
+        <DropdownItem onClick={() => printInvoice(row, "A5")}>
+          Print A5
+        </DropdownItem>
+
+      </PrintDropdown>
+
     </ActionsContainer>
   );
 

@@ -2180,7 +2180,7 @@ const PatientRegistration = () => {
                                   <SearchResults>
                                     {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
                                       <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
-                                        {itemResult.value || itemResult.name} - {itemResult.description || ""}
+                                        {itemResult.description || ""}
                                       </SearchResultItem>))) : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
 
                                       </SearchResultEmpty>
