@@ -593,6 +593,24 @@ const Billing = () => {
 
   const handlePrint = (invoice, pageSize = "A4") => {
     const itemsHTML = buildItemsRows(invoice.items);
+    const companyAddressMap = {
+      "Ramakrishna Mission Sargachi": {
+        area: "Sargachi, Murshidabad",
+        state: "West Bengal, India - 742134",
+        phone: "+91 3482 232222",
+      },
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
+        area: "Hariharpara, Murshidabad",
+        state: "West Bengal, India - 742165",
+        phone: "+91 9475 353302",
+      },
+    };
+
+    const companyDetails = companyAddressMap[invoice.company] || {
+      area: "",
+      state: "",
+      phone: "",
+    };
 
     setTimeout(() => {
       const printWindow = window.open("", "_blank");
@@ -608,9 +626,8 @@ const Billing = () => {
 
       const wrapperWidth =
         pageSize === "A5"
-          ? "100mm"
-          : "148mm";
-
+          ? "148mm"   // A5 width
+          : "210mm";  // A4 width
 
       printWindow.document.write(`
      <!DOCTYPE html>
@@ -618,7 +635,7 @@ const Billing = () => {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hospital Patient Invoice - Ramakrishna Mission Sargachi Hospital ${invoice.patient_name}</title>
+  <title>Hospital Patient Invoice - ${invoice.patient_name}</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -629,6 +646,8 @@ const Billing = () => {
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
   <style>
+    ${pageCSS}
+    
     :root {
       --primary: #137fec;
       --primary-dark: #0b5cb5;
@@ -654,14 +673,9 @@ const Billing = () => {
       justify-content: center;
       padding: 16px 16px;
     }
-    @page {
-      size: A4 portrait;
-      margin: 15mm;
-    }
 
     .invoice-wrapper {
       width: 100%;
-      max-width: ${wrapperWidth};
       margin:auto;
       background: var(--surface);
       border-radius: 12px;
@@ -938,24 +952,25 @@ const Billing = () => {
     <!-- Header -->
     <header class="invoice-header">
       <div class="hospital-info">
-        <div class="hospital-title">
-          <div class="hospital-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
-              10-4.48 10-10S17.52 2 12 2zm1 
-              11h4v-2h-4V7h-2v4H7v2h4v4h2v-4z"/>
-            </svg>
-          </div>
-          <div class="hospital-name">
-            Ramakrishna Mission<br>Sargachi
-          </div>
-        </div>
-        <div class="hospital-address">
-          <p>Sargachi, Murshidabad</p>
-          <p>West Bengal, India - 742134</p>
-          <p>📞 +91 3482 232222</p>
-        </div>
-      </div>
+  <div class="hospital-title">
+    <div class="hospital-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
+          10-4.48 10-10S17.52 2 12 2zm1 
+          11h4v-2h-4V7h-2v4H7v2h4v4h2v-4z"/>
+      </svg>
+    </div>
+    <div class="hospital-name">
+      ${invoice.company}
+    </div>
+  </div>
+
+  <div class="hospital-address">
+    <p>${companyDetails.area}</p>
+    <p>${companyDetails.state}</p>
+    <p>📞 ${companyDetails.phone}</p>
+  </div>
+</div>
 
       <div class="invoice-meta">
         <h1 class="invoice-title">INVOICE</h1>
