@@ -1492,7 +1492,7 @@ const PatientRegistration = () => {
             console.log("Creating queue no:", queuePayload);
 
             const queueResponse = await fetch(
-              "http://localhost:3010/appointments/create",
+              "http://localhost:3008/appointments/create",
               {
                 method: "POST",
                 headers: {
@@ -1867,7 +1867,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Clinic</FormLabel>
-                    <FormSelect name="company" value={formData.company} onChange={handleInputChange}>
+                    <FormSelect name="company" value={formData.company} onChange={handleInputChange} required >
                       <option value="">Select clinic</option>
                       {companyOptions.map((option) => (
                         <option key={option.name} value={option.name}>

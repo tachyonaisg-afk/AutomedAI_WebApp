@@ -649,7 +649,7 @@ const Prescription = () => {
         if (!appointmentId) return;
 
         const response = await api.get(
-          `http://localhost:3010/appointments/queue/${appointmentId}`
+          `http://localhost:3008/appointments/queue/${appointmentId}`
         );
 
         console.log("📌 Queue API Response:", response.data);
@@ -911,11 +911,11 @@ const Prescription = () => {
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[PT Name :</PatientLabel>
-                <PatientValue><b>{patientData?.patient_name || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}</b>]</PatientValue>
+                <PatientValue><b>{patientData?.patient_name || "xxxxxxxxxxxx xxxxxxxxxxxxxxx"}</b>]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[Mobile :</PatientLabel>
-                <PatientValue><b>{patientData?.mobile || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}</b>]</PatientValue>
+                <PatientValue><b>{patientData?.mobile || "xxxxxxxxxxx"}</b>]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[Age :</PatientLabel>
