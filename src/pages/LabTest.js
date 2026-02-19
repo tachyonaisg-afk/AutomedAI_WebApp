@@ -211,26 +211,50 @@ const LabTest = () => {
   // Fetch lab test count
   const fetchLabTestCount = async () => {
     try {
+      // Step 1: Fetch Company Name
+      const companyResponse = await api.get("/resource/Company");
+
+      console.log("🏢 Company API Response:", companyResponse);
+
+      const companyName =
+        companyResponse.data?.data?.[0]?.name || "";
+
+      console.log("🏢 Company Name:", companyName);
+
+      // Step 2: Prepare filters with company
       const params = {
         doctype: "Lab Test",
-        filters: JSON.stringify({ status: ["!=", "Completed"] }),
+        filters: JSON.stringify({
+          company: companyName,
+          status: ["!=", "Completed"],
+        }),
       };
 
       console.log("📊 Fetching lab test count with params:", params);
 
-      const response = await api.get(API_ENDPOINTS.LAB_TEST.COUNT, params);
+      // Step 3: Fetch Count
+      const response = await api.get(
+        API_ENDPOINTS.LAB_TEST.COUNT,
+        params
+      );
 
       console.log("📊 Count API Response:", response);
 
-      const count = response.data?.message || response.data?.data || 0;
+      const count =
+        response.data?.message ||
+        response.data?.data ||
+        0;
+
       console.log("📊 Total Lab Test Count:", count);
 
       setTotalCount(count);
+
     } catch (err) {
       console.error("❌ Error fetching lab test count:", err);
       setTotalCount(0);
     }
   };
+
   const formatTestName = (name = "") => {
     return name.includes("-")
       ? name.split("-").slice(1).join("-").trim()

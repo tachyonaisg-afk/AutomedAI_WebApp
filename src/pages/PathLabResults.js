@@ -182,9 +182,20 @@ const PathLabResults = () => {
   // Fetch completed lab test count
   const fetchCompletedTestCount = async () => {
     try {
+      // Step 1: Fetch Company Name
+            const companyResponse = await api.get("/resource/Company");
+      
+            console.log("🏢 Company API Response:", companyResponse);
+      
+            const companyName =
+              companyResponse.data?.data?.[0]?.name || "";
+      
+            console.log("🏢 Company Name:", companyName);
+      
+      // Step 2: Prepare filters with company
       const params = {
         doctype: "Lab Test",
-        filters: JSON.stringify({ status: "Completed" }),
+        filters: JSON.stringify({company: companyName, status: "Completed" }),
       };
 
       console.log("📊 Fetching completed lab test count with params:", params);

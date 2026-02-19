@@ -663,26 +663,33 @@ const PathLabBilling = () => {
 
   <style>
   ${pageSize === "A5"
-    ? `
-    /* ===== A5 LANDSCAPE ===== */
+          ? `
     @page { 
-      size: A5 landscape; 
-      margin: 8mm; 
+      size: A5; 
+      margin: 0;
     }
 
     html, body {
       width: 210mm;
       height: 148mm;
+      margin: 0;
+    }
+
+    body {
+      transform: rotate(90deg);
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 148mm;
     }
   `
-    : `
-    /* ===== A4 PORTRAIT ===== */
+          : `
     @page { 
       size: A4 portrait; 
       margin: 15mm; 
     }
   `
-  }
+        }
 
   :root {
     --primary: #137fec;
