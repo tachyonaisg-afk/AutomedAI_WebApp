@@ -501,6 +501,7 @@ const Prescription = () => {
   const [paperSize, setPaperSize] = useState('a5');
   const [appointmentId, setAppointmentId] = useState(null);
   const [appointmentDoctor, setAppointmentDoctor] = useState(null);
+  const [queueNumber, setQueueNumber] = useState(null);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
     ticketDate: new Date().toLocaleDateString('en-GB'),
@@ -642,6 +643,31 @@ const Prescription = () => {
 
     fetchDoctorDetails();
   }, [formData.selectedDoctor, practitioners]);
+  useEffect(() => {
+    const fetchQueueNumber = async () => {
+      try {
+        if (!appointmentId) return;
+
+        const response = await api.get(
+          `http://localhost:3010/appointments/queue/${appointmentId}`
+        );
+
+        console.log("📌 Queue API Response:", response.data);
+
+        if (response.data?.success) {
+          setQueueNumber(response.data.data.queue_no);
+        } else {
+          setQueueNumber(null);
+        }
+
+      } catch (error) {
+        console.error("Error fetching queue number:", error);
+        setQueueNumber(null);
+      }
+    };
+
+    fetchQueueNumber();
+  }, [appointmentId]);
 
   // Fetch healthcare practitioners
   useEffect(() => {
@@ -704,7 +730,6 @@ const Prescription = () => {
 
     return `${pad(years)} Years ${pad(months)} Months ${pad(days)} Days`;
   };
-
 
   const handlePrint = () => {
     // Set print styles based on paper size
@@ -874,7 +899,7 @@ const Prescription = () => {
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
                 <div>SL NO:</div>
-                <div>Appointment ID: <b>{appointmentId ? appointmentId.slice(-3) : " "}</b></div>
+                <div>Appointment ID: <b>{queueNumber !== null ? queueNumber : "-"}</b></div>
                 <div>Ticket Date: [<b>{formData.ticketDate} - {formData.ticketTime}</b>]</div>
               </TicketInfo>
             </TopRow>

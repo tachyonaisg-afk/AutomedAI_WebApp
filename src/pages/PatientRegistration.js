@@ -1426,6 +1426,8 @@ const PatientRegistration = () => {
         // Get patient details from response
         const patientId = data.data?.name;
         const customer = data.data?.customer;
+        let appointmentId = null; 
+
         // ----------------------------
         // CREATE PATIENT APPOINTMENT
         // ----------------------------
@@ -1460,9 +1462,9 @@ const PatientRegistration = () => {
             );
 
             const appointmentData = await appointmentResponse.json();
-
             if (appointmentResponse.ok) {
               console.log("Appointment created successfully:", appointmentData);
+              appointmentId = appointmentData.data?.name;
             } else {
               console.error("Appointment creation failed:", appointmentData);
               alert(
@@ -1475,6 +1477,51 @@ const PatientRegistration = () => {
             alert("Patient created, but appointment could not be created.");
           }
         }
+        // ----------------------------
+        // CREATE QUEUE NUMBER
+        // ----------------------------
+        if (requiresAppointment && appointmentId && billingData.referringPractitioner) {
+          try {
+            const queuePayload = {
+              appointment_id: appointmentId,
+              doctor_id: billingData.referringPractitioner,
+              patient_id: patientId,
+              appointment_date: formData.appointmentDate,
+            };
+
+            console.log("Creating queue no:", queuePayload);
+
+            const queueResponse = await fetch(
+              "http://localhost:3010/appointments/create",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Accept: "application/json",
+                  Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+                },
+                body: JSON.stringify(queuePayload),
+              }
+            );
+
+            const queueData = await queueResponse.json();
+
+            if (queueResponse.ok) {
+              console.log("Queue no created successfully:", queueData);
+            } else {
+              console.error("Queue creation failed:", queueData);
+              alert(
+                `Patient & appointment created, but queue failed: ${queueData.message || "Unknown error"
+                }`
+              );
+            }
+          } catch (queueError) {
+            console.error("Error creating queue:", queueError);
+            alert("Patient & appointment created, but queue could not be created.");
+          }
+        }
+
+
 
         const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
         const company = formData.company;
@@ -1562,7 +1609,7 @@ const PatientRegistration = () => {
                   company: company,
                   mode_of_payment: "Cash", // Todo This can be changed if needed
                   party_type: "Customer",
-                  party: patientName,
+                  party: customer,
                   paid_amount: netTotal,
                   received_amount: netTotal,
                   target_exchange_rate: 1,
