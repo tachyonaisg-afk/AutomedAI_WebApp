@@ -412,6 +412,11 @@ const PrintStyles = createGlobalStyle`
     
 
     /* ✅ KEY FIXES */
+    img {
+  max-width: 100%;
+  page-break-inside: avoid;
+}
+
     table {
       page-break-inside: auto;
     }
@@ -771,23 +776,38 @@ const ResultPrint = () => {
     });
   };
 
+  const waitForImages = async () => {
+    const images = document.querySelectorAll("img");
+
+    await Promise.all(
+      Array.from(images).map(
+        img =>
+          img.complete
+            ? Promise.resolve()
+            : new Promise(resolve => {
+              img.onload = resolve;
+              img.onerror = resolve;
+            })
+      )
+    );
+  };
+
   const handlePrint = async () => {
     try {
+      await waitForImages();
+
       const html2pdf = (await import("html2pdf.js")).default;
 
       const element = document.querySelector("[data-pdf-content]");
-      if (!element) return;
 
       const opt = {
         margin: [15, 10, 15, 10],
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg", quality: 1 },
         html2canvas: {
           scale: 2,
           useCORS: true,
-          allowTaint: true,
-          logging: false
+          allowTaint: true
         },
-
         jsPDF: {
           unit: "mm",
           format: "a4",
@@ -795,7 +815,6 @@ const ResultPrint = () => {
         },
       };
 
-      // Generate PDF as Blob
       const pdfBlob = await html2pdf()
         .set(opt)
         .from(element)
@@ -803,21 +822,18 @@ const ResultPrint = () => {
 
       const blobUrl = URL.createObjectURL(pdfBlob);
 
-      // Open new tab
       const printWindow = window.open(blobUrl);
 
       if (printWindow) {
         printWindow.onload = () => {
-          printWindow.focus();
           printWindow.print();
         };
       }
+
     } catch (error) {
-      console.error("Print Error:", error);
-      alert("Failed to generate printable PDF.");
+      console.error(error);
     }
   };
-
 
   const handleDownloadPDF = async () => {
     try {
@@ -989,7 +1005,6 @@ const ResultPrint = () => {
               <div style={{ marginBottom: "5px" }}>
                 <img
                   src={base64Header}
-                  crossOrigin="anonymous"
                   alt="Letterhead"
                   style={{
                     width: "100%",
@@ -1098,7 +1113,6 @@ const ResultPrint = () => {
                 {includeLetterhead && base64Footer && (
                   <img
                     src={base64Footer}
-                    crossOrigin="anonymous"
                     alt="Footer Letterhead"
                     style={{
                       width: "100%",
