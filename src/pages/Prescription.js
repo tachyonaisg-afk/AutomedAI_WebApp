@@ -865,36 +865,36 @@ const Prescription = () => {
 
             <TopRow>
               <DoctorInfo paperSize={paperSize}>
-                [Dr. {selectedDoctorData?.practitioner_name || ""}]<br />
+                [Dr. <b>{selectedDoctorData?.practitioner_name || ""}</b>]<br />
                 [Ex- H.M.o]<br />
                 PM]
               </DoctorInfo>
               <DoctorInfo paperSize={paperSize}>
-                [Done by : {currentUser}]<br />
+                [Done by : <b>{currentUser}</b>]<br />
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
                 <div>SL NO:</div>
-                <div>Appointment ID: {appointmentId ? appointmentId.slice(-3) : " "}</div>
-                <div>Ticket Date: [{formData.ticketDate} - {formData.ticketTime}]</div>
+                <div>Appointment ID: <b>{appointmentId ? appointmentId.slice(-3) : " "}</b></div>
+                <div>Ticket Date: [<b>{formData.ticketDate} - {formData.ticketTime}</b>]</div>
               </TicketInfo>
             </TopRow>
 
             <PatientInfoRow paperSize={paperSize}>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[PT Reg No :</PatientLabel>
-                <PatientValue>{patientData?.name || "0000000000"}]</PatientValue>
+                <PatientValue><b>{patientData?.name || "0000000000"}</b>]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[PT Name :</PatientLabel>
-                <PatientValue>{patientData?.patient_name || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}]</PatientValue>
+                <PatientValue><b>{patientData?.patient_name || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}</b>]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
                 <PatientLabel paperSize={paperSize}>[Mobile :</PatientLabel>
-                <PatientValue>{patientData?.mobile || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}]</PatientValue>
+                <PatientValue><b>{patientData?.mobile || "xxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxx"}</b>]</PatientValue>
               </PatientInfoItem>
               <PatientInfoItem>
-                <PatientLabel paperSize={paperSize}>Age</PatientLabel>
-                <PatientValue>[{formatAge(patientData?.dob)}]</PatientValue>
+                <PatientLabel paperSize={paperSize}>[Age :</PatientLabel>
+                <PatientValue><b>{formatAge(patientData?.dob)}</b>]</PatientValue>
               </PatientInfoItem>
             </PatientInfoRow>
 

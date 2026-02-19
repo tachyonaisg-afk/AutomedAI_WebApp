@@ -470,8 +470,6 @@ const LetterheadToggle = styled.div`
   }
 `;
 
-
-
 const ResultPrint = () => {
   usePageTitle("Result Print");
   const navigate = useNavigate();
@@ -487,8 +485,6 @@ const ResultPrint = () => {
   const [selectedTestDetails, setSelectedTestDetails] = useState([]);
   const [sampleDetails, setSampleDetails] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [base64Header, setBase64Header] = useState(null);
-  const [base64Footer, setBase64Footer] = useState(null);
 
   // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
@@ -509,26 +505,6 @@ const ResultPrint = () => {
       return dateString;
     }
   };
-  useEffect(() => {
-    const loadImages = async () => {
-      try {
-        const header = await getBase64Image(
-          "https://hms.automedai.in/files/rkma_ltrhd_hdr.jpg"
-        );
-
-        const footer = await getBase64Image(
-          "https://hms.automedai.in/files/rkma_ltrhd_ftr.jpg"
-        );
-
-        setBase64Header(header);
-        setBase64Footer(footer);
-      } catch (err) {
-        console.error("Image conversion error:", err);
-      }
-    };
-
-    loadImages();
-  }, []);
 
   const normalizeRange = (range) => {
     if (!range) return "";
@@ -765,16 +741,6 @@ const ResultPrint = () => {
       )
     );
   };
-  const getBase64Image = async (url) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.readAsDataURL(blob);
-    });
-  };
 
   const waitForImages = async () => {
     const images = document.querySelectorAll("img");
@@ -1001,10 +967,10 @@ const ResultPrint = () => {
           <PrintStyles />
 
           <ReportPreview data-pdf-content>
-            {includeLetterhead && base64Header && (
+            {includeLetterhead && (
               <div style={{ marginBottom: "5px" }}>
                 <img
-                  src={base64Header}
+                  src="https://hms.automedai.in/files/rkma_ltrhd_hdr.jpg"
                   alt="Letterhead"
                   style={{
                     width: "100%",
@@ -1110,9 +1076,9 @@ const ResultPrint = () => {
               })}
 
               <ReportFooter>
-                {includeLetterhead && base64Footer && (
+                {includeLetterhead && (
                   <img
-                    src={base64Footer}
+                    src="https://hms.automedai.in/files/rkma_ltrhd_ftr.jpg"
                     alt="Footer Letterhead"
                     style={{
                       width: "100%",
