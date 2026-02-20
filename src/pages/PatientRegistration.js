@@ -1530,7 +1530,6 @@ const PatientRegistration = () => {
                 headers: {
                   "Content-Type": "application/json",
                   Accept: "application/json",
-                  Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
                 },
                 body: JSON.stringify(queuePayload),
               }
@@ -1552,8 +1551,6 @@ const PatientRegistration = () => {
             alert("Patient & appointment created, but queue could not be created.");
           }
         }
-
-
 
         const patientName = data.data?.patient_name || `${formData.firstName} ${formData.middleName} ${formData.lastName}`.trim();
         const company = formData.company;
