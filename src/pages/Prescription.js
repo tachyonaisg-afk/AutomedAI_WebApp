@@ -649,7 +649,7 @@ const Prescription = () => {
         if (!appointmentId) return;
 
         const response = await api.get(
-          `http://168.231.123.210:3008/appointments/queue/${appointmentId}`
+          `https://midl.automedai.in/appointments/queue/${appointmentId}`
         );
 
         console.log("📌 Queue API Response:", response.data);

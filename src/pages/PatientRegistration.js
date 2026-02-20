@@ -1524,7 +1524,7 @@ const PatientRegistration = () => {
             console.log("Creating queue no:", queuePayload);
 
             const queueResponse = await fetch(
-              "http://168.231.123.210:3008/appointments/create",
+              "https://midl.automedai.in/appointments/create",
               {
                 method: "POST",
                 headers: {
