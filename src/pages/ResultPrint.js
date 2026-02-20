@@ -5,6 +5,8 @@ import { Printer, Download, ArrowLeft, MessageCircle } from "lucide-react";
 import api, { API_ENDPOINTS, apiService } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 import { createGlobalStyle } from "styled-components";
+import rkmsHeader from "../assets/rkma_ltrhd_hdr.jpg";
+import rkmsFooter from "../assets/rkma_ltrhd_ftr.jpg";
 
 const Container = styled.div`
   display: flex;
@@ -398,7 +400,7 @@ const EndOfReport = styled.div`
   font-size: 12px;
   font-weight: 600;
   color: #000000;
-  margin-top: 40px;
+  margin-top: 10px;
   padding: 20px 0;
   border-top: 2px solid #e0e0e0;
   letter-spacing: 1px;
@@ -970,7 +972,7 @@ const ResultPrint = () => {
             {includeLetterhead && (
               <div style={{ marginBottom: "5px" }}>
                 <img
-                  src="https://hms.automedai.in/files/rkma_ltrhd_hdr.jpg"
+                  src={rkmsHeader}
                   alt="Letterhead"
                   style={{
                     width: "100%",
@@ -1074,11 +1076,11 @@ const ResultPrint = () => {
                   </TestSection>
                 );
               })}
-
+              <EndOfReport>*** END OF REPORT ***</EndOfReport>
               <ReportFooter>
                 {includeLetterhead && (
                   <img
-                    src="https://hms.automedai.in/files/rkma_ltrhd_ftr.jpg"
+                    src={rkmsFooter}
                     alt="Footer Letterhead"
                     style={{
                       width: "100%",
@@ -1089,7 +1091,7 @@ const ResultPrint = () => {
                 )}
               </ReportFooter>
 
-              <EndOfReport>*** END OF REPORT ***</EndOfReport>
+
             </div>
           </ReportPreview>
         </PreviewCard>

@@ -924,7 +924,7 @@ const AddBilling = () => {
       setSearchingItem(false);
     }
   }, []);
-  
+
   // Debounce effect for patient search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1582,7 +1582,7 @@ const AddBilling = () => {
                                           key={idx}
                                           onMouseDown={() => handleItemSelect(itemResult, index)}
                                         >
-                                          {itemResult.value || itemResult.name} - {itemResult.description || ""}
+                                          {itemResult.description || ""}
                                         </SearchResultItem>
                                       ))
                                     ) : (
