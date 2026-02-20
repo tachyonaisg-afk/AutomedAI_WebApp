@@ -8,6 +8,7 @@ import usePageTitle from "../hooks/usePageTitle";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import Select from "react-select";
+import paymentQR from "../assets/paymentupi.jpeg";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -696,7 +697,9 @@ const PatientRegistration = () => {
     first_name: "",
     last_name: "",
     gender: "",
-    practitioner_type: "Internal",
+    practitioner_type: "External",
+    custom_registration_number: "",
+    custom_specializedqualification: "",
     status: "Active",
   });
   const [creatingDoctor, setCreatingDoctor] = useState(false);
@@ -751,8 +754,11 @@ const PatientRegistration = () => {
 
   const [billingData, setBillingData] = useState({
     referringPractitioner: "",
+    mode_of_payment: "Cash",
     editPostingDate: false,
     discountPercent: 0,
+    reference_no: "",
+    reference_date: "",
   });
 
   const [items, setItems] = useState(() => {
@@ -1000,13 +1006,24 @@ const PatientRegistration = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const isEmpanelled = newDoctorData.practitioner_type === "Empanelled";
+
   // Function to create a new doctor
   const createDoctor = async () => {
     if (!newDoctorData.first_name || !newDoctorData.gender) {
-      alert("First Name and Gender are required.");
+      alert("Please fill all required fields.");
       return;
     }
 
+    if (isEmpanelled) {
+      if (
+        !newDoctorData.custom_specializedqualification ||
+        !newDoctorData.custom_registration_number
+      ) {
+        alert("Specialization and Registration Number are required for Empanelled doctors.");
+        return;
+      }
+    }
     setCreatingDoctor(true);
 
     try {
@@ -1046,7 +1063,9 @@ const PatientRegistration = () => {
           first_name: "",
           last_name: "",
           gender: "",
-          practitioner_type: "Internal",
+          practitioner_type: "External",
+          custom_registration_number: "",
+          custom_specializedqualification: "",
           status: "Active",
         });
 
@@ -1185,10 +1204,23 @@ const PatientRegistration = () => {
 
   const handleBillingChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setBillingData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+
+    setBillingData((prev) => {
+      // If payment type changes and it's NOT UPI → clear reference fields
+      if (name === "mode_of_payment" && value !== "UPI") {
+        return {
+          ...prev,
+          mode_of_payment: value,
+          reference_no: "",
+          reference_date: "",
+        };
+      }
+
+      return {
+        ...prev,
+        [name]: type === "checkbox" ? (checked ? 1 : 0) : value,
+      };
+    });
   };
 
   const handleMedicalHistoryChange = (e) => {
@@ -1426,7 +1458,7 @@ const PatientRegistration = () => {
         // Get patient details from response
         const patientId = data.data?.name;
         const customer = data.data?.customer;
-        let appointmentId = null; 
+        let appointmentId = null;
 
         // ----------------------------
         // CREATE PATIENT APPOINTMENT
@@ -1607,12 +1639,14 @@ const PatientRegistration = () => {
                   payment_type: "Receive",
                   posting_date: new Date().toISOString().split("T")[0],
                   company: company,
-                  mode_of_payment: "Cash", // Todo This can be changed if needed
+                  mode_of_payment: billingData.mode_of_payment, // Todo This can be changed if needed
                   party_type: "Customer",
                   party: customer,
                   paid_amount: netTotal,
                   received_amount: netTotal,
                   target_exchange_rate: 1,
+                  reference_no: billingData.reference_no,
+                  reference_date: billingData.reference_date,
                   paid_to: company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P",
                   paid_to_account_currency: "INR",
                   references: [
@@ -1836,7 +1870,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Gender<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} required>
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} >
                       <option value="">Select</option>
                       {genderOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -1866,8 +1900,8 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Clinic</FormLabel>
-                    <FormSelect name="company" value={formData.company} onChange={handleInputChange} required >
+                    <FormLabel>Clinic<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                    <FormSelect name="company" value={formData.company} onChange={handleInputChange}  >
                       <option value="">Select clinic</option>
                       {companyOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -2296,13 +2330,46 @@ const PatientRegistration = () => {
                   <CardTitle>Payment</CardTitle>
                   <FormGroup>
                     <FormLabel>Payment Type</FormLabel>
-                    <FormInput type="text" value="Cash" disabled />
-                    {/* <FormSelect name="paymentType" value={billingData.paymentType} onChange={handlePaymentType}>
+                    <FormSelect name="mode_of_payment" value={billingData.mode_of_payment} onChange={handleBillingChange}>
                       <option value="">Select payment type</option>
-                      <option value="Single">Cash</option>
-                      <option value="Married">UPI</option>
-                    </FormSelect> */}
+                      <option value="Cash">Cash</option>
+                      <option value="UPI">UPI</option>
+                    </FormSelect>
                   </FormGroup>
+                  {billingData.mode_of_payment === "UPI" && (
+                    <>
+                      {/* Dummy QR */}
+                      <div style={{ marginTop: "16px", textAlign: "center" }}>
+                        <img
+                          src={paymentQR}
+                          alt="UPI QR"
+                          style={{ width: "200px", height: "200px" }}
+                        />
+                      </div>
+
+                      <FormGroup>
+                        <FormLabel>UPI Reference No<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                        <FormInput
+                          type="text"
+                          name="reference_no"
+                          value={billingData.reference_no || ""}
+                          onChange={handleBillingChange}
+                          required={billingData.mode_of_payment === "UPI"}
+                        />
+                      </FormGroup>
+
+                      <FormGroup>
+                        <FormLabel>Reference Date<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                        <FormInput
+                          type="date"
+                          name="reference_date"
+                          value={billingData.reference_date || ""}
+                          onChange={handleBillingChange}
+                          required={billingData.mode_of_payment === "UPI"}
+                        />
+                      </FormGroup>
+                    </>
+                  )}
                 </CalculationCard>
               </BottomSection>
             </>
@@ -2529,7 +2596,7 @@ const PatientRegistration = () => {
             <ModalContent>
               <ModalHeader>Add New Doctor</ModalHeader>
 
-              <FormGroup>
+              <FormGroup style={{ marginBottom: "16px" }}>
                 <FormLabel>First Name <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                 <FormInput
                   type="text"
@@ -2544,7 +2611,7 @@ const PatientRegistration = () => {
                 />
               </FormGroup>
 
-              <FormGroup>
+              <FormGroup style={{ marginBottom: "16px" }}>
                 <FormLabel>Last Name</FormLabel>
                 <FormInput
                   type="text"
@@ -2558,7 +2625,7 @@ const PatientRegistration = () => {
                 />
               </FormGroup>
 
-              <FormGroup>
+              <FormGroup style={{ marginBottom: "16px" }}>
                 <FormLabel>Gender <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
                 <FormSelect
                   value={newDoctorData.gender}
@@ -2576,7 +2643,7 @@ const PatientRegistration = () => {
                 </FormSelect>
               </FormGroup>
 
-              <FormGroup>
+              <FormGroup style={{ marginBottom: "16px" }}>
                 <FormLabel>Practitioner Type</FormLabel>
                 <FormSelect
                   value={newDoctorData.practitioner_type}
@@ -2587,9 +2654,45 @@ const PatientRegistration = () => {
                     })
                   }
                 >
-                  <option value="Internal">Internal</option>
                   <option value="External">External</option>
+                  <option value="Empanelled">Empanelled</option>
                 </FormSelect>
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>
+                  Specialization / Qualification
+                  {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                </FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Enter specialization or qualification"
+                  value={newDoctorData.custom_specializedqualification}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      custom_specializedqualification: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>
+                  Registration Number / MCI ID
+                  {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                </FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Enter registration number"
+                  value={newDoctorData.custom_registration_number}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      custom_registration_number: e.target.value,
+                    })
+                  }
+                />
               </FormGroup>
 
               <ModalActions>
