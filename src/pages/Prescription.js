@@ -890,7 +890,7 @@ const Prescription = () => {
 
             <TopRow>
               <DoctorInfo paperSize={paperSize}>
-                [Dr. <b>{selectedDoctorData?.practitioner_name || ""}</b>]<br />
+                [<b>{selectedDoctorData?.practitioner_name || ""}</b>]<br />
                 [Ex- H.M.o]<br />
                 PM]
               </DoctorInfo>
