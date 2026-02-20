@@ -1006,7 +1006,7 @@ const PatientRegistration = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isEmpanelled = newDoctorData.practitioner_type === "Empanelled";
+  const isEmpanelled = newDoctorData.practitioner_type === "Internal";
 
   // Function to create a new doctor
   const createDoctor = async () => {
@@ -1870,7 +1870,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Gender<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} >
+                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} required>
                       <option value="">Select</option>
                       {genderOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -1901,7 +1901,7 @@ const PatientRegistration = () => {
 
                   <FormGroup>
                     <FormLabel>Clinic<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="company" value={formData.company} onChange={handleInputChange}  >
+                    <FormSelect name="company" value={formData.company} onChange={handleInputChange} required>
                       <option value="">Select clinic</option>
                       {companyOptions.map((option) => (
                         <option key={option.name} value={option.name}>
@@ -2608,6 +2608,7 @@ const PatientRegistration = () => {
                       first_name: e.target.value,
                     })
                   }
+                  required
                 />
               </FormGroup>
 
@@ -2635,11 +2636,14 @@ const PatientRegistration = () => {
                       gender: e.target.value,
                     })
                   }
+                  required
                 >
                   <option value="">Select</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  {genderOptions.map((option) => (
+                    <option key={option.name} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
                 </FormSelect>
               </FormGroup>
 
@@ -2655,7 +2659,7 @@ const PatientRegistration = () => {
                   }
                 >
                   <option value="External">External</option>
-                  <option value="Empanelled">Empanelled</option>
+                  <option value="Internal">Empanelled</option>
                 </FormSelect>
               </FormGroup>
 
