@@ -2678,7 +2678,7 @@ const PatientRegistration = () => {
                 />
               </FormGroup>
 
-              <FormGroup style={{ marginBottom: "16px" }}>
+              <FormGroup style={{ marginBottom: "20px" }}>
                 <FormLabel>
                   Registration Number / MCI ID
                   {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
