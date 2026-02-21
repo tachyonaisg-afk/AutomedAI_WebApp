@@ -430,7 +430,9 @@ const Collection = () => {
           id: index + 1,
           sample_id: item.name || "-",
           patient_id: item.patient || "-",
-          patient_name: item.patient_name || "-",
+          patient_name: item.patient_name
+            ? `${item.patient_name} (${(item.patient_sex || "").charAt(0).toUpperCase()})`
+            : "-",
           gender: item.patient_sex || "-",
           age: item.patient_age || "-",
           referring_practitioner: item.referring_practitioner || "-",
@@ -470,8 +472,6 @@ const Collection = () => {
     { key: "sample_id", label: "SAMPLE ID" },
     { key: "patient_id", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
-    { key: "gender", label: "GENDER" },
-    { key: "referring_practitioner", label: "REFERRED BY" },
     { key: "date", label: "DATE" },
     { key: "status", label: "STATUS" },
     { key: "sample", label: "SAMPLE" },

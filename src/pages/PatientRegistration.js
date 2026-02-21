@@ -1399,6 +1399,19 @@ const PatientRegistration = () => {
     }
   };
 
+  const paidToMapping = {
+    Cash: {
+      "Ramakrishna Mission Sargachi": "Cash - RKMS",
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": "Cash - ADC&P",
+      "Automed AI": "Cash - AMAI",
+    },
+    UPI: {
+      "Ramakrishna Mission Sargachi": "UPI-RKMS - RKMS",
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": "UPI-ALFA - ADC&P",
+      "Automed AI": "UPI-AAI - AMAI",
+    }
+  };
+
   const createPatient = async () => {
     setIsSubmitting(true);
     try {
@@ -1625,7 +1638,8 @@ const PatientRegistration = () => {
               const invoiceName = invoiceData.data?.name;
               const totals = calculateTotals();
               const netTotal = totals.netTotal;
-
+              const paidToAccount =
+                paidToMapping[billingData.mode_of_payment]?.[formData.company] || "";
               // Create Payment Entry
               try {
                 console.log("Creating Payment Entry...");
@@ -1644,7 +1658,7 @@ const PatientRegistration = () => {
                   target_exchange_rate: 1,
                   reference_no: billingData.reference_no,
                   reference_date: billingData.reference_date,
-                  paid_to: company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P",
+                  paid_to: paidToAccount,
                   paid_to_account_currency: "INR",
                   references: [
                     {
