@@ -665,23 +665,19 @@ const PathLabBilling = () => {
   ${pageSize === "A5"
           ? `
     @page { 
-      size: A5; 
-      margin: 0;
-    }
+  size: A5 landscape;
+  margin: 8mm;
+}
 
-    html, body {
-      width: 210mm;
-      height: 148mm;
-      margin: 0;
-    }
+html, body {
+  width: 210mm;
+  height: 148mm;
+  margin: 0;
+}
 
-    body {
-      transform: rotate(90deg);
-      transform-origin: top left;
-      position: absolute;
-      top: 0;
-      left: 148mm;
-    }
+body {
+  background: #fff;
+}
   `
           : `
     @page { 
@@ -723,7 +719,7 @@ const PathLabBilling = () => {
     border-radius: ${pageSize === "A5" ? "6px" : "12px"};
     box-shadow: ${pageSize === "A5" ? "none" : "0 20px 40px rgba(0,0,0,0.08)"};
     overflow: hidden;
-    ${pageSize === "A5" ? "transform: scale(0.92); transform-origin: top left;" : ""}
+    ${pageSize === "A5" ? "transform-origin: top left;" : ""}
   }
 
   /* ===== HEADER ===== */

@@ -2638,7 +2638,7 @@ const PatientRegistration = () => {
               </FormGroup>
 
               <FormGroup style={{ marginBottom: "16px" }}>
-                <FormLabel>Gender <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                <FormLabel>Gender </FormLabel>
                 <FormSelect
                   value={newDoctorData.gender}
                   onChange={(e) =>
@@ -2647,7 +2647,6 @@ const PatientRegistration = () => {
                       gender: e.target.value,
                     })
                   }
-                  required
                 >
                   <option value="">Select</option>
                   {genderOptions.map((option) => (
