@@ -240,7 +240,7 @@ const Patients = () => {
 
       // 4️⃣ Call get_count API
       const countResponse = await api.get(
-        "/api/method/frappe.client.get_count",
+        "/method/frappe.client.get_count",
         {
           doctype: "Patient",
           filters: JSON.stringify(filters),
