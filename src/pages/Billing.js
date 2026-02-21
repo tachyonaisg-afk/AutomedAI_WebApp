@@ -1008,9 +1008,9 @@ const Billing = () => {
       <table>
         <thead>
           <tr>
-            <th>Product Description</th>
+            <th>Item Name</th>
             <th class="center">Quantity</th>
-            <th class="right">Unit Rate</th>
+            <th class="right">Item Price</th>
             <th class="right">Amount</th>
           </tr>
         </thead>
@@ -1024,6 +1024,7 @@ const Billing = () => {
           <h3>Payment Details</h3>
           <div class="payment-row"><span>Status</span><strong>${invoice.status}</strong></div>
           <div class="payment-row"><span>Date</span><strong>${invoice.posting_date}</strong></div>
+          <div class="payment-row"><span>Discount</span><strong>₹ ${invoice.discount_amount || 0}</strong></div>
           <div class="payment-row"><span>Method</span><strong>Cash</strong></div>
         </div>
 

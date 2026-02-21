@@ -202,25 +202,56 @@ const Patients = () => {
 
   /* ========= DATA FETCH ========= */
 
-  const fetchPatientCount = async (patientId = null) => {
+  const fetchPatientCount = async () => {
     try {
-      const params = {
-        doctype: "Patient",
-      };
+      console.log("📊 Fetching company list...");
 
-      // If a specific patient is selected, add filter
-      if (patientId) {
-        params.filters = JSON.stringify({ name: patientId });
+      // 1️⃣ Fetch company list
+      const companyResponse = await api.get(
+        "https://hms.automedai.in/api/resource/Company"
+      );
+
+      const companies =
+        companyResponse.data?.data?.map((c) => c.name) || [];
+
+      console.log("🏢 Companies:", companies);
+
+      if (!companies.length) {
+        setTotalCount(0);
+        return;
       }
 
-      console.log("📊 Fetching patient count with params:", params);
+      let filters;
 
-      const response = await api.get(API_ENDPOINTS.PATIENTS.COUNT, params);
+      // 2️⃣ If only one company → "=" operator
+      if (companies.length === 1) {
+        filters = {
+          custom_company: companies[0],
+        };
+      }
+      // 3️⃣ If multiple companies → "in" operator
+      else {
+        filters = [
+          ["custom_company", "in", companies],
+        ];
+      }
 
-      console.log("📊 Count API Response:", response);
+      console.log("📊 Final Filters:", filters);
 
-      // The count is usually in response.data.message
-      const count = response.data?.message || response.data?.data || 0;
+      // 4️⃣ Call get_count API
+      const countResponse = await api.get(
+        "/api/method/frappe.client.get_count",
+        {
+          doctype: "Patient",
+          filters: JSON.stringify(filters),
+        }
+      );
+
+      console.log("📊 Count API Response:", countResponse);
+
+      const count =
+        countResponse.data?.message || 0;
+
       console.log("📊 Total Patient Count:", count);
 
       setTotalCount(count);
