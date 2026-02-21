@@ -898,8 +898,8 @@ const Prescription = () => {
                 [Done by : <b>{currentUser}</b>]<br />
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
-                <div>SL NO:</div>
-                <div>Appointment ID: <b>{queueNumber !== null ? queueNumber : "-"}</b></div>
+                {/* <div>SL NO:</div> */}
+                <div>SL NO: <b>{queueNumber !== null ? queueNumber : "-"}</b></div>
                 <div>Ticket Date: [<b>{formData.ticketDate} - {formData.ticketTime}</b>]</div>
               </TicketInfo>
             </TopRow>
