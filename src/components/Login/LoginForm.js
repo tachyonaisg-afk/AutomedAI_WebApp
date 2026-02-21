@@ -224,9 +224,9 @@ const LoginForm = () => {
 
       <LoginContent>
         <WelcomeHeading>Welcome</WelcomeHeading>
-        <SignUpText>
+        {/* <SignUpText>
           New to AutoMedAi? <SignUpLink href="#">Sign up</SignUpLink>
-        </SignUpText>
+        </SignUpText> */}
 
         {error && <LoginError>{error}</LoginError>}
 

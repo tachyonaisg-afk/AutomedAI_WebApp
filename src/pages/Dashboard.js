@@ -52,8 +52,8 @@ const TopNavigation = styled.div`
 `;
 
 const IconCircle = styled.div`
-  width: 56px;
-  height: 56px;
+  width: 70px;
+  height: 70px;
   background: ${(props) => props.bgColor || "#f1f5f9"};
   border-radius: 12px;
   display: flex;
@@ -76,8 +76,8 @@ const IconWrapper = styled.div`
   transform: translateY(0);
 
   svg {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     color: ${(props) => props.iconColor || "#475569"};
   }
 `;
@@ -92,7 +92,7 @@ const NavItem = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 140px;
+  height: 160px;
   gap: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -131,6 +131,7 @@ const NavItem = styled.div`
       background: ${(props) => props.hoverBgColor || "#eff6ff"};
       border-color: ${(props) => props.borderColor || "#3b82f6"};
       transform: scale(1.05);
+      border-radius: 50%;
     }
 
     ${IconWrapper} {
@@ -144,9 +145,9 @@ const NavItem = styled.div`
 `;
 
 const NavLabel = styled.span`
-  font-size: 13px;
+  font-size: 15px;
   color: #475569;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
   position: relative;
   z-index: 1;
@@ -163,7 +164,7 @@ const SearchBarContainer = styled.div`
 const SearchWrapper = styled.div`
   position: relative;
   width: 100%;
-  max-width: 800px;
+  // max-width: 1200px;
   z-index: 1001;
 `;
 
@@ -173,8 +174,8 @@ const SearchBar = styled.div`
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 50px;
-  padding: 16px 24px;
-  gap: 12px;
+  padding: 20px 24px;
+  gap: 9px;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease;
@@ -195,8 +196,8 @@ const SearchIcon = styled.div`
   z-index: 1;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
   }
 `;
 
@@ -204,12 +205,12 @@ const SearchInput = styled.input`
   flex: 1;
   border: none;
   outline: none;
-  font-size: 15px;
+  font-size: 18px;
   color: #1e293b;
   background: transparent;
   position: relative;
   z-index: 1;
-  font-weight: 400;
+  font-weight: 500;
 
   &::placeholder {
     color: #94a3b8;
@@ -265,13 +266,13 @@ const SearchResultItem = styled.div`
 `;
 
 const ResultValue = styled.div`
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #1e293b;
 `;
 
 const ResultDescription = styled.div`
-  font-size: 13px;
+  font-size: 14px;
   color: #64748b;
 `;
 
@@ -799,7 +800,7 @@ const Dashboard = () => {
                   <IconCircle bgColor={item.bgColor}>
                     <>
                       <IconWrapper iconColor={item.iconColor}>
-                        <IconComponent />
+                        <IconComponent style={{height:"25px",width:"25px"}}/>
                       </IconWrapper>
                       <IconWrapperBottom iconColor={item.iconColor}>
                         <IconComponent />

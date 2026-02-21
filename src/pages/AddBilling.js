@@ -1106,12 +1106,12 @@ const AddBilling = () => {
   const paidToMapping = {
     Cash: {
       "Ramakrishna Mission Sargachi": "Cash - RKMS",
-      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC Hosp": "Cash - ADC&P",
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": "Cash - ADC&P",
       "Automed AI": "Cash - AMAI",
     },
     UPI: {
       "Ramakrishna Mission Sargachi": "UPI-RKMS - RKMS",
-      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC Hosp": "UPI-ALFA - ADC&P",
+      "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": "UPI-ALFA - ADC&P",
       "Automed AI": "UPI-AAI - AMAI",
     }
   };
