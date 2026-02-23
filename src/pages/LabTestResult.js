@@ -499,8 +499,8 @@ const LabTestResult = () => {
       .replace(/[–—−â€“]/g, "-")
       .replace(/≤/g, "<=")
       .replace(/≥/g, ">=")
-      .replace(/,/g, "") 
-      .replace(/\/.*$/, "") 
+      .replace(/,/g, "")
+      .replace(/\/.*$/, "")
       .toLowerCase()
       .trim();
   };
@@ -684,7 +684,7 @@ const LabTestResult = () => {
   return (
     <Layout>
       <ResultContainer>
-        <PageTitle>Lab Test Result Entry</PageTitle>
+        <PageTitle>Lab Test Result Entry - {labTestData?.custom_display_name || "N/A"}</PageTitle>
 
         {loading && <div>Loading patient details...</div>}
         {error && <div style={{ color: "red" }}>Error: {error}</div>}
