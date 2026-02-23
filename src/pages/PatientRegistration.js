@@ -1010,7 +1010,7 @@ const PatientRegistration = () => {
 
   // Function to create a new doctor
   const createDoctor = async () => {
-    if (!newDoctorData.first_name || !newDoctorData.gender) {
+    if (!newDoctorData.first_name) {
       alert("Please fill all required fields.");
       return;
     }
@@ -2638,7 +2638,7 @@ const PatientRegistration = () => {
               </FormGroup>
 
               <FormGroup style={{ marginBottom: "16px" }}>
-                <FormLabel>Gender </FormLabel>
+                <FormLabel>Gender</FormLabel>
                 <FormSelect
                   value={newDoctorData.gender}
                   onChange={(e) =>

@@ -349,7 +349,7 @@ const LabTest = () => {
   };
 
   const columns = [
-    { key: "name", label: "ID" },
+    { key: "name", label: "TEST ID" },
     { key: "patient", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "lab_test_name", label: "TEST NAME" },
