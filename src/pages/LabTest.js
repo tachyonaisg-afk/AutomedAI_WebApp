@@ -371,10 +371,11 @@ const LabTest = () => {
 
 
   const renderActions = (row) => {
+    const docstatus = sampleStatusMap[row.sample];
     return (
       <ActionsContainer>
         <ActionLink onClick={() => handleAddResult(row)}>
-          Add result
+          {docstatus === 1 ? "Add Result" : ""}
         </ActionLink>
       </ActionsContainer>
     );

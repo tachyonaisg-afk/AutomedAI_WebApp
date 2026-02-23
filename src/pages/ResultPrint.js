@@ -342,7 +342,7 @@ const TestSectionHeader = styled.div`
 `;
 
 const TestName = styled.h2`
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #000000;
   margin: 0 0 4px 0;
