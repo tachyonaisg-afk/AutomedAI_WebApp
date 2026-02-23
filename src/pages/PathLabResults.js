@@ -249,7 +249,7 @@ const PathLabResults = () => {
       const limitStart = (page - 1) * limit;
 
       const params = {
-        fields: '["name","patient","patient_name","status"]',
+        fields: '["name","patient","patient_name","status","lab_test_name","sample","department"]',
         filters: '[["Lab Test","status","=","Completed"]]',
         order_by: "modified desc",
         limit_start: limitStart,
