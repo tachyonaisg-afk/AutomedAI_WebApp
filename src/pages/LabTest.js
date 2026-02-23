@@ -247,7 +247,7 @@ const LabTest = () => {
 
       // 4️⃣ Call get_count API
       const countResponse = await api.get(
-        "/api/method/frappe.client.get_count",
+        "/method/frappe.client.get_count",
         {
           doctype: "Lab Test",
           filters: JSON.stringify(filters),
@@ -284,7 +284,7 @@ const LabTest = () => {
       const limitStart = (page - 1) * limit;
 
       const params = {
-        fields: '["name","patient","patient_name","status","lab_test_name","sample"]',
+        fields: '["name","patient","patient_name","status","lab_test_name","sample","department"]',
         filters: '[["Lab Test","status","!=","Completed"]]',
         order_by: "creation desc",
         limit_start: limitStart,

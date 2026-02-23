@@ -220,7 +220,7 @@ const PathLabResults = () => {
 
       // 4️⃣ Call get_count API
       const countResponse = await api.get(
-        "/api/method/frappe.client.get_count",
+        "/method/frappe.client.get_count",
         {
           doctype: "Lab Test",
           filters: JSON.stringify(filters),
@@ -291,7 +291,7 @@ const PathLabResults = () => {
   };
 
   const columns = [
-    { key: "name", label: "ID" },
+    { key: "name", label: "TEST ID" },
     { key: "patient", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "status", label: "STATUS" },
