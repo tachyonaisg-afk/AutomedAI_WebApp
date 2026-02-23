@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
-import { Upload } from "lucide-react";
+import { ArrowLeft, Upload } from "lucide-react";
 import api from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -369,6 +369,25 @@ const ReadOnlyField = styled.div`
   color: #333;
 `;
 
+const PageHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+`;
+
+const BackButton = styled.button`
+  padding: 6px 14px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+`;
 
 const LabTestResult = () => {
   usePageTitle("Lab Test Result");
@@ -684,7 +703,15 @@ const LabTestResult = () => {
   return (
     <Layout>
       <ResultContainer>
-        <PageTitle>Lab Test Result Entry - {labTestData?.custom_display_name || "N/A"}</PageTitle>
+        <PageHeader>
+          <BackButton onClick={() => navigate(-1)}>
+            <ArrowLeft size={16} /> Back
+          </BackButton>
+
+          <PageTitle>
+            Lab Test Result Entry - {labTestData?.custom_display_name || "N/A"}
+          </PageTitle>
+        </PageHeader>
 
         {loading && <div>Loading patient details...</div>}
         {error && <div style={{ color: "red" }}>Error: {error}</div>}
