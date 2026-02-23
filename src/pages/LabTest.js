@@ -211,46 +211,59 @@ const LabTest = () => {
   // Fetch lab test count
   const fetchLabTestCount = async () => {
     try {
-      // Step 1: Fetch Company Name
-      const companyResponse = await api.get("/resource/Company");
+      console.log("📊 Fetching company list...");
 
-      console.log("🏢 Company API Response:", companyResponse);
-
-      const companyName =
-        companyResponse.data?.data?.[0]?.name || "";
-
-      console.log("🏢 Company Name:", companyName);
-
-      // Step 2: Prepare filters with company
-      const params = {
-        doctype: "Lab Test",
-        filters: JSON.stringify({
-          company: companyName,
-          status: ["!=", "Completed"],
-        }),
-      };
-
-      console.log("📊 Fetching lab test count with params:", params);
-
-      // Step 3: Fetch Count
-      const response = await api.get(
-        API_ENDPOINTS.LAB_TEST.COUNT,
-        params
+      // 1️⃣ Fetch company list
+      const companyResponse = await api.get(
+        "https://hms.automedai.in/api/resource/Company"
       );
 
-      console.log("📊 Count API Response:", response);
+      const companies =
+        companyResponse.data?.data?.map((c) => c.name) || [];
+
+      console.log("🏢 Companies:", companies);
+
+      if (!companies.length) {
+        setTotalCount(0);
+        return;
+      }
+
+      let filters;
+
+      // 2️⃣ If only one company → "=" operator
+      if (companies.length === 1) {
+        filters = {
+          company: companies[0],
+        };
+      }
+      // 3️⃣ If multiple companies → "in" operator
+      else {
+        filters = [
+          ["company", "in", companies],
+        ];
+      }
+
+      console.log("📊 Final Filters:", filters);
+
+      // 4️⃣ Call get_count API
+      const countResponse = await api.get(
+        "/api/method/frappe.client.get_count",
+        {
+          doctype: "Lab Test",
+          filters: JSON.stringify(filters),
+        }
+      );
+
+      console.log("📊 Count API Response:", countResponse);
 
       const count =
-        response.data?.message ||
-        response.data?.data ||
-        0;
+        countResponse.data?.message || 0;
 
       console.log("📊 Total Lab Test Count:", count);
 
       setTotalCount(count);
-
     } catch (err) {
-      console.error("❌ Error fetching lab test count:", err);
+      console.error("❌ Error fetching Lab Test count:", err);
       setTotalCount(0);
     }
   };
