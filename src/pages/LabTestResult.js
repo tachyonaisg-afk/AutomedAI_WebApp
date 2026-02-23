@@ -377,12 +377,12 @@ const PageHeader = styled.div`
 `;
 
 const BackButton = styled.button`
-  padding: 6px 14px;
+  padding: 8px 14px;
   background: #f1f5f9;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
 
   &:hover {
     background: #e2e8f0;
