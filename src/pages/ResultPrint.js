@@ -769,7 +769,7 @@ const ResultPrint = () => {
       const element = document.querySelector("[data-pdf-content]");
 
       const opt = {
-        margin: [15, 10, 15, 10],
+        margin: [0, 0, 0, 0],
         image: { type: "jpeg", quality: 1 },
         html2canvas: {
           scale: 2,
@@ -816,7 +816,7 @@ const ResultPrint = () => {
       }
 
       const opt = {
-        margin: [15, 10, 15, 10],
+        margin: [0, 0, 0, 0],
         filename: `lab-report-${patientId || 'patient'}-${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
@@ -969,18 +969,26 @@ const ResultPrint = () => {
           <PrintStyles />
 
           <ReportPreview data-pdf-content>
-            {includeLetterhead && (
-              <div style={{ marginBottom: "5px" }}>
+            <div
+              style={{
+                width: "100%",
+                height: "120px", // adjust to your header height
+                marginBottom: "5px",
+              }}
+            >
+              {includeLetterhead && (
                 <img
                   src={rkmsHeader}
                   alt="Letterhead"
                   style={{
                     width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
                     display: "block",
                   }}
                 />
-              </div>
-            )}
+              )}
+            </div>
 
 
             <div className="pdf-body">
@@ -1078,17 +1086,25 @@ const ResultPrint = () => {
               })}
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
               <ReportFooter>
-                {includeLetterhead && (
-                  <img
-                    src={rkmsFooter}
-                    alt="Footer Letterhead"
-                    style={{
-                      width: "100%",
-                      height: "auto",
-                      display: "block",
-                    }}
-                  />
-                )}
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100px", // adjust to your footer height
+                  }}
+                >
+                  {includeLetterhead && (
+                    <img
+                      src={rkmsFooter}
+                      alt="Footer Letterhead"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        display: "block",
+                      }}
+                    />
+                  )}
+                </div>
               </ReportFooter>
 
 
