@@ -1241,24 +1241,24 @@ const PatientRegistration = () => {
     }));
   };
 
-const getLockedCategory = useCallback(() => {
-  const validItems = items.filter(
-    (item) =>
-      item.item &&
-      item.item !== "STO-ITEM-2025-00539"
-  );
+  const getLockedCategory = useCallback(() => {
+    const validItems = items.filter(
+      (item) =>
+        item.item &&
+        item.item !== "STO-ITEM-2025-00539"
+    );
 
-  if (validItems.length === 0) return null;
+    if (validItems.length === 0) return null;
 
-  const firstItemCode = validItems[0].item;
-  const code = firstItemCode.toUpperCase();
+    const firstItemCode = validItems[0].item;
+    const code = firstItemCode.toUpperCase();
 
-  if (code.startsWith("LAB")) return "LAB";
-  if (code.startsWith("PLB")) return "PLB";
-  if (code.startsWith("PHC")) return "PHC";
+    if (code.startsWith("LAB")) return "LAB";
+    if (code.startsWith("PLB")) return "PLB";
+    if (code.startsWith("PHC")) return "PHC";
 
-  return null;
-}, [items]);
+    return null;
+  }, [items]);
 
   // Debounced item search
   const searchItems = useCallback(async (query) => {
@@ -1301,16 +1301,39 @@ const getLockedCategory = useCallback(() => {
       // --------------------------------------
       // Filter PHC visibility logic
       // --------------------------------------
+      // Normalize typed query
+      const typed = query.trim().toUpperCase();
 
+      // --------------------------------------
+      // PHC MODE (unchanged)
+      // --------------------------------------
       if (showPHCOnly) {
         results = results.filter((item) =>
-          item.value?.toUpperCase().startsWith("PHC")
+          item.description?.toUpperCase().startsWith("PHC")
         );
-      } else {
-        // PHC should not appear in normal mode
+      }
+
+      // --------------------------------------
+      // NORMAL MODE (NEW LOGIC)
+      // --------------------------------------
+      else {
+        // PHC should NEVER appear
         results = results.filter(
-          (item) => !item.value?.toUpperCase().startsWith("PHC")
+          (item) => !item.description?.toUpperCase().startsWith("PHC")
         );
+
+        // If user explicitly starts typing PLB → show only PLB
+        if (typed.startsWith("PLB")) {
+          results = results.filter((item) =>
+            item.description?.toUpperCase().startsWith("PLB")
+          );
+        }
+        // Otherwise → default to LAB only
+        else {
+          results = results.filter((item) =>
+            item.description?.toUpperCase().startsWith("LAB")
+          );
+        }
       }
 
       // --------------------------------------
@@ -1319,7 +1342,7 @@ const getLockedCategory = useCallback(() => {
 
       if (!showPHCOnly && lockedCategory) {
         results = results.filter((item) =>
-          item.value?.toUpperCase().startsWith(lockedCategory)
+          item.description?.toUpperCase().startsWith(lockedCategory)
         );
       }
 
@@ -2277,7 +2300,7 @@ const getLockedCategory = useCallback(() => {
 
                   <ItemButtons style={{ display: "flex", alignItems: "center", gap: "12px" }}>
 
-                    {formData.company === "Ramakakrishna Mission Sargachi" && (
+                    {formData.company?.toLowerCase() === "ramakrishna mission sargachi" && (
                       <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
                         <input
                           type="checkbox"

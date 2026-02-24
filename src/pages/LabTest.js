@@ -258,7 +258,7 @@ font-size: 14px;
 outline: none;
 
 &:focus {
-border-color: #4CAF50;
+border-color: #4a90e2;
 box-shadow: 0 0 0 2px rgba(76,175,80,0.15);
 }
 `;
@@ -290,14 +290,14 @@ padding: 10px 22px;
 font-size: 14px;
 border-radius: 8px;
 border: none;
-background: #4CAF50;
+background: #4a90e2;
 color: white;
 font-weight: 500;
 cursor: pointer;
 transition: 0.2s;
 
 &:hover {
-background: #43a047;
+background: #4a90e2;
 }
 `;
 
