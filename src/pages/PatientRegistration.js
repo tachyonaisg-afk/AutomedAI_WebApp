@@ -1295,6 +1295,9 @@ const getLockedCategory = useCallback(() => {
 
       let results = response.data?.results || response.data?.message || [];
 
+      console.log("📊 Search results data:", results);
+      console.log("📋 Processed search results:", results);
+
       // --------------------------------------
       // Filter PHC visibility logic
       // --------------------------------------
