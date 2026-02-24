@@ -788,6 +788,7 @@ const PatientRegistration = () => {
   const [itemResults, setItemResults] = useState([]);
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
+  const [showPHCOnly, setShowPHCOnly] = useState(false);
 
   // If address line 1 has a value, other address fields (except line 2) become required
   const hasAnyAddressValue = formData.address_line1?.trim().length > 0;
@@ -1083,7 +1084,9 @@ const PatientRegistration = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
+    if (name === "company") {
+      setShowPHCOnly(false);
+    }
     // Handle DOB change - calculate age
     if (name === "dateOfBirth") {
       setFormData((prev) => ({
@@ -1238,6 +1241,25 @@ const PatientRegistration = () => {
     }));
   };
 
+const getLockedCategory = useCallback(() => {
+  const validItems = items.filter(
+    (item) =>
+      item.item &&
+      item.item !== "STO-ITEM-2025-00539"
+  );
+
+  if (validItems.length === 0) return null;
+
+  const firstItemCode = validItems[0].item;
+  const code = firstItemCode.toUpperCase();
+
+  if (code.startsWith("LAB")) return "LAB";
+  if (code.startsWith("PLB")) return "PLB";
+  if (code.startsWith("PHC")) return "PHC";
+
+  return null;
+}, [items]);
+
   // Debounced item search
   const searchItems = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -1250,18 +1272,19 @@ const PatientRegistration = () => {
 
     try {
       let finalQuery = query.trim();
+      const lockedCategory = getLockedCategory();
 
-      // If user types something like "plb tsh"
-      const words = finalQuery.split(" ");
-
-      if (words.length > 1) {
-        const firstWord = words[0];
-
-        // If first word does NOT already contain "-"
-        if (!firstWord.includes("-")) {
-          words[0] = `${firstWord}-`;
-          finalQuery = words.join(" ");
-        }
+      // -----------------------------
+      // PHC ONLY MODE
+      // -----------------------------
+      if (showPHCOnly) {
+        finalQuery = "PHC";
+      }
+      // -----------------------------
+      // LOCKED CATEGORY MODE
+      // -----------------------------
+      else if (lockedCategory) {
+        finalQuery = lockedCategory;
       }
 
       const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
@@ -1270,17 +1293,42 @@ const PatientRegistration = () => {
         page_length: 10,
       });
 
-      if (response.data?.results || response.data?.message) {
-        setItemResults(response.data.results || response.data.message || []);
-        setShowItemResults(true);
+      let results = response.data?.results || response.data?.message || [];
+
+      // --------------------------------------
+      // Filter PHC visibility logic
+      // --------------------------------------
+
+      if (showPHCOnly) {
+        results = results.filter((item) =>
+          item.value?.toUpperCase().startsWith("PHC")
+        );
+      } else {
+        // PHC should not appear in normal mode
+        results = results.filter(
+          (item) => !item.value?.toUpperCase().startsWith("PHC")
+        );
       }
+
+      // --------------------------------------
+      // Enforce category lock
+      // --------------------------------------
+
+      if (!showPHCOnly && lockedCategory) {
+        results = results.filter((item) =>
+          item.value?.toUpperCase().startsWith(lockedCategory)
+        );
+      }
+
+      setItemResults(results);
+      setShowItemResults(true);
+
     } catch (err) {
       console.error("Error searching items:", err);
     } finally {
       setSearchingItem(false);
     }
-  }, []);
-
+  }, [showPHCOnly, getLockedCategory]);
 
   // Debounce effect for item search
   useEffect(() => {
@@ -2223,13 +2271,23 @@ const PatientRegistration = () => {
               <ItemsSection>
                 <ItemsHeader>
                   <ItemsTitle>Items</ItemsTitle>
-                  <ItemButtons>
+
+                  <ItemButtons style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+
+                    {formData.company === "Ramakakrishna Mission Sargachi" && (
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                        <input
+                          type="checkbox"
+                          checked={showPHCOnly}
+                          onChange={(e) => setShowPHCOnly(e.target.checked)}
+                        />
+                        Show PHC items Only
+                      </label>
+                    )}
+
                     <IconButton type="button" onClick={addItem}>
                       <Plus />
                     </IconButton>
-                    {/* <IconButton type="button" onClick={removeItem}>
-                      <Minus />
-                    </IconButton> */}
                   </ItemButtons>
                 </ItemsHeader>
 
