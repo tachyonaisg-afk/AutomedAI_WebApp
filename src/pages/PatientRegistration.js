@@ -710,7 +710,6 @@ const PatientRegistration = () => {
     return now.toTimeString().slice(0, 5); // "14:30"
   };
 
-
   // Check if we're on pathlab route
   const isPathLabRoute = location.pathname.includes("/pathlab");
   const [formData, setFormData] = useState({
@@ -1272,13 +1271,21 @@ const PatientRegistration = () => {
 
     try {
       let finalQuery = query.trim();
+
+      // Normalize prefix (PLB / LAB / PHC)
+      const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
+
+      if (prefixMatch) {
+        const prefix = prefixMatch[1].toUpperCase();
+        finalQuery = finalQuery.replace(/^(plb|lab|phc)\s+/i, `${prefix}- `);
+      }
       const lockedCategory = getLockedCategory();
 
       // -----------------------------
       // PHC ONLY MODE
       // -----------------------------
       if (showPHCOnly) {
-        finalQuery = "PHC";
+        finalQuery = `PHC- ${query.trim()}`;
       }
       // -----------------------------
       // LOCKED CATEGORY MODE
@@ -2298,10 +2305,10 @@ const PatientRegistration = () => {
                 <ItemsHeader>
                   <ItemsTitle>Items</ItemsTitle>
 
-                  <ItemButtons style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
                     {formData.company?.toLowerCase() === "ramakrishna mission sargachi" && (
-                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "14px" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
                         <input
                           type="checkbox"
                           checked={showPHCOnly}
