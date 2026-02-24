@@ -1030,60 +1030,79 @@ const ResultPrint = () => {
                 </InfoField>
               </PatientInfoSection>
 
-              {selectedTestDetails.map((testDetail, index) => {
-                const showDepartment =
-                  index === 0 ||
-                  selectedTestDetails[index - 1]?.department !== testDetail.department;
+              <ResultsTable>
+                <thead>
+                  <tr>
+                    <TableHeader>Test Parameter</TableHeader>
+                    <TableHeader style={{ textAlign: "right" }}>Result</TableHeader>
+                    <TableHeader style={{ textAlign: "right" }}>Units</TableHeader>
+                    <TableHeader style={{ textAlign: "right" }}>Reference Interval</TableHeader>
+                  </tr>
+                </thead>
 
-                return (
-                  <TestSection key={testDetail.name} className="test-section">
-                    <TestSectionHeader>
-                      {showDepartment && (
-                        <TestCategory>
-                          Department of {testDetail.department || "Laboratory Test"}
-                        </TestCategory>
-                      )}
-                      <TestName>
-                        {removeTestPrefix(testDetail.lab_test_name) || "N/A"}
-                      </TestName>
-                    </TestSectionHeader>
+                <tbody>
 
-                    {testDetail.normal_test_items && testDetail.normal_test_items.length > 0 && (
-                      <ResultsTable>
-                        <thead>
+                  {selectedTestDetails.map((testDetail, index) => {
+
+                    const showDepartment =
+                      index === 0 ||
+                      selectedTestDetails[index - 1]?.department !== testDetail.department;
+
+                    return (
+                      <React.Fragment key={testDetail.name}>
+
+                        {/* Department heading */}
+                        {showDepartment && (
                           <tr>
-                            <TableHeader>Test Parameter</TableHeader>
-                            <TableHeader>Result</TableHeader>
-                            <TableHeader>Units</TableHeader>
-                            <TableHeader>Reference Interval</TableHeader>
+                            <td colSpan="4">
+                              <TestCategory>
+                                Department of {testDetail.department || "Laboratory Test"}
+                              </TestCategory>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {testDetail.normal_test_items.map((item, itemIndex) => (
-                            <TableRow key={itemIndex}>
-                              <TableCell>{removeTestPrefix(item.lab_test_name) || "N/A"}</TableCell>
-                              <TableCell>
-                                {isOutOfRange(
-                                  item.result_value,
-                                  item.normal_range,
-                                  selectedTestDetails[0]?.patient_sex
-                                ) ? (
-                                  <strong>{item.result_value}</strong>
-                                ) : (
-                                  item.result_value || "N/A"
-                                )}
-                              </TableCell>
+                        )}
 
-                              <TableCell>{item.lab_test_uom || ""}</TableCell>
-                              <TableCell>{item.normal_range || ""}</TableCell>
-                            </TableRow>
-                          ))}
-                        </tbody>
-                      </ResultsTable>
-                    )}
-                  </TestSection>
-                );
-              })}
+                        {/* Test Name */}
+                        <tr>
+                          <td colSpan="4">
+                            <TestName>
+                              {removeTestPrefix(testDetail.lab_test_name)}
+                            </TestName>
+                          </td>
+                        </tr>
+
+                        {/* Parameters */}
+                        {testDetail.normal_test_items.map((item, itemIndex) => (
+
+                          <TableRow key={itemIndex}>
+
+                            <TableCell>
+                              {removeTestPrefix(item.lab_test_name)}
+                            </TableCell>
+
+                            <TableCell style={{ textAlign: "right" }}>
+                              {item.result_value}
+                            </TableCell>
+
+                            <TableCell style={{ textAlign: "right" }}>
+                              {item.lab_test_uom}
+                            </TableCell>
+
+                            <TableCell style={{ textAlign: "right" }}>
+                              {item.normal_range}
+                            </TableCell>
+
+                          </TableRow>
+
+                        ))}
+
+                      </React.Fragment>
+                    );
+                  })}
+
+                </tbody>
+              </ResultsTable>
+              
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
               <ReportFooter>
                 <div
