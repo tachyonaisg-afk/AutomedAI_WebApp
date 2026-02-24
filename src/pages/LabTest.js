@@ -197,28 +197,108 @@ const ActionLink = styled.button`
 `;
 const FilterModalOverlay = styled.div`
 position: fixed;
-top:0;
-left:0;
-right:0;
-bottom:0;
-background: rgba(0,0,0,0.3);
-display:flex;
-align-items:center;
-justify-content:center;
+inset: 0;
+background: rgba(0,0,0,0.35);
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 1000;
 `;
 
 const FilterModal = styled.div`
-background:white;
-padding:20px;
-border-radius:8px;
-width:400px;
+background: #fff;
+width: 520px;
+border-radius: 12px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+animation: fadeIn 0.2s ease;
+
+@keyframes fadeIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 `;
 
-const FilterModalActions = styled.div`
-display:flex;
-justify-content:flex-end;
-gap:10px;
-margin-top:20px;
+const FilterHeader = styled.div`
+font-size: 20px;
+font-weight: 600;
+padding: 20px 24px;
+border-bottom: 1px solid #eee;
+`;
+
+const FilterBody = styled.div`
+padding: 24px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+`;
+
+const FilterGroup = styled.div`
+display: flex;
+flex-direction: column;
+gap: 8px;
+`;
+
+const FilterLabel = styled.label`
+font-size: 14px;
+font-weight: 500;
+color: #444;
+`;
+
+const FilterSelect = styled.select`
+padding: 12px;
+border-radius: 8px;
+border: 1px solid #ccc;
+font-size: 14px;
+outline: none;
+
+&:focus {
+border-color: #4CAF50;
+box-shadow: 0 0 0 2px rgba(76,175,80,0.15);
+}
+`;
+
+const FilterFooter = styled.div`
+padding: 18px 24px;
+border-top: 1px solid #eee;
+display: flex;
+justify-content: flex-end;
+gap: 12px;
+`;
+
+const CancelButton = styled.button`
+padding: 10px 20px;
+font-size: 14px;
+border-radius: 8px;
+border: 1px solid #ccc;
+background: #fff;
+cursor: pointer;
+transition: 0.2s;
+
+&:hover {
+background: #f5f5f5;
+}
+`;
+
+const ApplyButton = styled.button`
+padding: 10px 22px;
+font-size: 14px;
+border-radius: 8px;
+border: none;
+background: #4CAF50;
+color: white;
+font-weight: 500;
+cursor: pointer;
+transition: 0.2s;
+
+&:hover {
+background: #43a047;
+}
 `;
 
 const LabTest = () => {
@@ -530,34 +610,48 @@ const LabTest = () => {
         <FilterModalOverlay>
           <FilterModal>
 
-            <h3>Filter Lab Tests</h3>
+            <FilterHeader>
+              Filter Lab Tests
+            </FilterHeader>
 
-            <label>Department</label>
+            <FilterBody>
 
-            <select
-              value={tempDepartment}
-              onChange={(e) => setTempDepartment(e.target.value)}
-            >
-              <option value="">All</option>
+              <FilterGroup>
+                <FilterLabel>Department</FilterLabel>
 
-              {departments.map((dept) => (
-                <option key={dept.name} value={dept.name}>
-                  {dept.name}
-                </option>
-              ))}
-            </select>
+                <FilterSelect
+                  value={tempDepartment}
+                  onChange={(e) => setTempDepartment(e.target.value)}
+                >
+                  <option value="">All Departments</option>
 
-            <FilterModalActions>
+                  {departments.map((dept) => (
+                    <option key={dept.name} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))}
 
-              <button onClick={() => setIsFilterOpen(false)}>
+                </FilterSelect>
+              </FilterGroup>
+
+            </FilterBody>
+
+
+            <FilterFooter>
+
+              <CancelButton
+                onClick={() => setIsFilterOpen(false)}
+              >
                 Cancel
-              </button>
+              </CancelButton>
 
-              <button onClick={applyFilter}>
-                Apply
-              </button>
+              <ApplyButton
+                onClick={applyFilter}
+              >
+                Apply Filter
+              </ApplyButton>
 
-            </FilterModalActions>
+            </FilterFooter>
 
           </FilterModal>
         </FilterModalOverlay>
