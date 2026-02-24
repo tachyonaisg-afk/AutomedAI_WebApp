@@ -1291,7 +1291,11 @@ const PatientRegistration = () => {
       // LOCKED CATEGORY MODE
       // -----------------------------
       else if (lockedCategory) {
-        finalQuery = lockedCategory;
+        const cleanedQuery = query
+          .trim()
+          .replace(/^(plb|lab|phc)-?\s*/i, "");
+
+        finalQuery = `${lockedCategory}- ${cleanedQuery}`;
       }
 
       const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
@@ -1311,31 +1315,40 @@ const PatientRegistration = () => {
       // Normalize typed query
       const typed = query.trim().toUpperCase();
 
-      // --------------------------------------
-      // PHC MODE (unchanged)
-      // --------------------------------------
+      // ------------------------------------------------
+      // PHC MODE (Highest Priority)
+      // ------------------------------------------------
       if (showPHCOnly) {
         results = results.filter((item) =>
           item.description?.toUpperCase().startsWith("PHC")
         );
       }
 
-      // --------------------------------------
-      // NORMAL MODE (NEW LOGIC)
-      // --------------------------------------
+      // ------------------------------------------------
+      // LOCKED CATEGORY MODE (Second Priority)
+      // ------------------------------------------------
+      else if (lockedCategory) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith(lockedCategory)
+        );
+      }
+
+      // ------------------------------------------------
+      // NORMAL MODE (Default Behaviour)
+      // ------------------------------------------------
       else {
-        // PHC should NEVER appear
+        // Never show PHC in normal mode
         results = results.filter(
           (item) => !item.description?.toUpperCase().startsWith("PHC")
         );
 
-        // If user explicitly starts typing PLB → show only PLB
+        // If explicitly typing PLB → show PLB
         if (typed.startsWith("PLB")) {
           results = results.filter((item) =>
             item.description?.toUpperCase().startsWith("PLB")
           );
         }
-        // Otherwise → default to LAB only
+        // Otherwise → default LAB
         else {
           results = results.filter((item) =>
             item.description?.toUpperCase().startsWith("LAB")
@@ -1343,15 +1356,7 @@ const PatientRegistration = () => {
         }
       }
 
-      // --------------------------------------
-      // Enforce category lock
-      // --------------------------------------
 
-      if (!showPHCOnly && lockedCategory) {
-        results = results.filter((item) =>
-          item.description?.toUpperCase().startsWith(lockedCategory)
-        );
-      }
 
       setItemResults(results);
       setShowItemResults(true);
