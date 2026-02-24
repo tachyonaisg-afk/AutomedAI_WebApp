@@ -1008,7 +1008,7 @@ const Billing = () => {
       <table>
         <thead>
           <tr>
-            <th>Item Name</th>
+            <th>Investigation Item / Consultation Item</th>
             <th class="center">Quantity</th>
             <th class="right">Item Price</th>
             <th class="right">Amount</th>

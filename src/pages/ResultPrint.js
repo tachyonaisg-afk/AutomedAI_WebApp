@@ -342,8 +342,8 @@ const TestSectionHeader = styled.div`
 `;
 
 const TestName = styled.h2`
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: #000000;
   margin: 0 0 4px 0;
   text-transform: uppercase;
@@ -1102,7 +1102,7 @@ const ResultPrint = () => {
 
                 </tbody>
               </ResultsTable>
-              
+
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
               <ReportFooter>
                 <div

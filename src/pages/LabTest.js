@@ -195,6 +195,31 @@ const ActionLink = styled.button`
     height: 16px;
   }
 `;
+const FilterModalOverlay = styled.div`
+position: fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background: rgba(0,0,0,0.3);
+display:flex;
+align-items:center;
+justify-content:center;
+`;
+
+const FilterModal = styled.div`
+background:white;
+padding:20px;
+border-radius:8px;
+width:400px;
+`;
+
+const FilterModalActions = styled.div`
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:20px;
+`;
 
 const LabTest = () => {
   usePageTitle("Lab Tests");
@@ -207,7 +232,28 @@ const LabTest = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [sampleStatusMap, setSampleStatusMap] = useState({});
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [tempDepartment, setTempDepartment] = useState("");
+
+  const [departments, setDepartments] = useState([]);
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await api.get("/resource/Medical Department", {
+        fields: '["name"]',
+        limit_page_length: 1500,
+      });
+
+      setDepartments(res.data?.data || []);
+    } catch (err) {
+      console.error("❌ Error fetching departments:", err);
+    }
+  };
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
   // Fetch lab test count
   const fetchLabTestCount = async () => {
     try {
@@ -283,9 +329,18 @@ const LabTest = () => {
 
       const limitStart = (page - 1) * limit;
 
+      let filters = [
+        ["Lab Test", "status", "!=", "Completed"],
+      ];
+
+      if (departmentFilter) {
+        filters.push(["Lab Test", "department", "=", departmentFilter]);
+      }
+
       const params = {
-        fields: '["name","patient","patient_name","status","lab_test_name","sample","department"]',
-        filters: '[["Lab Test","status","!=","Completed"]]',
+        fields:
+          '["name","patient","patient_name","status","lab_test_name","sample","department"]',
+        filters: JSON.stringify(filters),
         order_by: "creation desc",
         limit_start: limitStart,
         limit_page_length: limit,
@@ -311,7 +366,6 @@ const LabTest = () => {
         const sampleIds = tests.map((t) => t.sample);
         await fetchSampleStatuses(sampleIds);
       }
-
 
     } catch (err) {
       console.error("❌ Error fetching lab tests:", err);
@@ -350,7 +404,7 @@ const LabTest = () => {
   useEffect(() => {
     fetchLabTests(currentPage, rowsPerPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, rowsPerPage]);
+  }, [currentPage, rowsPerPage, departmentFilter]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -366,6 +420,7 @@ const LabTest = () => {
     { key: "patient", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "lab_test_name", label: "TEST NAME" },
+    { key: "department", label: "DEPARTMENT" },
     { key: "status", label: "SAMPLE STATUS" },
     { key: "actions", label: "ACTION" },
   ];
@@ -408,8 +463,13 @@ const LabTest = () => {
   };
 
   const handleFilter = () => {
-    console.log("Open filter modal");
-    // TODO: Open filter modal
+    setTempDepartment(departmentFilter);
+    setIsFilterOpen(true);
+  };
+  const applyFilter = () => {
+    setDepartmentFilter(tempDepartment);
+    setCurrentPage(1);
+    setIsFilterOpen(false);
   };
 
   // Client-side filtering for search
@@ -466,6 +526,42 @@ const LabTest = () => {
           onRowsPerPageChange={handleRowsPerPageChange}
         />
       </LabTestContainer>
+      {isFilterOpen && (
+        <FilterModalOverlay>
+          <FilterModal>
+
+            <h3>Filter Lab Tests</h3>
+
+            <label>Department</label>
+
+            <select
+              value={tempDepartment}
+              onChange={(e) => setTempDepartment(e.target.value)}
+            >
+              <option value="">All</option>
+
+              {departments.map((dept) => (
+                <option key={dept.name} value={dept.name}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+
+            <FilterModalActions>
+
+              <button onClick={() => setIsFilterOpen(false)}>
+                Cancel
+              </button>
+
+              <button onClick={applyFilter}>
+                Apply
+              </button>
+
+            </FilterModalActions>
+
+          </FilterModal>
+        </FilterModalOverlay>
+      )}
     </Layout>
   );
 };
