@@ -288,7 +288,7 @@ const BackButton = styled.button`
 `;
 
 const ReportPreview = styled.div`
-  padding: 40px;
+  padding: 15px;
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -306,8 +306,8 @@ const PatientInfoSection = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 30px;
-  padding: 20px;
+  margin-bottom: 25px;
+  padding: 5px;
   background-color: #ffffff;
   border-radius: 4px;
 `;
@@ -366,12 +366,13 @@ const TableHeader = styled.th`
   text-align: left;
   padding: 10px 12px;
   background-color: #ffffff;
-  font-size: 9px;
+  font-size: 12px;
   color: #000000;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #e0e0e0;
+  border-top: 1px solid #e0e0e0;
 `;
 
 const TableRow = styled.tr`
@@ -383,7 +384,7 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 12px;
+  padding: 5px;
   font-size: 12px;
   color: #000000;
 `;
