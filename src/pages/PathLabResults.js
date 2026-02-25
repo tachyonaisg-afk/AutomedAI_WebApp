@@ -292,6 +292,8 @@ const PathLabResults = () => {
 
   const columns = [
     { key: "name", label: "TEST ID" },
+    { key: "lab_test_name", label: "TEST NAME" },
+    { key: "department", label: "DEPARTMENT" },
     { key: "patient", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "status", label: "STATUS" },
