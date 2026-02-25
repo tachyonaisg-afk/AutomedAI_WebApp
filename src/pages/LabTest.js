@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
-import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
 import { Search, Filter, Plus } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
+import LabTestListTable from "../components/shared/LabTestListTable";
 
 const LabTestContainer = styled.div`
   display: flex;
@@ -592,7 +592,7 @@ const LabTest = () => {
           </ButtonGroup>
         </ToolbarSection>
 
-        <DataTable
+        <LabTestListTable
           columns={columns}
           data={filteredData}
           sortableColumns={["name", "patient", "patient_name"]}

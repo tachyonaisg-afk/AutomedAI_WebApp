@@ -1240,24 +1240,23 @@ const PatientRegistration = () => {
     }));
   };
 
-  const getLockedCategory = useCallback(() => {
-    const validItems = items.filter(
-      (item) =>
-        item.item &&
-        item.item !== "STO-ITEM-2025-00539"
-    );
+const getLockedCategory = useCallback(() => {
+  const validItems = items.filter(
+    (item) =>
+      item.item &&
+      item.item !== "STO-ITEM-2025-00539"
+  );
 
-    if (validItems.length === 0) return null;
+  if (validItems.length === 0) return null;
 
-    const firstItemCode = validItems[0].item;
-    const code = firstItemCode.toUpperCase();
+  const firstItemName = validItems[0].itemName?.toUpperCase() || "";
 
-    if (code.startsWith("LAB")) return "LAB";
-    if (code.startsWith("PLB")) return "PLB";
-    if (code.startsWith("PHC")) return "PHC";
+  if (firstItemName.startsWith("LAB")) return "LAB";
+  if (firstItemName.startsWith("PLB")) return "PLB";
+  if (firstItemName.startsWith("PHC")) return "PHC";
 
-    return null;
-  }, [items]);
+  return null;
+}, [items]);
 
   // Debounced item search
   const searchItems = useCallback(async (query) => {
@@ -1832,7 +1831,6 @@ const PatientRegistration = () => {
     (item) => item.item === "STO-ITEM-2025-00539"
   );
 
-
   return (
     <Layout>
       {isSubmitting && (
@@ -2304,7 +2302,6 @@ const PatientRegistration = () => {
                   )}
                 </FormRow>
               </FormSection>
-
 
               <ItemsSection>
                 <ItemsHeader>
