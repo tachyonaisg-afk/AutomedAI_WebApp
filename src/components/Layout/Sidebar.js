@@ -270,6 +270,7 @@ const Sidebar = () => {
     { path: "/opd/appointments", label: "Appointments", icon: Calendar },
     { path: "/opd/consultation", label: "Consultation", icon: MessageSquare },
     { path: "/opd/telemedicine", label: "Telemedicine", icon: Video },
+    { path: "/opd/admin", label: "Admin", icon: ShieldCheck },
   ];
 
   const pathLabSubItems = [

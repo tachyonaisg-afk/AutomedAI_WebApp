@@ -26,6 +26,7 @@ import Settings from './pages/Settings';
 import ComingSoon from './pages/ComingSoon';
 import SalesReport from './pages/SalesReport';
 import './App.css';
+import OpdAdmin from './pages/OpdAdmin';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -146,6 +147,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ComingSoon />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/admin"
+            element={
+              <ProtectedRoute>
+                <OpdAdmin />
               </ProtectedRoute>
             }
           />
