@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import usePageTitle from "../hooks/usePageTitle";
 import OpdRoomTab from "../components/modals/OpdRoomTab";
+import DoctorAvailabilityTab from "../components/modals/DoctorAvailabilityTab";
 
 /* ---------------- Styled Components ---------------- */
 
@@ -410,6 +411,18 @@ const OpdAdmin = () => {
                                 setRooms={setRooms}
                             />
                         )}
+                        {activeTab === "availability" && (
+                            <DoctorAvailabilityTab
+                                availability={availability}
+                                setAvailability={setAvailability}
+                            />
+                        )}
+                        {/* {activeTab === "assignment" && (
+                            <OpdAssignmentTab
+                                assignments={assignments}
+                                setAssignments={setAssignments}
+                            />
+                        )} */}
                         </ModalContent>
                         <ModalFooter>
                             <SecondaryBtn onClick={() => setIsManageSlotsOpen(false)}>

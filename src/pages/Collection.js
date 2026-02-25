@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
-import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
 import { Search, Filter, Plus, Check, X } from "lucide-react";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import usePageTitle from "../hooks/usePageTitle";
+import CollectionDataTable from "../components/shared/CollectionDataTable";
 
 const CollectionContainer = styled.div`
   display: flex;
@@ -480,15 +480,80 @@ const Collection = () => {
     { key: "collected_by", label: "COLLECTED BY" },
     { key: "actions", label: "ACTIONS" },
   ];
+  const handleCollectAll = async (groupItems) => {
+  try {
+    if (!selectedEmployee) {
+      alert("Please select an employee first");
+      return;
+    }
 
+    const getISTDateTime = () => {
+      const now = new Date();
+      const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+      return istTime.toISOString().slice(0, 19).replace("T", " ");
+    };
+
+    const istDateTime = getISTDateTime();
+
+    const uncollectedItems = groupItems.filter(
+      (item) => item.docstatus === 0
+    );
+
+    if (uncollectedItems.length === 0) {
+      alert("All samples already collected.");
+      return;
+    }
+
+    // 🔥 SAME API — Loop for each sample
+    await Promise.all(
+      uncollectedItems.map((item) =>
+        apiService.put(
+          API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(item.name),
+          {
+            docstatus: 1,
+            collected_by: selectedEmployee.user_id,
+            collected_time: istDateTime,
+          }
+        )
+      )
+    );
+
+    alert("All samples collected successfully!");
+
+    setSelectedEmployee("");
+    await fetchCollections();
+
+  } catch (error) {
+    console.error("Error collecting all:", error);
+    alert("Failed to collect samples.");
+  }
+};
   const renderStatus = (status) => {
     return <StatusBadge status={status}>{status}</StatusBadge>;
   };
 
-  const renderActions = (row) => {
-    // Show button only if docstatus === 0 (Not Collected)
+  const renderActions = (rowOrGroup) => {
+    const isGroup = Array.isArray(rowOrGroup);
+
+    // GROUP LEVEL (Collect All)
+    if (isGroup) {
+      const hasUncollected = rowOrGroup.some(
+        (item) => item.docstatus === 0
+      );
+
+      if (!hasUncollected) return null;
+
+      return (
+        <ActionButton onClick={() => handleCollectAll(rowOrGroup)}>
+          Collect All
+        </ActionButton>
+      );
+    }
+
+    // SINGLE ROW LEVEL
+    const row = rowOrGroup;
+
     if (row.docstatus === 0) {
-      // If this row is in editing mode, show dropdown + icons
       if (editingRowId === row.name) {
         return (
           <ActionContainer>
@@ -512,14 +577,13 @@ const Collection = () => {
             <IconButton
               variant="confirm"
               onClick={() => handleConfirmCollect(row)}
-              title="Confirm"
             >
               <Check />
             </IconButton>
+
             <IconButton
               variant="cancel"
               onClick={handleCancelEdit}
-              title="Cancel"
             >
               <X />
             </IconButton>
@@ -527,13 +591,13 @@ const Collection = () => {
         );
       }
 
-      // Otherwise show the "Collected" button
       return (
         <ActionButton onClick={() => handleCollectClick(row)}>
           Collect
         </ActionButton>
       );
     }
+
     return null;
   };
 
@@ -664,11 +728,8 @@ const Collection = () => {
             <RetryButton onClick={fetchCollections}>Retry</RetryButton>
           </ErrorContainer>
         ) : (
-          <DataTable
-            columns={columns}
+          <CollectionDataTable
             data={filteredData}
-            sortableColumns={["patient_id", "patient_name", "date"]}
-            renderStatus={renderStatus}
             renderActions={renderActions}
           />
         )}

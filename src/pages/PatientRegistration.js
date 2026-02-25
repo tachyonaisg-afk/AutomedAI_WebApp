@@ -1240,23 +1240,23 @@ const PatientRegistration = () => {
     }));
   };
 
-const getLockedCategory = useCallback(() => {
-  const validItems = items.filter(
-    (item) =>
-      item.item &&
-      item.item !== "STO-ITEM-2025-00539"
-  );
+  const getLockedCategory = useCallback(() => {
+    const validItems = items.filter(
+      (item) =>
+        item.item &&
+        item.item !== "STO-ITEM-2025-00539"
+    );
 
-  if (validItems.length === 0) return null;
+    if (validItems.length === 0) return null;
 
-  const firstItemName = validItems[0].itemName?.toUpperCase() || "";
+    const firstItemName = validItems[0].itemName?.toUpperCase() || "";
 
-  if (firstItemName.startsWith("LAB")) return "LAB";
-  if (firstItemName.startsWith("PLB")) return "PLB";
-  if (firstItemName.startsWith("PHC")) return "PHC";
+    if (firstItemName.startsWith("LAB")) return "LAB";
+    if (firstItemName.startsWith("PLB")) return "PLB";
+    if (firstItemName.startsWith("PHC")) return "PHC";
 
-  return null;
-}, [items]);
+    return null;
+  }, [items]);
 
   // Debounced item search
   const searchItems = useCallback(async (query) => {

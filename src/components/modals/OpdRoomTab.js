@@ -319,29 +319,19 @@ const OpdRoomTab = () => {
 
         const newStatus =
             room.status === "active" ? "inactive" : "active";
-
         try {
-
             const response = await fetch(
                 `https://midl.automedai.in/rooms/${room.id}/status`,
                 {
-
-                    method: "POST",
-
+                    method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
                     },
-
                     body: JSON.stringify({
-
                         status: newStatus,
-
                         user_id: currentUser,
-
                         company: room.company,
-
                     }),
-
                 }
             );
 
@@ -366,100 +356,58 @@ const OpdRoomTab = () => {
     return (
 
         <SectionWrapper>
-
-
             {/* FORM */}
-
             <FormGrid>
-
                 <FormField>
-
                     <label>Company</label>
-
                     <select
                         name="company"
                         value={formData.company}
                         onChange={handleChange}
                     >
-
                         <option value="">Select Company</option>
-
                         {companyOptions.map((company) => (
-
                             <option
                                 key={company.name}
                                 value={company.name}
                             >
-
                                 {company.name}
-
                             </option>
-
                         ))}
-
                     </select>
-
                 </FormField>
 
-
-
                 <FormField>
-
                     <label>Room Name</label>
-
                     <input
                         name="room_name"
                         value={formData.room_name}
                         onChange={handleChange}
                     />
-
                 </FormField>
 
-
-
                 <AddButton onClick={handleAddRoom}>
-
                     Add Room
-
                 </AddButton>
-
             </FormGrid>
 
-
-
             {/* TABLE */}
-
             <Table>
-
                 <thead>
-
                     <tr>
-
                         <th>Room</th>
-
                         <th>Company</th>
-
                         <th>Status</th>
-
                     </tr>
-
                 </thead>
 
-
                 <tbody>
-
                     {rooms.map((room) => (
-
                         <tr key={room.id}>
-
                             <td>{room.room_name}</td>
-
                             <td>{room.company}</td>
-
                             <td>
-
                                 <ToggleWrapper>
-
                                     <ToggleInput
                                         type="checkbox"
                                         checked={room.status === "active"}
@@ -467,26 +415,15 @@ const OpdRoomTab = () => {
                                             handleToggleStatus(room)
                                         }
                                     />
-
                                     <ToggleSlider />
-
                                 </ToggleWrapper>
-
                             </td>
-
                         </tr>
-
                     ))}
-
                 </tbody>
-
-
             </Table>
-
         </SectionWrapper>
-
     );
-
 };
 
 export default OpdRoomTab;
