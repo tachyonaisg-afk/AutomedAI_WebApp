@@ -520,6 +520,8 @@ const Prescription = () => {
 
   const [selectedDoctorData, setSelectedDoctorData] = useState(null);
   const [currentUser, setCurrentUser] = useState("");
+  const [companyOptions, setCompanyOptions] = useState([]);
+  const [selectedClinic, setSelectedClinic] = useState(null);
 
   useEffect(() => {
     try {
@@ -536,6 +538,50 @@ const Prescription = () => {
     } catch (error) {
       console.error("Error reading user from localStorage:", error);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchCompanyOptions = async () => {
+      try {
+        const response = await fetch(
+          "https://hms.automedai.in/api/resource/Company",
+          {
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+          }
+        );
+
+        const data = await response.json();
+
+        if (data?.data) {
+
+          const options = data.data.map((c) => ({
+            value: c.name,
+            label: c.name,
+          }));
+
+          setCompanyOptions(options);
+
+          // ✅ Auto select if only one clinic
+          if (options.length === 1) {
+            setSelectedClinic(options[0]);
+
+            setFormData(prev => ({
+              ...prev,
+              selectedClinic: options[0].value
+            }));
+          }
+
+        }
+
+      } catch (error) {
+        console.error("Error fetching company options:", error);
+      }
+    };
+
+    fetchCompanyOptions();
   }, []);
 
   // Fetch patient data
@@ -691,7 +737,10 @@ const Prescription = () => {
     value: p.name,
     label: p.practitioner_name,
   }));
-
+  const clinicDropdownOptions = companyOptions.map((c) => ({
+    value: c.name,
+    label: c.name,
+  }));
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -837,6 +886,28 @@ const Prescription = () => {
               }
             />
           </FormGroup>
+          <SidebarSection>
+            <FormGroup>
+              <Label>Select Clinic *</Label>
+
+              <ReactSelect
+                classNamePrefix="react-select"
+                options={companyOptions}
+                placeholder="Choose a clinic"
+                isSearchable
+                isClearable={false}
+                value={selectedClinic}
+                onChange={(selected) => {
+                  setSelectedClinic(selected);
+
+                  setFormData(prev => ({
+                    ...prev,
+                    selectedClinic: selected.value
+                  }));
+                }}
+              />
+            </FormGroup>
+          </SidebarSection>
 
         </SidebarSection>
 
