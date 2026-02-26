@@ -703,7 +703,10 @@ const PathLabBilling = () => {
     };
 
     setTimeout(() => {
-      const printWindow = window.open("", "_blank");
+      const printWindow = window.open(
+        `https://hms.automedai.in/api/resource/Sales Invoice/${invoice.name}`,
+        "_blank"
+      );
 
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");

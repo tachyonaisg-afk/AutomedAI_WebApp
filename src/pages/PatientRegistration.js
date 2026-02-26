@@ -1440,7 +1440,6 @@ const PatientRegistration = () => {
 
   const addItem = () => {
     const newItem = {
-      no: items.length + 1,
       item: "",
       itemName: "",
       qty: 1,
@@ -2316,7 +2315,7 @@ const PatientRegistration = () => {
                           checked={showPHCOnly}
                           onChange={(e) => setShowPHCOnly(e.target.checked)}
                         />
-                        Show PHC items Only
+                        Show Government Rate Only
                       </label>
                     )}
 
@@ -2341,7 +2340,7 @@ const PatientRegistration = () => {
                   <TableBody>
                     {items.map((item, index) => (
                       <TableRow key={index}>
-                        <TableCell>{item.no}</TableCell>
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>
                           <ItemSearchWrapper>
                             {item.item ? (

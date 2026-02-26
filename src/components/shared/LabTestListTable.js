@@ -6,7 +6,9 @@ const TableContainer = styled.div`
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+
+  max-height: 500px;   /* adjust as needed */
+  overflow-y: auto;
 `;
 
 const Table = styled.table`
@@ -30,6 +32,11 @@ const TableHeaderCell = styled.th`
   color: #333333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa;
+  z-index: 2;
 
   &:first-child {
     padding-left: 24px;

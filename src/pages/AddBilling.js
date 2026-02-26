@@ -1613,7 +1613,7 @@ const AddBilling = () => {
                       checked={showPHCOnly}
                       onChange={(e) => setShowPHCOnly(e.target.checked)}
                     />
-                    Show PHC items Only
+                    Show Government Rate Only
                   </label>
                 )}
 
@@ -1638,7 +1638,7 @@ const AddBilling = () => {
               <TableBody>
                 {items.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell>{item.no}</TableCell>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>
                       <ItemSearchWrapper>
                         {item.item ? (
