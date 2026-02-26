@@ -370,7 +370,8 @@ const Collection = () => {
   const [editingRowId, setEditingRowId] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [employees, setEmployees] = useState([]);
-
+  const [editingGroupKey, setEditingGroupKey] = useState(null);
+  const [selectedGroupEmployee, setSelectedGroupEmployee] = useState(null);
   // Fetch employees from API
   const fetchEmployees = async () => {
     try {
@@ -481,70 +482,113 @@ const Collection = () => {
     { key: "actions", label: "ACTIONS" },
   ];
   const handleCollectAll = async (groupItems) => {
-  try {
-    if (!selectedEmployee) {
-      alert("Please select an employee first");
-      return;
-    }
+    try {
+      if (!selectedGroupEmployee) {
+        alert("Please select an employee");
+        return;
+      }
 
-    const getISTDateTime = () => {
-      const now = new Date();
-      const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-      return istTime.toISOString().slice(0, 19).replace("T", " ");
-    };
+      const getISTDateTime = () => {
+        const now = new Date();
+        const istTime = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+        return istTime.toISOString().slice(0, 19).replace("T", " ");
+      };
 
-    const istDateTime = getISTDateTime();
+      const istDateTime = getISTDateTime();
 
-    const uncollectedItems = groupItems.filter(
-      (item) => item.docstatus === 0
-    );
+      const uncollectedItems = groupItems.filter(
+        (item) => item.docstatus === 0
+      );
 
-    if (uncollectedItems.length === 0) {
-      alert("All samples already collected.");
-      return;
-    }
-
-    // 🔥 SAME API — Loop for each sample
-    await Promise.all(
-      uncollectedItems.map((item) =>
-        apiService.put(
-          API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(item.name),
-          {
-            docstatus: 1,
-            collected_by: selectedEmployee.user_id,
-            collected_time: istDateTime,
-          }
+      await Promise.all(
+        uncollectedItems.map((item) =>
+          apiService.put(
+            API_ENDPOINTS.SAMPLE_COLLECTION.UPDATE(item.name),
+            {
+              docstatus: 1,
+              collected_by: selectedGroupEmployee.user_id,
+              collected_time: istDateTime,
+            }
+          )
         )
-      )
-    );
+      );
 
-    alert("All samples collected successfully!");
+      setEditingGroupKey(null);
+      setSelectedGroupEmployee(null);
 
-    setSelectedEmployee("");
-    await fetchCollections();
+      await fetchCollections();
 
-  } catch (error) {
-    console.error("Error collecting all:", error);
-    alert("Failed to collect samples.");
-  }
-};
+      alert("All samples collected successfully!");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to collect samples.");
+    }
+  };
   const renderStatus = (status) => {
     return <StatusBadge status={status}>{status}</StatusBadge>;
   };
 
   const renderActions = (rowOrGroup) => {
-    const isGroup = Array.isArray(rowOrGroup);
+    const isGroup = rowOrGroup?.items;
 
     // GROUP LEVEL (Collect All)
     if (isGroup) {
-      const hasUncollected = rowOrGroup.some(
+      const groupItems = rowOrGroup.items;
+      const groupKey = rowOrGroup.groupKey;
+
+      const hasUncollected = groupItems.some(
         (item) => item.docstatus === 0
       );
 
       if (!hasUncollected) return null;
 
+      // Editing mode
+      if (editingGroupKey === groupKey) {
+        return (
+          <ActionContainer>
+            <EmployeeSelect
+              value={selectedGroupEmployee?.user_id || ""}
+              onChange={(e) => {
+                const emp = employees.find(
+                  (emp) => emp.user_id === e.target.value
+                );
+                setSelectedGroupEmployee(emp);
+              }}
+            >
+              <option value="">Select Employee</option>
+              {employees.map((emp) => (
+                <option key={emp.user_id} value={emp.user_id}>
+                  {emp.employee_name}
+                </option>
+              ))}
+            </EmployeeSelect>
+
+            <IconButton
+              variant="confirm"
+              onClick={() => handleCollectAll(groupItems)}
+            >
+              <Check />
+            </IconButton>
+
+            <IconButton
+              variant="cancel"
+              onClick={() => {
+                setEditingGroupKey(null);
+                setSelectedGroupEmployee(null);
+              }}
+            >
+              <X />
+            </IconButton>
+          </ActionContainer>
+        );
+      }
+
       return (
-        <ActionButton onClick={() => handleCollectAll(rowOrGroup)}>
+        <ActionButton
+          onClick={() => {
+            setEditingGroupKey(groupKey);
+          }}
+        >
           Collect All
         </ActionButton>
       );

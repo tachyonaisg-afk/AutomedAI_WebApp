@@ -2261,6 +2261,7 @@ const PatientRegistration = () => {
                       placeholder="Search practitioner..."
                       isSearchable
                       isClearable
+                      required
                     />
                   </FormGroup>
                   <AddDoctorButton

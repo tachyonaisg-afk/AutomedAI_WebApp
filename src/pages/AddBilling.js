@@ -1483,6 +1483,7 @@ const AddBilling = () => {
                   placeholder="Select practitioner"
                   isClearable
                   isSearchable
+                  required
                   value={practitionerOptions.find(
                     (opt) => opt.value === billingData.ref_practitioner
                   )}
