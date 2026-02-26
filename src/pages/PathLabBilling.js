@@ -580,12 +580,26 @@ const PathLabBilling = () => {
   const buildItemsRows = (items = []) => {
     return items
       .map(
-        (item) => `
+        (item, index) => `
       <tr>
-        <td>${formatTestName(item.item_name)}</td>
-        <td class="center">${item.qty}</td>
-        <td class="right">₹ ${item.rate.toFixed(2)}</td>
-        <td class="right"><strong>₹ ${item.amount.toFixed(2)}</strong></td>
+        <td class="border border-gray-800">${index + 1}</td>
+        
+        <td class="border border-gray-800">
+          ${formatTestName(item.item_name)}
+        </td>
+        
+        <td class="border border-gray-800 text-right">
+          ₹ ${item.rate.toFixed(2)}
+        </td>
+        
+        <td class="border border-gray-800 text-right">
+          ₹ ${item.discount_amount.toFixed(2)}
+        </td>
+        
+        <td class="border border-gray-800 text-right">
+          ₹ ${item.amount.toFixed(2)}
+        </td>
+        
       </tr>
     `
       )
@@ -596,21 +610,33 @@ const PathLabBilling = () => {
     const itemsHTML = buildItemsRows(invoice.items);
     const companyAddressMap = {
       "Ramakrishna Mission Sargachi": {
-        area: "Sargachi, Murshidabad",
+        heading: "RAMAKRISHNA MISSION SARGACHI",
+        subHeading: "Charitable Dispensary & Diagnostic Centre",
+        area: "Sargachi, P.O. Sargachi Ashram, Dist. Murshidabad, West Bengal - 742134",
+        iso: "ISO 9001:2008 Certified",
         state: "West Bengal, India - 742134",
-        phone: "+91 3482 232222",
+        phone: "03482-232222",
+        email:"rkm.sargachi@gmail.com",
       },
       "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
+        heading: "ALFA DIAGNOSTIC CENTRE & POLYCLINIC",
+        subHeading: "-",
         area: "Hariharpara, Murshidabad",
+        iso: "-",
         state: "West Bengal, India - 742165",
         phone: "+91 9475 353302",
+        email:"-",
       },
     };
 
     const companyDetails = companyAddressMap[invoice.company] || {
+      heading: "",
+      subHeading: "",
+      iso: "",
       area: "",
       state: "",
       phone: "",
+      email:"",
     };
 
     setTimeout(() => {
@@ -619,409 +645,220 @@ const PathLabBilling = () => {
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");
 
-      // Decide page dimensions
-      const pageCSS =
-        pageSize === "A5"
-          ? `
-      @page { 
-        size: A5 landscape; 
-        margin: 8mm; 
-      }
-      html, body {
-        width: 210mm;
-        height: 148mm;
-      }
-    `
-          : `
-      @page { 
-        size: A4 portrait; 
-        margin: 15mm; 
-      }
-    `;
-
-
-      const wrapperWidth =
-        pageSize === "A5"
-          ? "148mm"   // A5 width
-          : "210mm";  // A4 width
-
       printWindow.document.write(`
      <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hospital Patient Invoice - ${invoice.patient_name}</title>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Medical Bill - ${invoice.patient_name}</title>
+    <!-- Tailwind CSS CDN with plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- BEGIN: Custom Styling -->
+    <style data-purpose="layout">
+        @media print {
+            @page {
+                size: A5 landscape;
+                margin: 1mm;
+            }
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Material Symbols -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-
-  <style>
-  ${pageSize === "A5"
-          ? `
-    @page { 
-  size: A5 landscape;
-  margin: 8mm;
-}
-
-html, body {
-  width: 210mm;
-  height: 148mm;
-  margin: 0;
-}
-
-body {
-  background: #fff;
-}
-  `
-          : `
-    @page { 
-      size: A4 portrait; 
-      margin: 15mm; 
-    }
-  `
+            body {
+                -webkit-print-color-adjust: exact;
+            }
         }
 
-  :root {
-    --primary: #137fec;
-    --primary-dark: #0b5cb5;
-    --bg-light: #f6f7f8;
-    --surface: #ffffff;
-    --text-main: #111418;
-    --text-secondary: #617589;
-    --border-light: #dbe0e6;
-    --success: #16a34a;
-  }
+        /* Fixed height for the A5 Landscape container to simulate the paper size */
+        .a5-landscape-container {
+            width: 210mm;
+            min-height: 140mm;
+            padding: 5mm;
+            margin: 0 auto;
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-  * {
-    box-sizing: border-box;
-  }
+        /* Control table cell padding for tight medical look */
+        th,
+        td {
+            padding: 2px 8px;
+        }
+    </style>
+    <style data-purpose="typography">
+        .font-header {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
 
-  body {
-    margin: 0;
-    font-family: "Manrope", sans-serif;
-    background: ${pageSize === "A5" ? "#fff" : "var(--bg-light)"};
-    color: var(--text-main);
-    display: flex;
-    justify-content: center;
-  }
+        .text-xs-custom {
+            font-size: 0.6rem;
+            line-height: 1rem;
+        }
 
-  .invoice-wrapper {
-    width: ${pageSize === "A5" ? "210mm" : "100%"};
-    height: ${pageSize === "A5" ? "148mm" : "auto"};
-    margin: auto;
-    background: var(--surface);
-    border-radius: ${pageSize === "A5" ? "6px" : "12px"};
-    box-shadow: ${pageSize === "A5" ? "none" : "0 20px 40px rgba(0,0,0,0.08)"};
-    overflow: hidden;
-    ${pageSize === "A5" ? "transform-origin: top left;" : ""}
-  }
-
-  /* ===== HEADER ===== */
-  .invoice-header {
-    padding: ${pageSize === "A5" ? "15px" : "30px"};
-    border-bottom: 1px solid var(--border-light);
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-  }
-
-  .hospital-info {
-    max-width: 60%;
-  }
-
-  .hospital-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-
-  .hospital-name {
-    font-size: ${pageSize === "A5" ? "16px" : "22px"};
-    font-weight: 800;
-  }
-
-  .hospital-address {
-    font-size: ${pageSize === "A5" ? "11px" : "14px"};
-    color: var(--text-secondary);
-    margin-left: 42px;
-  }
-
-  .invoice-title {
-    font-size: ${pageSize === "A5" ? "22px" : "36px"};
-    font-weight: 900;
-    color: var(--primary);
-    margin: 0;
-  }
-
-  .invoice-meta p {
-    font-size: ${pageSize === "A5" ? "11px" : "14px"};
-    margin: 4px 0;
-    color: var(--text-secondary);
-  }
-
-  .paid-badge {
-    margin-top: 10px;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #dcfce7;
-    color: var(--success);
-    font-size: ${pageSize === "A5" ? "9px" : "12px"};
-    font-weight: 700;
-    border: 1px solid #bbf7d0;
-  }
-
-  /* ===== PATIENT ===== */
-  .patient-section {
-    background: #f1f3f5;
-    padding: ${pageSize === "A5" ? "6px 20px" : "12px 48px"};
-    border-bottom: 1px solid var(--border-light);
-  }
-
-  .patient-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .label {
-    font-size: ${pageSize === "A5" ? "9px" : "11px"};
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-  }
-
-  .value {
-    font-size: ${pageSize === "A5" ? "13px" : "16px"};
-    font-weight: 700;
-  }
-
-  /* ===== TABLE ===== */
-  .table-section {
-    padding: ${pageSize === "A5" ? "10px" : "25px"};
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1px solid var(--border-light);
-  }
-
-  thead {
-    background: #f6f7f8;
-  }
-
-  th, td {
-    padding: ${pageSize === "A5" ? "6px" : "14px"};
-    font-size: ${pageSize === "A5" ? "10px" : "12px"};
-  }
-
-  th {
-    text-align: left;
-    font-weight: 700;
-    color: var(--text-secondary);
-  }
-
-  th.center, td.center { text-align: center; }
-  th.right, td.right { text-align: right; }
-
-  tbody tr {
-    border-top: 1px solid var(--border-light);
-  }
-
-  /* ===== SUMMARY ===== */
-  .summary {
-    display: flex;
-    justify-content: space-between;
-    gap: ${pageSize === "A5" ? "12px" : "32px"};
-    margin-top: ${pageSize === "A5" ? "12px" : "32px"};
-  }
-
-  .payment-box {
-    flex: 1;
-    padding: ${pageSize === "A5" ? "10px" : "24px"};
-    background: #f6f7f8;
-    border-radius: 8px;
-    border: 1px solid var(--border-light);
-  }
-
-  .payment-box h3 {
-    font-size: ${pageSize === "A5" ? "10px" : "13px"};
-    text-transform: uppercase;
-    margin-bottom: 10px;
-    color: var(--text-secondary);
-  }
-
-  .payment-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: ${pageSize === "A5" ? "11px" : "14px"};
-    margin-bottom: 6px;
-  }
-
-  .totals {
-    width: ${pageSize === "A5" ? "180px" : "260px"};
-  }
-
-  .totals-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-    font-size: ${pageSize === "A5" ? "12px" : "14px"};
-  }
-
-  .grand-total {
-    font-size: ${pageSize === "A5" ? "16px" : "20px"};
-    font-weight: 900;
-    color: var(--primary);
-  }
-
-  .thank-you {
-    margin-top: 8px;
-    padding: 6px;
-    text-align: center;
-    background: #eff6ff;
-    font-size: ${pageSize === "A5" ? "9px" : "12px"};
-    border-radius: 6px;
-    border: 1px solid #dbeafe;
-  }
-
-  /* ===== FOOTER ===== */
-  .invoice-footer {
-    padding: ${pageSize === "A5" ? "6px 20px" : "16px 48px"};
-    border-top: 1px solid var(--border-light);
-    font-size: ${pageSize === "A5" ? "9px" : "12px"};
-    color: var(--text-secondary);
-  }
-
-  /* ===== PRINT FIX ===== */
-  @media print {
-    body {
-      overflow: hidden;
-      background: #fff;
-    }
-
-    table, tr, td, th {
-      page-break-inside: avoid !important;
-    }
-
-    .invoice-wrapper {
-      page-break-after: avoid;
-    }
-  }
-</style>
-
+        .text-sm-custom {
+            font-size: 0.8rem;
+            line-height: 1.25rem;
+        }
+    </style>
+    <!-- END: Custom Styling -->
 </head>
 
-<body>
+<body class="bg-gray-100">
+    <!-- BEGIN: Medical Bill Main Container -->
+    <main class="a5-landscape-container shadow-lg flex flex-col justify-between" id="medical-bill-a5">
+        <!-- BEGIN: Header Section -->
+        <header class="border-b-2 border-black pb-2 mb-2">
+            <div class="flex justify-between items-start">
+                <div class="flex-1 text-center">
+                    <h1 class="text-xl font-header text-gray-900">${companyDetails.heading}</h1>
+                    <h2 class="font-semibold text-gray-800">${companyDetails.subHeading}</h2>
+                    <p class="text-xs font-medium">${companyDetails.iso}</p>
+                    <p class="text-xs italic">${companyDetails.area}
+                    </p>
+                </div>
+            </div>
+        </header>
+        <!-- END: Header Section -->
+        <!-- BEGIN: Patient Information Grid -->
+        <section class="grid grid-cols-3 gap-y-2 gap-x-4 mb-2 text-xs-custom border-b pb-4">
 
-  <main class="invoice-wrapper">
-
-    <!-- Header -->
-    <header class="invoice-header">
-      <div class="hospital-info">
-  <div class="hospital-title">
-    <div class="hospital-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
-          10-4.48 10-10S17.52 2 12 2zm1 
-          11h4v-2h-4V7h-2v4H7v2h4v4h2v-4z"/>
-      </svg>
+    <!-- Row 1 -->
+    <div class="flex gap-1">
+        <span class="font-bold">Invoice No:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">${invoice.name}</span>
     </div>
-    <div class="hospital-name">
-      ${invoice.company}
+
+    <div class="flex gap-1">
+        <span class="font-bold">Invoice Date:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">${formattedDate}</span>
     </div>
-  </div>
 
-  <div class="hospital-address">
-    <p>${companyDetails.area}</p>
-    <p>${companyDetails.state}</p>
-    <p>📞 ${companyDetails.phone}</p>
-  </div>
-</div>
+    <div class="flex gap-1">
+        <span class="font-bold">Customer ID:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">${invoice.customer}</span>
+    </div>
 
-      <div class="invoice-meta">
-        <h1 class="invoice-title">INVOICE</h1>
-        <p>Invoice # <strong>${invoice.name})</strong></p>
-        <p>Date: <strong>${formattedDate}</strong></p>
-        <div class="paid-badge">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 
-              10 10 10-4.48 10-10S17.52 2 
-              12 2zm-1.2 14.4L6.6 
-              12.2l1.4-1.4 2.8 2.8 
-              5.8-5.8 1.4 1.4-7.2 7.2z"/>
-            </svg>
-           ${invoice.status}
-        </div>
-      </div>
-    </header>
 
-    <!-- Patient -->
-    <section class="patient-section">
-      <div class="patient-grid">
-        <div>
-          <div class="label">Patient Name</div>
-          <div class="value">${invoice.patient_name}</div>
-        </div>
-        <div>
-          <div class="label">Patient ID</div>
-          <div class="value">${invoice.patient}</div>
-        </div>
-      </div>
-    </section>
+    <!-- Row 2 -->
 
-    <!-- Table -->
-    <section class="table-section">
-      <table>
-        <thead>
-          <tr>
-            <th>Test Name</th>
-            <th class="center">Quantity</th>
-            <th class="right">Test Price</th>
-            <th class="right">Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHTML}
-        </tbody>
-      </table>
+    <div class="flex gap-1">
+        <span class="font-bold">Customer Name:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">
+            ${invoice.customer_name}
+        </span>
+    </div>
 
-      <div class="summary">
-        <div class="payment-box">
-          <h3>Payment Details</h3>
-          <div class="payment-row"><span>Status</span><strong>${invoice.status}</strong></div>
-          <div class="payment-row"><span>Date</span><strong>${invoice.posting_date}</strong></div>
-          <div class="payment-row"><span>Discount</span><strong>₹ ${invoice.discount_amount || 0}</strong></div>
-          <div class="payment-row"><span>Method</span><strong>Cash</strong></div>
-        </div>
+    <div class="flex gap-1">
+        <span class="font-bold">Age:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">
+            45 Yrs
+        </span>
+    </div>
 
-        <div class="totals">
-          
-          <div class="totals-row">
-            <span>Total</span>
-            <span class="grand-total">₹ ${invoice.net_total}</span>
-          </div>
-          <div class="thank-you">
-            Thank you for choosing Ramakrishna Mission Sargachi.
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="flex gap-1">
+        <span class="font-bold">Gender:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">
+            Male
+        </span>
+    </div>
 
-    <!-- Footer -->
-    <footer class="invoice-footer">
-      <p>© 2023 Ramakrishna Mission Sargachi. All rights reserved.</p>
-    </footer>
-  </main>
 
+    <!-- Row 3 -->
+
+    <div class="flex gap-1">
+        <span class="font-bold">Mobile:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">
+            9876543210
+        </span>
+    </div>
+
+    <div class="flex gap-1">
+        <span class="font-bold">Category:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">
+            General
+        </span>
+    </div>
+
+    <div class="flex gap-1">
+        <span class="font-bold">Ref By:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">
+            ${invoice.ref_practitioner}
+        </span>
+    </div>
+
+</section>
+        <!-- END: Patient Information Grid -->
+        <!-- BEGIN: Billing Table -->
+        <section class="flex-grow" data-purpose="billing-table" >
+            <table class="w-full border-collapse border border-gray-800 text-xs-custom">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th class="border border-gray-800 text-left w-12">Sl.</th>
+                        <th class="border border-gray-800 text-left">TEST DESCRIPTION</th>
+                        <th class="border border-gray-800 text-right w-24">TEST AMT (₹)</th>
+                        <th class="border border-gray-800 text-right w-24">DISCOUNT (₹)</th>
+                        <th class="border border-gray-800 text-right w-24">NET AMT (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHTML}
+                </tbody>
+            </table>
+        </section>
+        <!-- END: Billing Table -->
+        <!-- BEGIN: Billing Summary and Footer -->
+        <footer class="mt-2 border-t-2 border-black pt-2">
+            <div class="flex justify-between items-end">
+                <!-- Contact Info & Sign -->
+                <div class="text-[10px]">
+                    <p class="font-bold">Contact: 03482-232222 | Email: ${companyDetails.email}</p>
+                    <p>Consultation Hours: 8:00 AM - 12:00 PM &amp; 4:00 PM - 6:00 PM</p>
+                    <div class="mt-8 flex gap-20">
+                        <div class="text-center">
+                            <div class="w-32 border-b border-black mb-1"></div>
+                            <p>Patient's Signature</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-32 border-b border-black mb-1"></div>
+                            <p>Authorized Signatory</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Summary Totals -->
+                <div class="w-1/3 text-xs-custom">
+                    <div class="flex justify-between border-b">
+                        <span>Total Amount:</span>
+                        <span class="font-semibold">₹ ${invoice.total}</span>
+                    </div>
+                    <div class="flex justify-between border-b">
+                        <span>(-) Discount:</span>
+                        <span class="font-semibold">₹ ${invoice.discount_amount || 0}</span>
+                    </div>
+                    <div class="flex justify-between border-b bg-gray-50">
+                        <span class="font-bold">Net Amount:</span>
+                        <span class="font-bold">₹ ${invoice.net_total}</span>
+                    </div>
+                    <div class="flex justify-between border-b">
+                        <span>(-) Paid:</span>
+                        <span class="font-semibold">₹ ${invoice.paid_amount}</span>
+                    </div>
+                    <div class="flex justify-between border-b border-black text-xs">
+                        <span class="font-black">Due Amount:</span>
+                        <span class="font-black">₹ 0.00</span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-[9px] text-center mt-1 italic text-gray-600">This is a computer-generated receipt and does
+                not require a physical stamp for validation.</p>
+        </footer>
+        <!-- END: Billing Summary and Footer -->
+    </main>
+    <!-- END: Toggle Notification -->
 </body>
+
 </html>
     `);
 
