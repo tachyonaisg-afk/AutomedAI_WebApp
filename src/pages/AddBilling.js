@@ -745,7 +745,7 @@ const AddBilling = () => {
   const [itemResults, setItemResults] = useState([]);
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
-
+    const [showPHCOnly, setShowPHCOnly] = useState(false);
   // Dropdown options
   const [practitioners, setPractitioners] = useState([]);
   const [serviceUnits, setServiceUnits] = useState([]);
@@ -882,6 +882,23 @@ const AddBilling = () => {
     }
   }, []);
 
+    const getLockedCategory = useCallback(() => {
+      const validItems = items.filter(
+        (item) =>
+          item.item &&
+          item.item !== "STO-ITEM-2025-00539"
+      );
+  
+      if (validItems.length === 0) return null;
+  
+      const firstItemName = validItems[0].itemName?.toUpperCase() || "";
+  
+      if (firstItemName.startsWith("LAB")) return "LAB";
+      if (firstItemName.startsWith("PLB")) return "PLB";
+      if (firstItemName.startsWith("PHC")) return "PHC";
+  
+      return null;
+    }, [items]);
   // Debounced item search
   const searchItems = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -895,17 +912,30 @@ const AddBilling = () => {
     try {
       let finalQuery = query.trim();
 
-      // If user types something like "plb tsh"
-      const words = finalQuery.split(" ");
+      // Normalize prefix (PLB / LAB / PHC)
+      const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
 
-      if (words.length > 1) {
-        const firstWord = words[0];
+      if (prefixMatch) {
+        const prefix = prefixMatch[1].toUpperCase();
+        finalQuery = finalQuery.replace(/^(plb|lab|phc)\s+/i, `${prefix}- `);
+      }
+      const lockedCategory = getLockedCategory();
 
-        // If first word does NOT already contain "-"
-        if (!firstWord.includes("-")) {
-          words[0] = `${firstWord}-`;
-          finalQuery = words.join(" ");
-        }
+      // -----------------------------
+      // PHC ONLY MODE
+      // -----------------------------
+      if (showPHCOnly) {
+        finalQuery = `PHC- ${query.trim()}`;
+      }
+      // -----------------------------
+      // LOCKED CATEGORY MODE
+      // -----------------------------
+      else if (lockedCategory) {
+        const cleanedQuery = query
+          .trim()
+          .replace(/^(plb|lab|phc)-?\s*/i, "");
+
+        finalQuery = `${lockedCategory}- ${cleanedQuery}`;
       }
 
       const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
@@ -914,16 +944,69 @@ const AddBilling = () => {
         page_length: 10,
       });
 
-      if (response.data?.results || response.data?.message) {
-        setItemResults(response.data.results || response.data.message || []);
-        setShowItemResults(true);
+      let results = response.data?.results || response.data?.message || [];
+
+      console.log("📊 Search results data:", results);
+      console.log("📋 Processed search results:", results);
+
+      // --------------------------------------
+      // Filter PHC visibility logic
+      // --------------------------------------
+      // Normalize typed query
+      const typed = query.trim().toUpperCase();
+
+      // ------------------------------------------------
+      // PHC MODE (Highest Priority)
+      // ------------------------------------------------
+      if (showPHCOnly) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith("PHC")
+        );
       }
+
+      // ------------------------------------------------
+      // LOCKED CATEGORY MODE (Second Priority)
+      // ------------------------------------------------
+      else if (lockedCategory) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith(lockedCategory)
+        );
+      }
+
+      // ------------------------------------------------
+      // NORMAL MODE (Default Behaviour)
+      // ------------------------------------------------
+      else {
+        // Never show PHC in normal mode
+        results = results.filter(
+          (item) => !item.description?.toUpperCase().startsWith("PHC")
+        );
+
+        // If explicitly typing PLB → show PLB
+        if (typed.startsWith("PLB")) {
+          results = results.filter((item) =>
+            item.description?.toUpperCase().startsWith("PLB")
+          );
+        }
+        // Otherwise → default LAB
+        else {
+          results = results.filter((item) =>
+            item.description?.toUpperCase().startsWith("LAB")
+          );
+        }
+      }
+
+
+
+      setItemResults(results);
+      setShowItemResults(true);
+
     } catch (err) {
       console.error("Error searching items:", err);
     } finally {
       setSearchingItem(false);
     }
-  }, []);
+  }, [showPHCOnly, getLockedCategory]);
 
   // Debounce effect for patient search
   useEffect(() => {
@@ -938,6 +1021,7 @@ const AddBilling = () => {
     const timer = setTimeout(() => {
       searchItems(itemSearch);
     }, 300);
+
     return () => clearTimeout(timer);
   }, [itemSearch, searchItems]);
 
@@ -961,7 +1045,6 @@ const AddBilling = () => {
       };
     });
   };
-
 
   const handlePatientSelect = async (patient) => {
     const patientId = patient.value || patient.name;
@@ -1034,10 +1117,10 @@ const AddBilling = () => {
 
       updatedItems[index] = {
         ...updatedItems[index],
-        item_code: itemCode,
-        item_name: itemData?.item_name || item.description || itemCode,
-        description: itemData?.description || item.description || itemCode,
-        uom: itemData?.stock_uom || itemData?.sales_uom || "Unit",
+        no: index + 1,
+        item: itemCode,
+        itemName: itemData?.item_name || item.description || itemCode,
+        qty: qty,
         rate: rate,
         amount: rate * qty,
       };
@@ -1047,10 +1130,8 @@ const AddBilling = () => {
       const updatedItems = [...items];
       updatedItems[index] = {
         ...updatedItems[index],
-        item_code: item.value || item.name,
-        item_name: item.description || item.value || item.name,
-        description: item.description || item.value || item.name,
-        uom: "Unit",
+        item: item.value || item.name,
+        itemName: item.description || item.value || item.name,
       };
       setItems(updatedItems);
     }
@@ -1519,197 +1600,110 @@ const AddBilling = () => {
           </FormSection>
 
           {/* Items Section */}
-          <ItemsSection style={{ marginTop: "24px" }}>
+          <ItemsSection>
             <ItemsHeader>
               <ItemsTitle>Items</ItemsTitle>
-              <ItemButtons>
+
+              <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+
+                {billingData.company?.toLowerCase() === "ramakrishna mission sargachi" && (
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
+                    <input
+                      type="checkbox"
+                      checked={showPHCOnly}
+                      onChange={(e) => setShowPHCOnly(e.target.checked)}
+                    />
+                    Show PHC items Only
+                  </label>
+                )}
+
                 <IconButton type="button" onClick={addItem}>
                   <Plus />
                 </IconButton>
               </ItemButtons>
             </ItemsHeader>
 
-            <ItemsTableWrapper>
-              <ItemsTable>
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>#</TableHeader>
-                    <TableHeader>Item Code</TableHeader>
-                    <TableHeader>Item Name</TableHeader>
-                    {/* <TableHeader>Warehouse</TableHeader> */}
-                    {/* <TableHeader>UOM</TableHeader> */}
-                    <TableHeader>Qty</TableHeader>
-                    <TableHeader>Rate</TableHeader>
-                    <TableHeader>Amount</TableHeader>
-                    <TableHeader></TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {items.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9} style={{ textAlign: "center", padding: "24px", color: "#666" }}>
-                        No items added. Click + to add items.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                          <ItemSearchWrapper>
-                            {item.item_code ? (
-                              <ItemInput type="text" value={item.item_code} disabled />
-                            ) : (
-                              <>
-                                <ItemInput
-                                  type="text"
-                                  placeholder="Search item..."
-                                  value={itemSearchIndex === index ? itemSearch : ""}
-                                  onChange={(e) => {
-                                    setItemSearchIndex(index);
-                                    setItemSearch(e.target.value);
-                                  }}
-                                  onFocus={() => {
-                                    setItemSearchIndex(index);
-                                    if (itemSearch.length >= 2) setShowItemResults(true);
-                                  }}
-                                  onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
-                                />
-                                {showItemResults && itemSearchIndex === index && (
-                                  <SearchResults>
-                                    {itemResults.length > 0 ? (
-                                      itemResults.map((itemResult, idx) => (
-                                        <SearchResultItem
-                                          key={idx}
-                                          onMouseDown={() => handleItemSelect(itemResult, index)}
-                                        >
-                                          {itemResult.description || ""}
-                                        </SearchResultItem>
-                                      ))
-                                    ) : (
-                                      <SearchResultEmpty>
-                                        {searchingItem ? "Searching..." : "No items found"}
-                                      </SearchResultEmpty>
-                                    )}
-                                  </SearchResults>
+            <ItemsTable>
+              <TableHead>
+                <TableRow>
+                  <TableHeader>No.</TableHeader>
+                  <TableHeader>Item</TableHeader>
+                  <TableHeader>Item Name</TableHeader>
+                  <TableHeader>Qty</TableHeader>
+                  <TableHeader>Rate</TableHeader>
+                  <TableHeader>Amount</TableHeader>
+                  <TableHeader></TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {items.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.no}</TableCell>
+                    <TableCell>
+                      <ItemSearchWrapper>
+                        {item.item ? (
+                          <ItemInput type="text" value={item.item} disabled />) : (
+                          <>
+                            <ItemInput
+                              type="text"
+                              placeholder="Search item..."
+                              value={itemSearchIndex === index ? itemSearch : ""}
+                              onChange={(e) => {
+                                setItemSearchIndex(index);
+                                setItemSearch(e.target.value);
+                              }}
+                              onFocus={() => {
+                                setItemSearchIndex(index);
+                                if (itemSearch.length >= 2)
+                                  setShowItemResults(true);
+                              }}
+                              onBlur={() => setTimeout(() => setShowItemResults(false), 200)} />
+                            {showItemResults && itemSearchIndex === index && (
+                              <SearchResults>
+                                {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
+                                  <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
+                                    {itemResult.description || ""}
+                                  </SearchResultItem>))) : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
+
+                                  </SearchResultEmpty>
                                 )}
-                              </>
-                            )}
-                          </ItemSearchWrapper>
-                        </TableCell>
-                        <TableCell>
-                          <ItemInput
-                            type="text"
-                            value={item.item_name}
-                            disabled
-                          />
-                        </TableCell>
-                        {/* <TableCell>
-                          <FormSelect
-                            value={item.warehouse}
-                            onChange={(e) => handleItemChange(index, "warehouse", e.target.value)}
-                            style={{ padding: "6px 8px", fontSize: "13px", minWidth: "120px" }}
-                          >
-                            {warehouses.map((w) => (
-                              <option key={w.name} value={w.name}>
-                                {w.name}
-                              </option>
-                            ))}
-                            <option value="Finished Goods - RKMS">Finished Goods - RKMS</option>
-                          </FormSelect>
-                        </TableCell> */}
-                        {/* <TableCell>
-                          <ItemInput
-                            type="text"
-                            value={item.uom}
-                            disabled
-                            style={{ width: "60px" }}
-                          />
-                        </TableCell> */}
-                        <TableCell>
-                          <QtyControlWrapper>
-                            <QtyButton
-                              type="button"
-                              onClick={() => {
-                                const currentQty = parseFloat(item.qty) || 0;
-                                if (currentQty > 1) {
-                                  handleItemChange(index, "qty", currentQty - 1);
-                                }
-                              }}
-                            >
-                              <Minus />
-                            </QtyButton>
-                            <QtyInput
-                              type="number"
-                              value={item.qty}
-                              onChange={(e) => handleItemChange(index, "qty", e.target.value)}
-                              min="1"
-                            />
-                            <QtyButton
-                              type="button"
-                              onClick={() => {
-                                const currentQty = parseFloat(item.qty) || 0;
-                                handleItemChange(index, "qty", currentQty + 1);
-                              }}
-                            >
-                              <Plus />
-                            </QtyButton>
-                          </QtyControlWrapper>
-                        </TableCell>
-                        <TableCell>
-                          <ItemInput
-                            type="number"
-                            step="0.01"
-                            value={item.rate}
-                            onChange={(e) => handleItemChange(index, "rate", e.target.value)}
-                            style={{ width: "80px" }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {(item.amount || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <DeleteItemButton type="button" onClick={() => removeItem(index)}>
-                            <X />
-                          </DeleteItemButton>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </ItemsTable>
-            </ItemsTableWrapper>
+                              </SearchResults>)}
+                          </>
+                        )}
+                      </ItemSearchWrapper>
+                    </TableCell>
+                    <TableCell>
+                      <ItemInput type="text" value={item.itemName} disabled />
+                    </TableCell>
+                    <TableCell>
+                      <ItemInput type="number" value={item.qty} onChange={(e) => handleItemChange(index, "qty", e.target.value)} />
+                    </TableCell>
+                    <TableCell>
+                      <ItemInput type="number" step="0.01" value={item.rate} onChange={(e) => handleItemChange(index, "rate", e.target.value)} />
+                    </TableCell>
+                    <TableCell>{item.amount.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <DeleteItemButton type="button" onClick={() => removeItem(index)}>
+                        <X />
+                      </DeleteItemButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </ItemsTable>
 
             <ItemFooter>
-              {/* <FooterItem>
-                <FooterLabel>Apply Discount On</FooterLabel>
-                <FormSelect
-                  name="apply_discount_on"
-                  value={billingData.apply_discount_on}
-                  onChange={handleBillingChange}
-                  style={{ padding: "6px 8px", fontSize: "13px" }}
-                >
-                  <option value="Grand Total">Grand Total</option>
-                  <option value="Net Total">Net Total</option>
-                </FormSelect>
-              </FooterItem> */}
               <FooterItem>
                 <FooterLabel>Discount %</FooterLabel>
-                <DiscountInput
-                  type="number"
-                  name="additional_discount_percentage"
-                  value={billingData.additional_discount_percentage}
-                  onChange={handleBillingChange}
-                  step="0.01"
-                />
+                <DiscountInput type="number" name="discountPercent" value={billingData.discountPercent} onChange={handleBillingChange} />
               </FooterItem>
               <FooterItem>
                 <FooterLabel>Total Qty:</FooterLabel>
-                <FooterValue>{totals.totalQty}</FooterValue>
+                <FooterValue>{calculateTotals().totalQty}</FooterValue>
               </FooterItem>
               <FooterItem>
                 <FooterLabel>Total:</FooterLabel>
-                <FooterValue>{totals.grossTotal.toFixed(2)}</FooterValue>
+                <FooterValue>{calculateTotals().grossTotal.toFixed(2)}</FooterValue>
               </FooterItem>
             </ItemFooter>
           </ItemsSection>

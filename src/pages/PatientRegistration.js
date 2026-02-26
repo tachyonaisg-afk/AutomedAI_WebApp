@@ -808,7 +808,6 @@ const PatientRegistration = () => {
     }
   }, [formData.address_line1]);
 
-
   // Calculate age from date of birth
   const calculateAgeFromDOB = (dob) => {
     if (!dob) return "";
