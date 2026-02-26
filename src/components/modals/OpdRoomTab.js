@@ -209,7 +209,7 @@ const OpdRoomTab = () => {
         try {
 
             const response = await fetch(
-                `https://hms.automedai.in/rooms/all?company=${company}`
+                `https://midl.automedai.in/rooms/all?company=${company}`
             );
 
             const data = await response.json();

@@ -12,6 +12,7 @@ const TableContainer = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+    table-layout: fixed;
 `;
 
 const Th = styled.th`
@@ -20,11 +21,23 @@ const Th = styled.th`
   font-size: 12px;
   font-weight: 600;
   background-color: #f8f9fa;
+  white-space: nowrap;
+
+  &:nth-child(1) { width: 40px; }
+  &:nth-child(2) { width: 140px; }
+  &:nth-child(3) { width: 180px; }
+  &:nth-child(4) { width: 140px; }
+  &:nth-child(5) { width: 140px; }
+  &:nth-child(6) { width: 140px; }
+  &:nth-child(7) { width: 140px; }
 `;
 
 const Td = styled.td`
   padding: 14px 16px;
   font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const OuterRow = styled.tr`
@@ -37,7 +50,8 @@ const OuterRow = styled.tr`
 `;
 
 const InnerRow = styled.tr`
-  background-color: #a8bbe2;
+  background-color: #f2f2f2;
+  transition: all 0.2s ease;
 `;
 
 const ExpandIcon = styled.div`
@@ -166,8 +180,8 @@ const CollectionDataTable = ({ data, renderActions }) => {
                                         <InnerHeaderCell>Patient</InnerHeaderCell>
                                         <InnerHeaderCell>Sample</InnerHeaderCell>
                                         <InnerHeaderCell>Quantity</InnerHeaderCell>
-                                        <InnerHeaderCell>Status / Date</InnerHeaderCell>
-                                        <InnerHeaderCell>Actions</InnerHeaderCell>
+                                        <InnerHeaderCell>Status</InnerHeaderCell>
+                                        <InnerHeaderCell>Date & Time</InnerHeaderCell>
                                     </InnerHeaderRow>
 
                                     {/* Inner Data Rows */}
@@ -180,11 +194,9 @@ const CollectionDataTable = ({ data, renderActions }) => {
                                             <Td>{item.quantity_uom}</Td>
                                             <Td>
                                                 {item.status}
-                                                <br />
-                                                {item.collection_datetime}
                                             </Td>
                                             <Td>
-                                                {item.status === "Collected" && renderActions && renderActions(item)}
+                                                {item.collection_datetime}
                                             </Td>
                                         </InnerRow>
                                     ))}
@@ -209,7 +221,7 @@ const CollectionDataTable = ({ data, renderActions }) => {
                             setRowsPerPage(Number(e.target.value));
                             setCurrentPage(1);
                         }}
-                        style={{ marginLeft: 8 }}
+                        style={{ marginLeft: 8, padding: "5px 8px" }}
                     >
                         {[10, 25, 50, 100].map((option) => (
                             <option key={option} value={option}>
@@ -226,7 +238,7 @@ const CollectionDataTable = ({ data, renderActions }) => {
                     <button
                         onClick={() => setCurrentPage((prev) => prev - 1)}
                         disabled={currentPage === 1}
-                        style={{ marginLeft: 16 }}
+                        style={{ marginLeft: 16, padding: "5px 8px" }}
                     >
                         Prev
                     </button>
@@ -234,7 +246,7 @@ const CollectionDataTable = ({ data, renderActions }) => {
                     <button
                         onClick={() => setCurrentPage((prev) => prev + 1)}
                         disabled={currentPage === totalPages}
-                        style={{ marginLeft: 8 }}
+                        style={{ marginLeft: 8, padding: "5px 8px" }}
                     >
                         Next
                     </button>
