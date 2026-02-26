@@ -606,7 +606,70 @@ const PathLabBilling = () => {
       .join("");
   };
 
-  const handlePrint = (invoice, pageSize = "A4") => {
+  const handlePrint = async (invoice, pageSize = "A4") => {
+    let patientDOB = "";
+    let patientGender = "";
+    let patientMobile = "";
+    let patientAge = "";
+
+    try {
+      const patientRes = await fetch(
+        "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient.patient.get_patient_detail",
+        {
+          method: "POST", // ⚠️ must be POST for x-www-form-urlencoded
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            patient: invoice.patient,
+          }),
+        }
+      );
+
+      const patientData = await patientRes.json();
+
+      if (patientData.message) {
+        patientDOB = patientData.message.dob;
+        patientGender = patientData.message.sex;
+        patientMobile = patientData.message.mobile;
+
+        // ✅ Calculate Age
+        if (patientDOB) {
+          const dob = new Date(patientDOB);
+          const today = new Date();
+          let age = today.getFullYear() - dob.getFullYear();
+          const m = today.getMonth() - dob.getMonth();
+
+          if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+            age--;
+          }
+
+          patientAge = age;
+        }
+      }
+    } catch (error) {
+      console.error("Patient Fetch Error:", error);
+    }
+
+    let practitionerName = invoice.ref_practitioner;
+
+    try {
+      if (invoice.ref_practitioner) {
+        const pracRes = await fetch(
+          `https://hms.automedai.in/api/resource/Healthcare Practitioner/${invoice.ref_practitioner}`
+        );
+
+        const pracData = await pracRes.json();
+
+        if (pracData.data?.practitioner_name) {
+          practitionerName = pracData.data.practitioner_name;
+        }
+      }
+    } catch (error) {
+      console.error("Practitioner Fetch Error:", error);
+    }
+
+
     const itemsHTML = buildItemsRows(invoice.items);
     const companyAddressMap = {
       "Ramakrishna Mission Sargachi": {
@@ -616,7 +679,7 @@ const PathLabBilling = () => {
         iso: "ISO 9001:2008 Certified",
         state: "West Bengal, India - 742134",
         phone: "03482-232222",
-        email:"rkm.sargachi@gmail.com",
+        email: "rkm.sargachi@gmail.com",
       },
       "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
         heading: "ALFA DIAGNOSTIC CENTRE & POLYCLINIC",
@@ -625,7 +688,7 @@ const PathLabBilling = () => {
         iso: "-",
         state: "West Bengal, India - 742165",
         phone: "+91 9475 353302",
-        email:"-",
+        email: "-",
       },
     };
 
@@ -636,7 +699,7 @@ const PathLabBilling = () => {
       area: "",
       state: "",
       phone: "",
-      email:"",
+      email: "",
     };
 
     setTimeout(() => {
@@ -644,6 +707,14 @@ const PathLabBilling = () => {
 
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");
+      let category = "";
+
+      if (invoice.items && invoice.items.length > 0) {
+        const itemName = invoice.items[0].item_name || "";
+
+        // Split by "-" and take first part
+        category = itemName.split("-")[0].trim();
+      }
 
       printWindow.document.write(`
      <!DOCTYPE html>
@@ -754,14 +825,14 @@ const PathLabBilling = () => {
     <div class="flex gap-1">
         <span class="font-bold">Age:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            45 Yrs
+            ${patientAge ? patientAge + " Yrs" : "-"}
         </span>
     </div>
 
     <div class="flex gap-1">
         <span class="font-bold">Gender:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            Male
+            ${patientGender || "-"}
         </span>
     </div>
 
@@ -771,21 +842,21 @@ const PathLabBilling = () => {
     <div class="flex gap-1">
         <span class="font-bold">Mobile:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            9876543210
+            ${patientMobile || "-"}
         </span>
     </div>
 
     <div class="flex gap-1">
         <span class="font-bold">Category:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            General
+            ${category || "-"}
         </span>
     </div>
 
     <div class="flex gap-1">
         <span class="font-bold">Ref By:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            ${invoice.ref_practitioner}
+            ${practitionerName || "-"}
         </span>
     </div>
 
