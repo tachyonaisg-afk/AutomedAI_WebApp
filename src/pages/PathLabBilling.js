@@ -663,7 +663,6 @@ const PathLabBilling = () => {
       console.error("Practitioner Fetch Error:", error);
     }
 
-
     const itemsHTML = buildItemsRows(invoice.items);
     const companyAddressMap = {
       "Ramakrishna Mission Sargachi": {
@@ -678,7 +677,7 @@ const PathLabBilling = () => {
       "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
         heading: "ALFA DIAGNOSTIC CENTRE & POLYCLINIC",
         subHeading: "-",
-        area: "Baharan, Baruipara, Hariharpara, Dist. Murshidabad, West Bengal - 742165",
+        area: "VILL-BAHARAN, P.O-BARUIPARA, P.S-HARIHARPARA, DIST-MURSHIDABAD, WEST BENGAL-742165",
         iso: "-",
         state: "West Bengal, India - 742165",
         phone: "+91-9475353302",
@@ -802,7 +801,12 @@ const PathLabBilling = () => {
 
     <!-- Row 1 -->
     <div class="flex gap-1">
-        <span class="font-bold">Invoice No:</span>
+        <span class="font-bold">Patient ID:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">${invoice.patient}</span>
+    </div>
+
+    <div class="flex gap-1">
+        <span class="font-bold">Invoice No.:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">${invoice.name}</span>
     </div>
 
@@ -811,16 +815,11 @@ const PathLabBilling = () => {
         <span class="border-b border-dotted border-gray-400 flex-grow">${formattedDate}</span>
     </div>
 
-    <div class="flex gap-1">
-        <span class="font-bold">Customer ID:</span>
-        <span class="border-b border-dotted border-gray-400 flex-grow">${invoice.customer}</span>
-    </div>
-
 
     <!-- Row 2 -->
 
     <div class="flex gap-1">
-        <span class="font-bold">Customer Name:</span>
+        <span class="font-bold">Patient Name:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
             ${invoice.customer_name}
         </span>
@@ -844,9 +843,9 @@ const PathLabBilling = () => {
     <!-- Row 3 -->
 
     <div class="flex gap-1">
-        <span class="font-bold">Mobile:</span>
+        <span class="font-bold">Ref By Prac:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            ${patientMobile || "-"}
+            ${practitionerName || "-"}
         </span>
     </div>
 
@@ -858,9 +857,9 @@ const PathLabBilling = () => {
     </div>
 
     <div class="flex gap-1">
-        <span class="font-bold">Ref By:</span>
+        <span class="font-bold">Mobile:</span>
         <span class="border-b border-dotted border-gray-400 flex-grow">
-            ${practitionerName || "-"}
+            ${patientMobile || "-"}
         </span>
     </div>
 

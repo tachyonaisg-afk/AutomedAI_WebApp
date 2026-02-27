@@ -125,6 +125,7 @@ const DoctorAvailabilityTab = () => {
   };
 
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [selectedCompany, setSelectedCompany] = useState("");
 
   const [formData, setFormData] = useState({
 
@@ -177,11 +178,16 @@ const DoctorAvailabilityTab = () => {
       if (data?.data?.length > 0) {
         setCompanyOptions(data.data);
 
-        // ✅ Auto select first company
+        const firstCompany = data.data[0].name;
+
+        // For create form
         setFormData((prev) => ({
           ...prev,
-          company: data.data[0].name,
+          company: firstCompany,
         }));
+
+        // ✅ For filter dropdown
+        setSelectedCompany(firstCompany);
       }
     } catch (error) {
       console.error(error);
@@ -322,11 +328,11 @@ const DoctorAvailabilityTab = () => {
 
   // ✅ Fetch Availability List
   const fetchAvailability = async () => {
-    if (!formData.company || !selectedDate) return;
+    if (!selectedCompany || !selectedDate) return;
 
     try {
       const res = await fetch(
-        `https://midl.automedai.in/doctor_available/fetch?company=${formData.company}&date=${selectedDate}`
+        `https://midl.automedai.in/doctor_available/fetch?company=${selectedCompany}&date=${selectedDate}`
       );
 
       const data = await res.json();
@@ -342,18 +348,16 @@ const DoctorAvailabilityTab = () => {
   };
 
   useEffect(() => {
-    if (formData.company && selectedDate) {
+    if (selectedCompany && selectedDate) {
       fetchAvailability();
     }
-  }, [formData.company, selectedDate]);
-
-
+  }, [selectedCompany, selectedDate]);
 
   return (
 
     <SectionWrapper>
 
-      <h3 style={{paddingLeft:"15px", paddingTop:"15px"}}>Create Doctor Availability :</h3>
+      <h3 style={{ paddingLeft: "15px", paddingTop: "15px" }}>Create Doctor Availability :</h3>
       <FormGrid>
 
         {/* Doctor */}
@@ -491,8 +495,25 @@ const DoctorAvailabilityTab = () => {
       </FormGrid>
 
       {/* Filter Section */}
-      <h3 style={{marginLeft:"15px",borderTop: "2px solid #e2e8f0", paddingTop:"15px", paddingBottom:"15px"}}>Check Doctor Availability :</h3>
+      <h3 style={{ marginLeft: "15px", borderTop: "2px solid #e2e8f0", paddingTop: "15px", paddingBottom: "15px" }}>Check Doctor Availability :</h3>
       <FormGrid style={{ paddingTop: "0", paddingBottom: "1rem" }}>
+
+        {/* Select Company */}
+        <Field>
+          <label>Select Company</label>
+          <select
+            value={selectedCompany}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+          >
+            {companyOptions.map((company) => (
+              <option key={company.name} value={company.name}>
+                {company.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        {/* Filter By Date */}
         <Field>
           <label>Filter By Date</label>
           <input
@@ -502,12 +523,14 @@ const DoctorAvailabilityTab = () => {
           />
         </Field>
 
+        {/* Today Button */}
         <Button
           style={{ gridColumn: "span 2", background: "#10b981" }}
           onClick={() => setSelectedDate(getTodayDate())}
         >
           Today
         </Button>
+
       </FormGrid>
 
       {/* TABLE */}
