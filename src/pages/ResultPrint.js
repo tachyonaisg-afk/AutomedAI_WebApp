@@ -991,7 +991,6 @@ const ResultPrint = () => {
               )}
             </div>
 
-
             <div className="pdf-body">
 
               <PatientInfoSection>

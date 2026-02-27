@@ -606,7 +606,7 @@ const PathLabBilling = () => {
       .join("");
   };
 
-  const handlePrint = async (invoice, pageSize = "A4") => {
+  const handlePrint = async (invoice) => {
     let patientDOB = "";
     let patientGender = "";
     let patientMobile = "";
@@ -678,11 +678,11 @@ const PathLabBilling = () => {
       "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
         heading: "ALFA DIAGNOSTIC CENTRE & POLYCLINIC",
         subHeading: "-",
-        area: "Hariharpara, Murshidabad",
+        area: "Baharan, Baruipara, Hariharpara, Dist. Murshidabad, West Bengal - 742165",
         iso: "-",
         state: "West Bengal, India - 742165",
-        phone: "+91 9475 353302",
-        email: "-",
+        phone: "+91-9475353302",
+        email: "alfadiagnosticcentrebaharan@gmail.com",
       },
     };
 
@@ -725,21 +725,31 @@ const PathLabBilling = () => {
     <style data-purpose="layout">
         @media print {
             @page {
-                size: A5 landscape;
-                margin: 1mm;
+                size: 210mm 148mm;
+                margin: 0;
+            }
+
+            html,
+            body {
+                width: 210mm;
+                height: 148mm;
+                margin: 0;
+                padding: 0;
             }
 
             body {
                 -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                overflow: hidden;
             }
         }
 
         /* Fixed height for the A5 Landscape container to simulate the paper size */
         .a5-landscape-container {
             width: 210mm;
-            min-height: 140mm;
+            height: 148mm;
             padding: 5mm;
-            margin: 0 auto;
+            margin: 0;
             border: 1px solid #e5e7eb;
             background-color: #ffffff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -930,6 +940,7 @@ const PathLabBilling = () => {
       printWindow.document.close();
 
       printWindow.onload = () => {
+        printWindow.document.body.style.zoom = "100%";
         printWindow.focus();
         printWindow.print();
 
@@ -944,24 +955,10 @@ const PathLabBilling = () => {
 
   const renderActions = (row) => (
     <ActionsContainer>
-
-      <ActionLink>
+      <ActionLink onClick={() => printInvoice(row)}>
         <Printer size={16} />
-        Print ▾
+        Print
       </ActionLink>
-
-      <PrintDropdown>
-
-        <DropdownItem onClick={() => printInvoice(row, "A4")}>
-          Print A4
-        </DropdownItem>
-
-        <DropdownItem onClick={() => printInvoice(row, "A5")}>
-          Print A5
-        </DropdownItem>
-
-      </PrintDropdown>
-
     </ActionsContainer>
   );
 
