@@ -815,7 +815,6 @@ const PathLabBilling = () => {
         <span class="border-b border-dotted border-gray-400 flex-grow">${formattedDate}</span>
     </div>
 
-
     <!-- Row 2 -->
 
     <div class="flex gap-1">
@@ -838,7 +837,6 @@ const PathLabBilling = () => {
             ${patientGender || "-"}
         </span>
     </div>
-
 
     <!-- Row 3 -->
 

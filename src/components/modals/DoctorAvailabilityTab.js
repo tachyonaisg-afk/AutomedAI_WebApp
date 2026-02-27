@@ -323,9 +323,6 @@ const DoctorAvailabilityTab = () => {
 
   };
 
-
-
-
   // ✅ Fetch Availability List
   const fetchAvailability = async () => {
     if (!selectedCompany || !selectedDate) return;
