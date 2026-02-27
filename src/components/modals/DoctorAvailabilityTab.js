@@ -333,14 +333,18 @@ const DoctorAvailabilityTab = () => {
       );
 
       const data = await res.json();
-      console.log("available data:",data);
-      if (data.success) {
+
+      console.log("available data:", data);
+
+      if (data.success && Array.isArray(data.available_slots)) {
         setAvailabilityList(data.available_slots);
       } else {
         setAvailabilityList([]);
       }
+
     } catch (error) {
       console.error(error);
+      setAvailabilityList([]);
     }
   };
 
