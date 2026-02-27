@@ -119,6 +119,13 @@ const DoctorAvailabilityTab = () => {
 
   const [availabilityList, setAvailabilityList] = useState([]);
 
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+
   const [formData, setFormData] = useState({
 
     doctor_id: "",
@@ -152,38 +159,34 @@ const DoctorAvailabilityTab = () => {
 
       }
 
-    } catch {}
+    } catch { }
 
   }, []);
 
 
-
-
   // ✅ Fetch Companies
   const fetchCompanies = async () => {
-
     try {
-
       const res = await fetch(
         "https://hms.automedai.in/api/resource/Company",
-        {
-          credentials: "include",
-        }
+        { credentials: "include" }
       );
 
       const data = await res.json();
 
-      if (data?.data) {
-
+      if (data?.data?.length > 0) {
         setCompanyOptions(data.data);
 
+        // ✅ Auto select first company
+        setFormData((prev) => ({
+          ...prev,
+          company: data.data[0].name,
+        }));
       }
-
-    } catch {}
-
+    } catch (error) {
+      console.error(error);
+    }
   };
-
-
 
 
   // ✅ Fetch Doctors
@@ -209,7 +212,7 @@ const DoctorAvailabilityTab = () => {
 
       }
 
-    } catch {}
+    } catch { }
 
   };
 
@@ -319,36 +322,30 @@ const DoctorAvailabilityTab = () => {
 
   // ✅ Fetch Availability List
   const fetchAvailability = async () => {
+    if (!formData.company || !selectedDate) return;
 
     try {
-
       const res = await fetch(
-        `https://midl.automedai.in/doctor_available/all?company=${formData.company}`
+        `https://midl.automedai.in/doctor_available/fetch?company=${formData.company}&date=${selectedDate}`
       );
 
       const data = await res.json();
 
       if (data.success) {
-
         setAvailabilityList(data.data);
-
+      } else {
+        setAvailabilityList([]);
       }
-
-    } catch {}
-
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-
-
   useEffect(() => {
-
-    if (formData.company) {
-
+    if (formData.company && selectedDate) {
       fetchAvailability();
-
     }
-
-  }, [formData.company]);
+  }, [formData.company, selectedDate]);
 
 
 
@@ -356,8 +353,8 @@ const DoctorAvailabilityTab = () => {
 
     <SectionWrapper>
 
+      <h3 style={{paddingLeft:"15px", paddingTop:"15px"}}>Create Doctor Availability :</h3>
       <FormGrid>
-
 
         {/* Doctor */}
 
@@ -493,7 +490,25 @@ const DoctorAvailabilityTab = () => {
 
       </FormGrid>
 
+      {/* Filter Section */}
+      <h3 style={{marginLeft:"15px",borderTop: "2px solid #e2e8f0", paddingTop:"15px", paddingBottom:"15px"}}>Check Doctor Availability :</h3>
+      <FormGrid style={{ paddingTop: "0", paddingBottom: "1rem" }}>
+        <Field>
+          <label>Filter By Date</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </Field>
 
+        <Button
+          style={{ gridColumn: "span 2", background: "#10b981" }}
+          onClick={() => setSelectedDate(getTodayDate())}
+        >
+          Today
+        </Button>
+      </FormGrid>
 
       {/* TABLE */}
 
