@@ -155,7 +155,7 @@ const CollectionDataTable = ({ data, renderActions }) => {
                                 </Td>
                                 <Td>{group.patient_id}</Td>
                                 <Td>{group.patient_name}</Td>
-                                <Td style={{ textTransform: "capitalize" }}>
+                                <Td>
                                     {group.base_sample}
                                 </Td>
                                 <Td>
