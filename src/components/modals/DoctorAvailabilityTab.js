@@ -375,7 +375,7 @@ const DoctorAvailabilityTab = () => {
 
             <option>Select Doctor</option>
 
-            {practitioners.map((doc) => (
+            {practitioners?.map((doc) => (
 
               <option
                 key={doc.name}
@@ -410,7 +410,7 @@ const DoctorAvailabilityTab = () => {
 
             <option>Select Company</option>
 
-            {companyOptions.map(
+            {companyOptions?.map(
               (company) => (
 
                 <option
@@ -505,7 +505,7 @@ const DoctorAvailabilityTab = () => {
             value={selectedCompany}
             onChange={(e) => setSelectedCompany(e.target.value)}
           >
-            {companyOptions.map((company) => (
+            {companyOptions?.map((company) => (
               <option key={company.name} value={company.name}>
                 {company.name}
               </option>
@@ -556,11 +556,9 @@ const DoctorAvailabilityTab = () => {
 
         </thead>
 
-
-
         <tbody>
 
-          {availabilityList.map(
+          {availabilityList?.map(
             (item) => (
 
               <tr key={item.id}>

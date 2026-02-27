@@ -676,9 +676,9 @@ const PathLabBilling = () => {
       },
       "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
         heading: "ALFA DIAGNOSTIC CENTRE & POLYCLINIC",
-        subHeading: "-",
-        area: "VILL-BAHARAN, P.O-BARUIPARA, P.S-HARIHARPARA, DIST-MURSHIDABAD, WEST BENGAL-742165",
-        iso: "-",
+        subHeading: "VILL-BAHARAN, P.O-BARUIPARA, P.S-HARIHARPARA, DIST-MURSHIDABAD",
+        area: "CONTACT NO: +91-9475353302     EMAIL: alfadiagnosticcentrebaharan@gmail.com",
+        iso: "WEST BENGAL, PIN-742165",
         state: "West Bengal, India - 742165",
         phone: "+91-9475353302",
         email: "alfadiagnosticcentrebaharan@gmail.com",
