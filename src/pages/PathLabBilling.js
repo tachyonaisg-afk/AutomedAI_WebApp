@@ -615,13 +615,8 @@ const PathLabBilling = () => {
     try {
       const patientRes = await api.post(
         "/method/healthcare.healthcare.doctype.patient.patient.get_patient_detail",
-        new URLSearchParams({
-          patient: invoice.patient,
-        }),
         {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
+          patient: invoice.patient,
         }
       );
 

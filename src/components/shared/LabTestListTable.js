@@ -12,7 +12,7 @@ const TableContainer = styled.div`
 `;
 const TableScroll = styled.div`
   overflow-y: auto;
-   max-height: 700px;
+   max-height: 500px;
   flex: 1;
 `;
 const Table = styled.table`
@@ -303,50 +303,48 @@ const LabTestListTable = ({
     return (
         <TableContainer>
             <TableScroll>
-            <Table>
-                <TableHeader>
-                    <TableHeaderRow>
-                        {columns.map((column) => {
-                            const isSortable = sortableColumns.includes(column.key);
-                            const isActive = sortConfig.key === column.key;
+                <Table>
+                    <TableHeader>
+                        <TableHeaderRow>
+                            {columns.map((column) => {
+                                const isSortable = sortableColumns.includes(column.key);
+                                const isActive = sortConfig.key === column.key;
 
-                            if (isSortable) {
+                                if (isSortable) {
+                                    return (
+                                        <SortableHeader key={column.key} onClick={() => handleSort(column.key)}>
+                                            <SortableHeaderContent>
+                                                {column.label}
+                                                <SortIcon active={isActive}>
+                                                    <ChevronUp
+                                                        style={{
+                                                            opacity: isActive && sortConfig.direction === "asc" ? 1 : 0.3,
+                                                        }}
+                                                    />
+                                                    <ChevronDown
+                                                        style={{
+                                                            opacity: isActive && sortConfig.direction === "desc" ? 1 : 0.3,
+                                                        }}
+                                                    />
+                                                </SortIcon>
+                                            </SortableHeaderContent>
+                                        </SortableHeader>
+                                    );
+                                }
+
                                 return (
-                                    <SortableHeader key={column.key} onClick={() => handleSort(column.key)}>
-                                        <SortableHeaderContent>
-                                            {column.label}
-                                            <SortIcon active={isActive}>
-                                                <ChevronUp
-                                                    style={{
-                                                        opacity: isActive && sortConfig.direction === "asc" ? 1 : 0.3,
-                                                    }}
-                                                />
-                                                <ChevronDown
-                                                    style={{
-                                                        opacity: isActive && sortConfig.direction === "desc" ? 1 : 0.3,
-                                                    }}
-                                                />
-                                            </SortIcon>
-                                        </SortableHeaderContent>
-                                    </SortableHeader>
+                                    <TableHeaderCell key={column.key}>{column.label}</TableHeaderCell>
                                 );
-                            }
+                            })}
+                        </TableHeaderRow>
+                    </TableHeader>
+                    <TableBody>
+                        {groupedData.map((group) => {
+                            const isExpanded = expandedGroups[group.groupKey];
 
                             return (
-                                <TableHeaderCell key={column.key}>{column.label}</TableHeaderCell>
-                            );
-                        })}
-                    </TableHeaderRow>
-                </TableHeader>
-                <TableBody>
-                    {groupedData.map((group) => {
-                        const isExpanded = expandedGroups[group.groupKey];
-
-                        return (
-                            <React.Fragment key={group.groupKey}>
-
-                                {/* If multiple tests → show group header */}
-                                {group.tests.length > 1 && (
+                                <React.Fragment key={group.groupKey}>
+                                    {/* Always show group header */}
                                     <TableRow
                                         style={{
                                             backgroundColor: "#f1f5f9",
@@ -357,46 +355,46 @@ const LabTestListTable = ({
                                     >
                                         <TableCell colSpan={columns.length}>
                                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}{" "}
-                                            {group.patient_name} ({group.patient}) — {group.department}
-                                            ({group.tests.length} Tests)
+                                            {group.patient_name} ({group.patient}) — {group.department} (
+                                            {group.tests.length} Test{group.tests.length > 1 ? "s" : ""}
+                                            )
                                         </TableCell>
                                     </TableRow>
-                                )}
 
-                                {/* Render individual tests */}
-                                {(group.tests.length === 1 || isExpanded) &&
-                                    group.tests.map((row, rowIndex) => (
-                                        <TableRow key={row.name}>
-                                            {columns.map((column) => {
-                                                if (column.key === "status" && renderStatus) {
+                                    {/* Render tests only if expanded */}
+                                    {isExpanded &&
+                                        group.tests.map((row, rowIndex) => (
+                                            <TableRow key={row.name}>
+                                                {columns.map((column) => {
+                                                    if (column.key === "status" && renderStatus) {
+                                                        return (
+                                                            <TableCell key={column.key}>
+                                                                {renderStatus(row[column.key], row)}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
+                                                    if (column.key === "actions" && renderActions) {
+                                                        return (
+                                                            <TableCell key={column.key}>
+                                                                {renderActions(row, rowIndex)}
+                                                            </TableCell>
+                                                        );
+                                                    }
+
                                                     return (
                                                         <TableCell key={column.key}>
-                                                            {renderStatus(row[column.key], row)}
+                                                            {row[column.key]}
                                                         </TableCell>
                                                     );
-                                                }
-
-                                                if (column.key === "actions" && renderActions) {
-                                                    return (
-                                                        <TableCell key={column.key}>
-                                                            {renderActions(row, rowIndex)}
-                                                        </TableCell>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <TableCell key={column.key}>
-                                                        {row[column.key]}
-                                                    </TableCell>
-                                                );
-                                            })}
-                                        </TableRow>
-                                    ))}
-                            </React.Fragment>
-                        );
-                    })}
-                </TableBody>
-            </Table>
+                                                })}
+                                            </TableRow>
+                                        ))}
+                                </React.Fragment>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
             </TableScroll>
             <PaginationContainer>
                 <RowsPerPage>
