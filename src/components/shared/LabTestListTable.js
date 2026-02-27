@@ -9,10 +9,10 @@ const TableContainer = styled.div`
 
   display: flex;
   flex-direction: column;
-  height: 700px;
 `;
 const TableScroll = styled.div`
   overflow-y: auto;
+   max-height: 700px;
   flex: 1;
 `;
 const Table = styled.table`

@@ -613,20 +613,19 @@ const PathLabBilling = () => {
     let patientAge = "";
 
     try {
-      const patientRes = await fetch(
-        "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient.patient.get_patient_detail",
+      const patientRes = await api.post(
+        "/method/healthcare.healthcare.doctype.patient.patient.get_patient_detail",
+        new URLSearchParams({
+          patient: invoice.patient,
+        }),
         {
-          method: "POST", // ⚠️ must be POST for x-www-form-urlencoded
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: new URLSearchParams({
-            patient: invoice.patient,
-          }),
         }
       );
 
-      const patientData = await patientRes.json();
+      const patientData = patientRes.data;
 
       if (patientData.message) {
         patientDOB = patientData.message.dob;
@@ -655,11 +654,11 @@ const PathLabBilling = () => {
 
     try {
       if (invoice.ref_practitioner) {
-        const pracRes = await fetch(
-          `https://hms.automedai.in/api/resource/Healthcare Practitioner/${invoice.ref_practitioner}`
+        const pracRes = await api.get(
+          `/resource/Healthcare Practitioner/${invoice.ref_practitioner}`
         );
 
-        const pracData = await pracRes.json();
+        const pracData = pracRes.data;
 
         if (pracData.data?.practitioner_name) {
           practitionerName = pracData.data.practitioner_name;
@@ -703,10 +702,7 @@ const PathLabBilling = () => {
     };
 
     setTimeout(() => {
-      const printWindow = window.open(
-        `https://hms.automedai.in/api/resource/Sales Invoice/${invoice.name}`,
-        "_blank"
-      );
+      const printWindow = window.open("", "_blank");
 
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");
