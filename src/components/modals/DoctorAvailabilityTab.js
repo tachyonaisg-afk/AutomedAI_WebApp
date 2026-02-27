@@ -118,7 +118,7 @@ const DoctorAvailabilityTab = () => {
   const [currentUser, setCurrentUser] = useState("");
 
   const [availabilityList, setAvailabilityList] = useState([]);
-
+  const [doctorNameMap, setDoctorNameMap] = useState({});
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split("T")[0];
@@ -222,7 +222,26 @@ const DoctorAvailabilityTab = () => {
 
   };
 
+  const fetchDoctorName = async (doctorId) => {
+    try {
+      const res = await fetch(
+        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
+        { credentials: "include" }
+      );
 
+      const data = await res.json();
+
+      if (data?.data?.practitioner_name) {
+        setDoctorNameMap((prev) => ({
+          ...prev,
+          [doctorId]: data.data.practitioner_name,
+        }));
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
 
@@ -334,10 +353,20 @@ const DoctorAvailabilityTab = () => {
 
       const data = await res.json();
 
-      console.log("available data:", data);
-
       if (data.success && Array.isArray(data.available_slots)) {
         setAvailabilityList(data.available_slots);
+
+        // ✅ Fetch doctor names for unique doctor_ids
+        const uniqueDoctorIds = [
+          ...new Set(data.available_slots.map(slot => slot.doctor_id))
+        ];
+
+        uniqueDoctorIds.forEach((id) => {
+          if (!doctorNameMap[id]) {
+            fetchDoctorName(id);
+          }
+        });
+
       } else {
         setAvailabilityList([]);
       }
@@ -430,9 +459,6 @@ const DoctorAvailabilityTab = () => {
 
         </Field>
 
-
-
-
         {/* Date */}
 
         <Field>
@@ -448,9 +474,6 @@ const DoctorAvailabilityTab = () => {
           />
 
         </Field>
-
-
-
 
         {/* Start */}
 
@@ -484,14 +507,11 @@ const DoctorAvailabilityTab = () => {
 
         </Field>
 
-
-
         <Button onClick={handleCreate}>
 
           Create
 
         </Button>
-
 
       </FormGrid>
 
@@ -536,7 +556,6 @@ const DoctorAvailabilityTab = () => {
 
       {/* TABLE */}
 
-
       <Table>
 
         <thead>
@@ -565,11 +584,13 @@ const DoctorAvailabilityTab = () => {
               <tr key={item.id}>
 
                 <td>
-                  {item.doctor_id}
+                  {doctorNameMap[item.doctor_id]
+                    ? doctorNameMap[item.doctor_id]
+                    : "Loading..."}
                 </td>
 
                 <td>
-                  {item.available_date}
+                  {new Date(item.available_date).toLocaleDateString()}
                 </td>
 
                 <td>

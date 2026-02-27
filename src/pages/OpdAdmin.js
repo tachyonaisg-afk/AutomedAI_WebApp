@@ -15,6 +15,7 @@ import {
 import usePageTitle from "../hooks/usePageTitle";
 import OpdRoomTab from "../components/modals/OpdRoomTab";
 import DoctorAvailabilityTab from "../components/modals/DoctorAvailabilityTab";
+import DoctorAssignmentTab from "../components/modals/DoctorAssignmentTab";
 
 /* ---------------- Styled Components ---------------- */
 
@@ -333,7 +334,7 @@ const OpdAdmin = () => {
                             <IconWrapper variant="orange">
                                 <Clock size={26} />
                             </IconWrapper>
-                            <ActionTitle>Manage Slots</ActionTitle>
+                            <ActionTitle>Manage OPD</ActionTitle>
                         </ActionCard>
 
                         <ActionCard>
@@ -368,9 +369,9 @@ const OpdAdmin = () => {
                     <ModalContainer>
                         <ModalHeader>
                             <ModalTitle>
-                                <TitleMain>Manage Slots & Facilities</TitleMain>
+                                <TitleMain>Manage OPD & Facilities</TitleMain>
                                 <Subtitle>
-                                    Configure rooms, doctor schedules, and assignments
+                                    Configure rooms, doctor schedules and assignments
                                 </Subtitle>
                             </ModalTitle>
 
@@ -382,27 +383,25 @@ const OpdAdmin = () => {
                         <ModalContent>
                             <TabBar>
                                 <TabButton
-                                    active={activeTab === "opd"}
-                                    onClick={() => setActiveTab("opd")}
-                                >
-                                    <TabDot color="#3b82f6" />
-                                    OPD Room Management
-                                </TabButton>
-
-                                <TabButton
                                     active={activeTab === "availability"}
                                     onClick={() => setActiveTab("availability")}
                                 >
                                     <TabDot color="#14b8a6" />
                                     Doctor Availability
                                 </TabButton>
-
                                 <TabButton
                                     active={activeTab === "assignment"}
                                     onClick={() => setActiveTab("assignment")}
                                 >
                                     <TabDot color="#8b5cf6" />
                                     Doctor Assignment
+                                </TabButton>
+                                <TabButton
+                                    active={activeTab === "opd"}
+                                    onClick={() => setActiveTab("opd")}
+                                >
+                                    <TabDot color="#3b82f6" />
+                                    OPD Room Management
                                 </TabButton>
                             </TabBar>
                         {activeTab === "opd" && (
@@ -417,12 +416,12 @@ const OpdAdmin = () => {
                                 setAvailability={setAvailability}
                             />
                         )}
-                        {/* {activeTab === "assignment" && (
-                            <OpdAssignmentTab
+                        {activeTab === "assignment" && (
+                            <DoctorAssignmentTab
                                 assignments={assignments}
                                 setAssignments={setAssignments}
                             />
-                        )} */}
+                        )}
                         </ModalContent>
                         <ModalFooter>
                             <SecondaryBtn onClick={() => setIsManageSlotsOpen(false)}>
