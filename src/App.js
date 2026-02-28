@@ -27,6 +27,7 @@ import ComingSoon from './pages/ComingSoon';
 import SalesReport from './pages/SalesReport';
 import './App.css';
 import OpdAdmin from './pages/OpdAdmin';
+import RecentOPDPatients from './pages/RecentOPDPatients';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -107,6 +108,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PatientRegistration />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/recent-opd-patients"
+            element={
+              <ProtectedRoute>
+                <RecentOPDPatients />
               </ProtectedRoute>
             }
           />

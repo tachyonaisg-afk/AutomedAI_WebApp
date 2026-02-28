@@ -297,7 +297,7 @@ const TabDot = styled.span`
 const OpdAdmin = () => {
     usePageTitle("OPD Admin Dashboard");
     const [isManageSlotsOpen, setIsManageSlotsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState("opd");
+    const [activeTab, setActiveTab] = useState("availability");
 
     const [rooms, setRooms] = useState([]);
     const [availability, setAvailability] = useState([]);

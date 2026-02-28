@@ -109,6 +109,34 @@ const RequiredAsterisk = styled.span`
   margin-left: 4px;
 `;
 
+const PaginationWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #e2e8f0;
+`;
+
+const PageButton = styled.button`
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: ${(props) => (props.active ? "#3b82f6" : "#ffffff")};
+  color: ${(props) => (props.active ? "#ffffff" : "#334155")};
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${(props) => (props.active ? "#2563eb" : "#f1f5f9")};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 const DoctorAvailabilityTab = () => {
 
   const [practitioners, setPractitioners] = useState([]);
@@ -126,6 +154,14 @@ const DoctorAvailabilityTab = () => {
 
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 10;
+  const totalPages = Math.ceil(availabilityList.length / rowsPerPage);
+
+  const paginatedData = availabilityList.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
 
   const [formData, setFormData] = useState({
 
@@ -373,6 +409,7 @@ const DoctorAvailabilityTab = () => {
 
   useEffect(() => {
     if (selectedCompany && selectedDate) {
+      setCurrentPage(1);   // reset to first page
       fetchAvailability();
     }
   }, [selectedCompany, selectedDate]);
@@ -594,7 +631,7 @@ const DoctorAvailabilityTab = () => {
 
         <tbody>
 
-          {availabilityList?.map(
+          {paginatedData?.map(
             (item) => (
 
               <tr key={item.id}>
@@ -627,6 +664,33 @@ const DoctorAvailabilityTab = () => {
         </tbody>
 
       </Table>
+      {totalPages > 1 && (
+        <PaginationWrapper>
+          <PageButton
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+            disabled={currentPage === 1}
+          >
+            Prev
+          </PageButton>
+
+          {[...Array(totalPages)].map((_, index) => (
+            <PageButton
+              key={index}
+              active={currentPage === index + 1}
+              onClick={() => setCurrentPage(index + 1)}
+            >
+              {index + 1}
+            </PageButton>
+          ))}
+
+          <PageButton
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </PageButton>
+        </PaginationWrapper>
+      )}
 
     </SectionWrapper>
   );

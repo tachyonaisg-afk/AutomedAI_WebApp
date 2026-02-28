@@ -266,6 +266,7 @@ const Sidebar = () => {
   const opdSubItems = [
     { path: "/opd", label: "Dashboard", icon: LayoutDashboard },
     { path: "/opd/patient-registration", label: "Patient Registration", icon: UserPlus },
+    { path: "/opd/recent-opd-patients", label: "Recent OPD Patients", icon: Users },
     { path: "/opd/billing", label: "Billing", icon: FileText },
     { path: "/opd/appointments", label: "Appointments", icon: Calendar },
     { path: "/opd/consultation", label: "Consultation", icon: MessageSquare },
@@ -276,6 +277,7 @@ const Sidebar = () => {
   const pathLabSubItems = [
     { path: "/pathlab", label: "Dashboard", icon: LayoutDashboard },
     { path: "/pathlab/patient-registration", label: "Patient Registration", icon: UserPlus },
+    { path: "/patients", label: "Patients", icon: Users },
     { path: "/pathlab/billing", label: "Billing", icon: FileText },
     { path: "/pathlab/collection", label: "Sample Collection", icon: TestTubes },
     { path: "/pathlab/labtest", label: "Lab Tests", icon: ClipboardList },
