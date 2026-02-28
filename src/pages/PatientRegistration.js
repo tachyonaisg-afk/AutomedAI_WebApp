@@ -2308,16 +2308,28 @@ const PatientRegistration = () => {
 
                   <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
-                    {formData.company?.toLowerCase() === "ramakrishna mission sargachi" && (
-                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
-                        <input
-                          type="checkbox"
-                          checked={showPHCOnly}
-                          onChange={(e) => setShowPHCOnly(e.target.checked)}
-                        />
-                        Show Government Rate Only
-                      </label>
-                    )}
+                    {(
+                      formData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
+                      formData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
+                    ) && (
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            fontSize: "16px",
+                            fontWeight: "600",
+                            color: "#333333",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={showPHCOnly}
+                            onChange={(e) => setShowPHCOnly(e.target.checked)}
+                          />
+                          Show Government Rate Only
+                        </label>
+                      )}
 
                     <IconButton type="button" onClick={addItem}>
                       <Plus />

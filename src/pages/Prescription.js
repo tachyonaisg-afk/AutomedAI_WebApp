@@ -807,16 +807,9 @@ const Prescription = () => {
           !formData.selectedClinic
         ) return;
 
-        const response = await api.get(
-          `https://midl.automedai.in/doctor_room/doctor_room`,
-          {
-            params: {
-              doctor_id: formData.selectedDoctor,
-              schedule_date: formData.selectedDate,
-              company: formData.selectedClinic
-            }
-          }
-        );
+        const url = `https://midl.automedai.in/doctor_room/doctor_room?doctor_id=${encodeURIComponent(formData.selectedDoctor)}&schedule_date=${encodeURIComponent(formData.selectedDate)}&company=${encodeURIComponent(formData.selectedClinic)}`;
+
+        const response = await api.get(url);
 
         console.log("🏥 Doctor Room API:", response.data);
 

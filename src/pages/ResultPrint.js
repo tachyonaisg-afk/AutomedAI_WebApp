@@ -350,7 +350,7 @@ const TestName = styled.h2`
 `;
 
 const TestCategory = styled.div`
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   color: #000000;
   text-align: center;
