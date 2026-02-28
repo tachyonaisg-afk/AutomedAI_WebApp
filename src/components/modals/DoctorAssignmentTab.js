@@ -344,14 +344,14 @@ const DoctorAssignmentTab = () => {
         }
         try {
             const body = {
-                    doctor_id: formData.doctor_id,
-                    company: formData.company,
-                    room_id: formData.room_id,
-                    schedule_date: formData.available_date,
-                    from_time: formData.start_time,
-                    to_time: formData.end_time,
-                    user_id: currentUser,
-                };
+                doctor_id: formData.doctor_id,
+                company: formData.company,
+                room_id: formData.room_id,
+                schedule_date: formData.available_date,
+                from_time: formData.start_time,
+                to_time: formData.end_time,
+                user_id: currentUser,
+            };
 
             const res = await fetch(
                 "https://midl.automedai.in/doctor_room/assign",
@@ -378,7 +378,7 @@ const DoctorAssignmentTab = () => {
 
     // ✅ Fetch Availability List
     const fetchAvailability = async () => {
-        if (!selectedCompany || !selectedDate) return;
+        if (!selectedCompany) return;
 
         try {
             const res = await fetch(
@@ -390,9 +390,9 @@ const DoctorAssignmentTab = () => {
             if (data.success && Array.isArray(data.data)) {
                 setAvailabilityList(data.data);
 
-                // ✅ Fetch doctor names for unique doctor_ids
+                // ✅ Extract unique doctor_ids correctly
                 const uniqueDoctorIds = [
-                    ...new Set(data.available_slots.map(slot => slot.doctor_id))
+                    ...new Set(data.data.map((slot) => slot.doctor_id))
                 ];
 
                 uniqueDoctorIds.forEach((id) => {
@@ -404,7 +404,6 @@ const DoctorAssignmentTab = () => {
             } else {
                 setAvailabilityList([]);
             }
-
         } catch (error) {
             console.error(error);
             setAvailabilityList([]);
@@ -416,6 +415,28 @@ const DoctorAssignmentTab = () => {
             fetchAvailability();
         }
     }, [selectedCompany, selectedDate]);
+
+    const formatToAMPM = (timeString) => {
+        if (!timeString) return "";
+
+        const [hours, minutes] = timeString.split(":");
+        let hour = parseInt(hours, 10);
+
+        const ampm = hour >= 12 ? "PM" : "AM";
+        hour = hour % 12 || 12; // convert 0 → 12
+
+        return `${hour}:${minutes} ${ampm}`;
+    };
+    const formatDate = (dateString) => {
+        if (!dateString) return "";
+
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+
+        return `${day}-${month}-${year}`;
+    };
 
     return (
 
@@ -616,17 +637,11 @@ const DoctorAssignmentTab = () => {
                                     {item.room_name}
                                 </td>
 
-                                <td>
-                                    {new Date(item.available_date).toLocaleDateString()}
-                                </td>
+                                <td>{formatDate(item.schedule_date)}</td>
 
-                                <td>
-                                    {item.from_time}
-                                </td>
+                                <td>{formatToAMPM(item.from_time)}</td>
 
-                                <td>
-                                    {item.to_time}
-                                </td>
+                                <td>{formatToAMPM(item.to_time)}</td>
 
                                 <td>
                                     {item.company}

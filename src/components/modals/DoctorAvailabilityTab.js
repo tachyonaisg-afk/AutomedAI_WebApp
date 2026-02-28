@@ -377,6 +377,28 @@ const DoctorAvailabilityTab = () => {
     }
   }, [selectedCompany, selectedDate]);
 
+  const formatToAMPM = (timeString) => {
+    if (!timeString) return "";
+
+    const [hours, minutes] = timeString.split(":");
+    let hour = parseInt(hours, 10);
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12; // convert 0 → 12
+
+    return `${hour}:${minutes} ${ampm}`;
+  };
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+
+    return `${day}-${month}-${year}`;
+  };
+
   return (
 
     <SectionWrapper>
@@ -583,16 +605,14 @@ const DoctorAvailabilityTab = () => {
                     : "Loading..."}
                 </td>
 
+                <td>{formatDate(item.schedule_date)}</td>
+
                 <td>
-                  {new Date(item.available_date).toLocaleDateString()}
+                  {formatToAMPM(item.start_time)}
                 </td>
 
                 <td>
-                  {item.start_time}
-                </td>
-
-                <td>
-                  {item.end_time}
+                  {formatToAMPM(item.end_time)}
                 </td>
 
                 <td>

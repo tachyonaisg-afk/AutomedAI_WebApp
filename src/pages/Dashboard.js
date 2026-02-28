@@ -509,9 +509,14 @@ const AnimatedNumber = ({ value }) => {
   return displayValue;
 };
 
+
 const Dashboard = () => {
   usePageTitle("Dashboard");
   const navigate = useNavigate();
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  };
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -533,10 +538,6 @@ const Dashboard = () => {
     { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
     { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444", route: null },
   ];
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  };
 
   const insights = [
     {
@@ -636,9 +637,11 @@ const Dashboard = () => {
 
           // 🔥 Fetch doctor names
           data.available_slots.forEach((slot) => {
-            if (!doctorNameMap[slot.doctor_id]) {
+            setDoctorNameMap((prev) => {
+              if (prev[slot.doctor_id]) return prev;
               fetchDoctorName(slot.doctor_id);
-            }
+              return prev;
+            });
           });
         } else {
           setAvailableSlots([]);
@@ -887,11 +890,15 @@ const Dashboard = () => {
                 onChange={(e) => setSelectedCompany(e.target.value)}
                 style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
               >
-                {companies.map((company, index) => (
-                  <option key={index} value={company.name}>
-                    {company.name}
-                  </option>
-                ))}
+                {companies.length === 0 ? (
+                  <option>Loading companies...</option>
+                ) : (
+                  companies.map((company, index) => (
+                    <option key={index} value={company.name}>
+                      {company.name}
+                    </option>
+                  ))
+                )}
               </select>
 
               <input
