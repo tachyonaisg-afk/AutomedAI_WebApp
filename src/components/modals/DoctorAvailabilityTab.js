@@ -642,7 +642,7 @@ const DoctorAvailabilityTab = () => {
                     : "Loading..."}
                 </td>
 
-                <td>{formatDate(item.schedule_date)}</td>
+                <td>{formatDate(item.available_date)}</td>
 
                 <td>
                   {formatToAMPM(item.start_time)}

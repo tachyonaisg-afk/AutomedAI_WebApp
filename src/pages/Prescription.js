@@ -493,7 +493,7 @@ const Prescription = () => {
   usePageTitle("Prescription");
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const todayISO = new Date().toISOString().split("T")[0];
   const [patientData, setPatientData] = useState(null);
   const [practitioners, setPractitioners] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -502,8 +502,11 @@ const Prescription = () => {
   const [appointmentId, setAppointmentId] = useState(null);
   const [appointmentDoctor, setAppointmentDoctor] = useState(null);
   const [queueNumber, setQueueNumber] = useState(null);
+  const [roomName, setRoomName] = useState(null);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
+    selectedClinic: "",
+    selectedDate: todayISO,
     ticketDate: new Date().toLocaleDateString('en-GB'),
     ticketTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
     grade: "",
@@ -659,6 +662,21 @@ const Prescription = () => {
             selectedDoctor: fullAppointment.practitioner,
           }));
         }
+        // ✅ Auto select clinic from appointment
+        if (fullAppointment?.company) {
+          const clinicOption = {
+            value: fullAppointment.company,
+            label: fullAppointment.company,
+          };
+
+          setSelectedClinic(clinicOption);
+
+          setFormData(prev => ({
+            ...prev,
+            selectedClinic: fullAppointment.company,
+            selectedDate: fullAppointment.appointment_date || todayISO
+          }));
+        }
 
       } catch (err) {
         console.error("Error fetching appointment & doctor:", err);
@@ -779,6 +797,47 @@ const Prescription = () => {
 
     return `${pad(years)} Years ${pad(months)} Months ${pad(days)} Days`;
   };
+
+  useEffect(() => {
+    const fetchDoctorRoom = async () => {
+      try {
+        if (
+          !formData.selectedDoctor ||
+          !formData.selectedDate ||
+          !formData.selectedClinic
+        ) return;
+
+        const response = await api.get(
+          `https://midl.automedai.in/doctor_room/doctor_room`,
+          {
+            params: {
+              doctor_id: formData.selectedDoctor,
+              schedule_date: formData.selectedDate,
+              company: formData.selectedClinic
+            }
+          }
+        );
+
+        console.log("🏥 Doctor Room API:", response.data);
+
+        if (response.data?.success && response.data.data.length > 0) {
+          setRoomName(response.data.data[0].room_name);
+        } else {
+          setRoomName(null);
+        }
+
+      } catch (error) {
+        console.error("Error fetching doctor room:", error);
+        setRoomName(null);
+      }
+    };
+
+    fetchDoctorRoom();
+  }, [
+    formData.selectedDoctor,
+    formData.selectedDate,
+    formData.selectedClinic
+  ]);
 
   const handlePrint = () => {
     // Set print styles based on paper size
@@ -907,6 +966,15 @@ const Prescription = () => {
                 }}
               />
             </FormGroup>
+            <FormGroup>
+              <Label>Select Date *</Label>
+              <Input
+                type="date"
+                name="selectedDate"
+                value={formData.selectedDate}
+                onChange={handleFormChange}
+              />
+            </FormGroup>
           </SidebarSection>
 
         </SidebarSection>
@@ -969,7 +1037,9 @@ const Prescription = () => {
                 [Done by : <b>{currentUser}</b>]<br />
               </DoctorInfo>
               <TicketInfo paperSize={paperSize}>
-                {/* <div>SL NO:</div> */}
+                <div>
+                  Room: <b>{roomName || "-"}</b>
+                </div>
                 <div>SL NO: <b>{queueNumber !== null ? queueNumber : "-"}</b></div>
                 <div>Ticket Date: [<b>{formData.ticketDate} - {formData.ticketTime}</b>]</div>
               </TicketInfo>
