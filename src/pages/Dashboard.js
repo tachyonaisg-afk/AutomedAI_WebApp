@@ -519,6 +519,11 @@ const Dashboard = () => {
   const searchTimeoutRef = useRef(null);
   const [availableDoctors, setAvailableDoctors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedDate, setSelectedDate] = useState(getTodayDate());
+  const [doctorNameMap, setDoctorNameMap] = useState({});
+  const [availableSlots, setAvailableSlots] = useState([]);
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
@@ -575,97 +580,80 @@ const Dashboard = () => {
   const sectionRefs = useRef({});
 
   useEffect(() => {
-    const fetchAvailableDoctors = async () => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get("https://hms.automedai.in/api/resource/Company");
+        const companyList = res.data?.data || [];
+
+        setCompanies(companyList);
+
+        if (companyList.length > 0) {
+          setSelectedCompany(companyList[0].name); // ✅ default first company
+        }
+      } catch (err) {
+        console.error("Error fetching companies", err);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+
+  const fetchDoctorName = async (doctorId) => {
+    try {
+      const res = await fetch(
+        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
+        { credentials: "include" }
+      );
+
+      const data = await res.json();
+
+      if (data?.data?.practitioner_name) {
+        setDoctorNameMap((prev) => ({
+          ...prev,
+          [doctorId]: data.data.practitioner_name,
+        }));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchDoctorAvailability = async () => {
+      if (!selectedCompany || !selectedDate) return;
+
       try {
         setIsLoading(true);
-        const todayDate = getTodayDate();
 
-        // 1️⃣ Fetch doctor list
-        const doctorRes = await api.get(
-          "https://hms.automedai.in/api/resource/Healthcare Practitioner?limit_page_length=5000"
+        const res = await fetch(
+          `https://midl.automedai.in/doctor_available/fetch?company=${selectedCompany}&date=${selectedDate}`
         );
-        const doctors = doctorRes.data?.data || [];
-        console.log("Doctors API Response:", doctors);
 
-        if (!doctors.length) {
-          setAvailableDoctors([]);
-          setIsLoading(false);
-          return;
-        }
+        const data = await res.json();
 
-        // 2️⃣ Helper function to process a single doctor
-        const checkDoctorAvailability = async (doc) => {
-          try {
-            // Using URLSearchParams standardizes the body for the server
-            const params = new URLSearchParams();
-            params.append("practitioner", doc.name);
-            params.append("date", todayDate);
-            params.append("appointment", JSON.stringify({
-              doctype: "Patient Appointment",
-              appointment_for: "Practitioner",
-              company: "Automed Ai",
-            }));
+        if (data.success) {
+          setAvailableSlots(data.available_slots || []);
 
-            // Using native fetch to ensure headers are correct
-            const response = await fetch(
-              "https://hms.automedai.in/api/method/healthcare.healthcare.doctype.patient_appointment.patient_appointment.get_availability_data",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: params,
-                credentials: "include",
-              }
-            );
-
-            if (!response.ok) return null;
-
-            // 🚨 FIX: Must await .json() to get the actual data object
-            const data = await response.json();
-            const slotDetails = data.message?.slot_details;
-
-            if (slotDetails && slotDetails.length > 0) {
-              const validSlots = slotDetails.filter(
-                (slot) => slot.avail_slot && slot.avail_slot.length > 0
-              );
-              if (validSlots.length > 0) {
-                return {
-                  practitionerId: doc.name,
-                  slots: validSlots,
-                };
-              }
+          // 🔥 Fetch doctor names
+          data.available_slots.forEach((slot) => {
+            if (!doctorNameMap[slot.doctor_id]) {
+              fetchDoctorName(slot.doctor_id);
             }
-            return null;
-          } catch (err) {
-            console.error("Availability error for", doc.name, err);
-            return null;
-          }
-        };
-
-        // 3️⃣ BATCHING: Process doctors in chunks of 5 to avoid server overload
-        // (Fixes the "1 success out of 126" issue)
-        const BATCH_SIZE = 5;
-        let allResults = [];
-
-        for (let i = 0; i < doctors.length; i += BATCH_SIZE) {
-          const batch = doctors.slice(i, i + BATCH_SIZE);
-          // Run 5 requests in parallel, then wait for them to finish
-          const batchResults = await Promise.all(batch.map(checkDoctorAvailability));
-          allResults = [...allResults, ...batchResults];
+          });
+        } else {
+          setAvailableSlots([]);
         }
-
-        const filteredDoctors = allResults.filter(Boolean);
-        setAvailableDoctors(filteredDoctors);
 
       } catch (error) {
-        console.error("Doctor fetch error:", error);
-        setAvailableDoctors([]);
+        console.error("Doctor availability error:", error);
+        setAvailableSlots([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchAvailableDoctors();
-  }, []);
+    fetchDoctorAvailability();
+  }, [selectedCompany, selectedDate]);
 
   // Search patients function
   const searchPatients = async (query) => {
@@ -800,7 +788,7 @@ const Dashboard = () => {
                   <IconCircle bgColor={item.bgColor}>
                     <>
                       <IconWrapper iconColor={item.iconColor}>
-                        <IconComponent style={{height:"25px",width:"25px"}}/>
+                        <IconComponent style={{ height: "25px", width: "25px" }} />
                       </IconWrapper>
                       <IconWrapperBottom iconColor={item.iconColor}>
                         <IconComponent />
@@ -892,39 +880,63 @@ const Dashboard = () => {
           <Section>
             <SectionTitle>Doctor Availability</SectionTitle>
 
+            {/* 🔥 Controls */}
+            <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
+              <select
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+                style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
+              >
+                {companies.map((company, index) => (
+                  <option key={index} value={company.name}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
+              />
+            </div>
+
             {isLoading ? (
               <DoctorAvailabilityCard>
                 <SkeletonBlock height="120px" style={{ width: "100%" }} />
               </DoctorAvailabilityCard>
             ) : (
               <DoctorAvailabilityCard>
-                {availableDoctors.length === 0 ? (
-                  <p>No doctors available today.</p>
+                {availableSlots.length === 0 ? (
+                  <p>No doctors available.</p>
                 ) : (
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr>
                         <th style={thStyle}>Doctor ID</th>
                         <th style={thStyle}>Doctor Name</th>
-                        <th style={thStyle}>Service Unit</th>
-                        <th style={thStyle}>Available From</th>
-                        <th style={thStyle}>Available To</th>
+                        <th style={thStyle}>Company</th>
+                        <th style={thStyle}>Available Date</th>
+                        <th style={thStyle}>Start Time</th>
+                        <th style={thStyle}>End Time</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {availableDoctors.map((doctor, index) =>
-                        doctor.slots.map((slot, slotIndex) =>
-                          slot.avail_slot.map((time, timeIndex) => (
-                            <tr key={`${index}-${slotIndex}-${timeIndex}`}>
-                              <td style={tdStyle}>{doctor.practitionerId}</td>
-                              <td style={tdStyle}>{formatSlotName(slot.slot_name)}</td>
-                              <td style={tdStyle}>{slot.service_unit}</td>
-                              <td style={tdStyle}>{formatTimeToAMPM(time.from_time)}</td>
-                              <td style={tdStyle}>{formatTimeToAMPM(time.to_time)}</td>
-                            </tr>
-                          ))
-                        )
-                      )}
+                      {availableSlots.map((slot) => (
+                        <tr key={slot.id}>
+                          <td style={tdStyle}>{slot.doctor_id}</td>
+                          <td style={tdStyle}>
+                            {doctorNameMap[slot.doctor_id] || "Loading..."}
+                          </td>
+                          <td style={tdStyle}>{slot.company}</td>
+                          <td style={tdStyle}>
+                            {new Date(slot.available_date).toLocaleDateString("en-IN")}
+                          </td>
+                          <td style={tdStyle}>{formatTimeToAMPM(slot.start_time)}</td>
+                          <td style={tdStyle}>{formatTimeToAMPM(slot.end_time)}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 )}

@@ -343,8 +343,7 @@ const DoctorAssignmentTab = () => {
             return;
         }
         try {
-            const body = [
-                {
+            const body = {
                     doctor_id: formData.doctor_id,
                     company: formData.company,
                     room_id: formData.room_id,
@@ -352,8 +351,7 @@ const DoctorAssignmentTab = () => {
                     from_time: formData.start_time,
                     to_time: formData.end_time,
                     user_id: currentUser,
-                },
-            ];
+                };
 
             const res = await fetch(
                 "https://midl.automedai.in/doctor_room/assign",

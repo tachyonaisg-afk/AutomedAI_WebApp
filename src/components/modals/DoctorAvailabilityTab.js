@@ -251,9 +251,6 @@ const DoctorAvailabilityTab = () => {
 
   }, []);
 
-
-
-
   // FORM CHANGE
   const handleChange = (e) => {
 
@@ -266,9 +263,6 @@ const DoctorAvailabilityTab = () => {
     });
 
   };
-
-
-
 
   // ✅ CREATE AVAILABILITY
   const handleCreate = async () => {
