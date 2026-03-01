@@ -313,7 +313,7 @@ const OpdAdmin = () => {
                             <IconWrapper variant="blue">
                                 <UserPlus size={26} />
                             </IconWrapper>
-                            <ActionTitle>Create Staff</ActionTitle>
+                            <ActionTitle>Onboard User</ActionTitle>
                         </ActionCard>
 
                         <ActionCard>
@@ -327,7 +327,7 @@ const OpdAdmin = () => {
                             <IconWrapper variant="green">
                                 <Stethoscope size={26} />
                             </IconWrapper>
-                            <ActionTitle>Register Doctor</ActionTitle>
+                            <ActionTitle>Empanel Doctor</ActionTitle>
                         </ActionCard>
 
                         <ActionCard onClick={() => setIsManageSlotsOpen(true)}>

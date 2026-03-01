@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import apiService from "../../services/api/apiService";
 import API_ENDPOINTS from "../../services/api/endpoints";
+import Select from "react-select";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -48,6 +49,29 @@ const Field = styled.div`
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
     }
+  }
+`;
+const DropField = styled.div`
+  grid-column: span 4;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  input,
+  select {
+    height: 20px;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
   }
 `;
 
@@ -171,9 +195,8 @@ const DoctorAvailabilityTab = () => {
 
     available_date: "",
 
-    start_time: "",
-
-    end_time: "",
+    start_time: "09:00",
+    end_time: "13:00",
 
   });
 
@@ -445,72 +468,78 @@ const DoctorAvailabilityTab = () => {
 
         {/* Doctor */}
 
-        <Field>
+        <DropField>
+          <label>
+            Doctor<RequiredAsterisk>*</RequiredAsterisk>
+          </label>
 
-          <label>Doctor<RequiredAsterisk>*</RequiredAsterisk></label>
+          <Select
+            options={practitioners?.map((doc) => ({
+              label: doc.practitioner_name || doc.name,
+              value: doc.name,
+            }))}
 
-          <select
-            name="doctor_id"
-            onChange={handleChange}
-            value={formData.doctor_id}
+            value={
+              practitioners
+                ?.map((doc) => ({
+                  label: doc.practitioner_name || doc.name,
+                  value: doc.name,
+                }))
+                .find((option) => option.value === formData.doctor_id) || null
+            }
+
+            onChange={(selected) =>
+              setFormData((prev) => ({
+                ...prev,
+                doctor_id: selected ? selected.value : "",
+              }))
+            }
+
+            placeholder="Search Doctor..."
+            isSearchable
+            isClearable
             required
-          >
-
-            <option>Select Doctor</option>
-
-            {practitioners?.map((doc) => (
-
-              <option
-                key={doc.name}
-                value={doc.name}
-              >
-
-                {doc.practitioner_name}
-
-              </option>
-
-            ))}
-
-          </select>
-
-        </Field>
+          />
+        </DropField>
 
 
 
 
         {/* Company */}
 
-        <Field>
+        <DropField>
+          <label>
+            Company<RequiredAsterisk>*</RequiredAsterisk>
+          </label>
 
-          <label>Company<RequiredAsterisk>*</RequiredAsterisk></label>
+          <Select
+            options={companyOptions?.map((company) => ({
+              label: company.name,
+              value: company.name,
+            }))}
 
-          <select
-            name="company"
-            onChange={handleChange}
-            value={formData.company}
+            value={
+              companyOptions
+                ?.map((company) => ({
+                  label: company.name,
+                  value: company.name,
+                }))
+                .find((option) => option.value === formData.company) || null
+            }
+
+            onChange={(selected) =>
+              setFormData((prev) => ({
+                ...prev,
+                company: selected ? selected.value : "",
+              }))
+            }
+
+            placeholder="Search Company..."
+            isSearchable
+            isClearable
             required
-          >
-
-            <option>Select Company</option>
-
-            {companyOptions?.map(
-              (company) => (
-
-                <option
-                  key={company.name}
-                  value={company.name}
-                >
-
-                  {company.name}
-
-                </option>
-
-              )
-            )}
-
-          </select>
-
-        </Field>
+          />
+        </DropField>
 
         {/* Date */}
 
@@ -573,19 +602,39 @@ const DoctorAvailabilityTab = () => {
       <FormGrid style={{ paddingTop: "0", paddingBottom: "1rem" }}>
 
         {/* Select Company */}
-        <Field>
-          <label>Select Company</label>
-          <select
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-          >
-            {companyOptions?.map((company) => (
-              <option key={company.name} value={company.name}>
-                {company.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <DropField>
+          <label>
+            Company<RequiredAsterisk>*</RequiredAsterisk>
+          </label>
+
+          <Select
+            options={companyOptions?.map((company) => ({
+              label: company.name,
+              value: company.name,
+            }))}
+
+            value={
+              companyOptions
+                ?.map((company) => ({
+                  label: company.name,
+                  value: company.name,
+                }))
+                .find((option) => option.value === formData.company) || null
+            }
+
+            onChange={(selected) =>
+              setFormData((prev) => ({
+                ...prev,
+                company: selected ? selected.value : "",
+              }))
+            }
+
+            placeholder="Search Company..."
+            isSearchable
+            isClearable
+            required
+          />
+        </DropField>
 
         {/* Filter By Date */}
         <Field>

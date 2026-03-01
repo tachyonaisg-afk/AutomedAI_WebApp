@@ -258,9 +258,9 @@ const Sidebar = () => {
   const dropdownRef = useRef(null);
   const isInitialMount = useRef(true);
 
-  const menuItems = [
-    { path: "/patients", label: "Patients", icon: Users },
-  ];
+  // const menuItems = [
+  //   { path: "/patients", label: "Patients", icon: Users },
+  // ];
 
   // OPD submenu items
   const opdSubItems = [
@@ -362,7 +362,7 @@ const Sidebar = () => {
       </SidebarLogo>
 
       <SidebarNav>
-        {menuItems.map(renderNavItem)}
+        {/* {menuItems.map(renderNavItem)} */}
 
         {/* OPD Dropdown */}
         <DropdownWrapper>

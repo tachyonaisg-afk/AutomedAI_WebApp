@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import apiService from "../../services/api/apiService";
 import API_ENDPOINTS from "../../services/api/endpoints";
+import Select from "react-select";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -48,6 +49,29 @@ const Field = styled.div`
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
     }
+  }
+`;
+const DropField = styled.div`
+  grid-column: span 4;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  input,
+  select {
+    height: 20px;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
   }
 `;
 
@@ -178,6 +202,8 @@ const DoctorAssignmentTab = () => {
     const [availabilityList, setAvailabilityList] = useState([]);
     const [doctorNameMap, setDoctorNameMap] = useState({});
     const [rooms, setRooms] = useState([]);
+    const [availableDoctors, setAvailableDoctors] = useState([]);
+    const [isDoctorRoomEnabled, setIsDoctorRoomEnabled] = useState(false);
     const getTodayDate = () => {
         const today = new Date();
         return today.toISOString().split("T")[0];
@@ -187,19 +213,12 @@ const DoctorAssignmentTab = () => {
     const [selectedCompany, setSelectedCompany] = useState("");
 
     const [formData, setFormData] = useState({
-
         doctor_id: "",
-
         company: "",
-
         available_date: "",
-
-        start_time: "",
-
-        end_time: "",
-
+        start_time: "09:00",
+        end_time: "13:00",
         room_id: "",
-
     });
     const [currentPage, setCurrentPage] = useState(1);
     const rowsPerPage = 10; // change if needed
@@ -309,6 +328,40 @@ const DoctorAssignmentTab = () => {
             console.error(error);
         }
     };
+    const fetchAvailableDoctors = async (company, date) => {
+        try {
+            const res = await fetch(
+                `https://midl.automedai.in/doctor_available/fetch?company=${company}&date=${date}`
+            );
+
+            const data = await res.json();
+
+            if (data.success && Array.isArray(data.available_slots)) {
+                const doctorIds = [
+                    ...new Set(data.available_slots.map(slot => slot.doctor_id))
+                ];
+
+                setAvailableDoctors(doctorIds);
+                setIsDoctorRoomEnabled(true);
+
+                // Fetch doctor names
+                doctorIds.forEach(id => {
+                    if (!doctorNameMap[id]) {
+                        fetchDoctorName(id);
+                    }
+                });
+
+            } else {
+                setAvailableDoctors([]);
+                setIsDoctorRoomEnabled(false);
+            }
+
+        } catch (error) {
+            console.error(error);
+            setAvailableDoctors([]);
+            setIsDoctorRoomEnabled(false);
+        }
+    };
     const fetchRooms = async (company) => {
         if (!company) {
             setRooms([]);
@@ -340,6 +393,15 @@ const DoctorAssignmentTab = () => {
             setRooms([]);
         }
     };
+    useEffect(() => {
+        if (formData.company && formData.available_date) {
+            fetchAvailableDoctors(formData.company, formData.available_date);
+        } else {
+            setAvailableDoctors([]);
+            setIsDoctorRoomEnabled(false);
+        }
+    }, [formData.company, formData.available_date]);
+
     useEffect(() => {
         if (formData.company) {
             fetchRooms(formData.company);
@@ -376,6 +438,7 @@ const DoctorAssignmentTab = () => {
             alert("Input Required Fields");
             return;
         }
+
         try {
             const body = {
                 doctor_id: formData.doctor_id,
@@ -392,8 +455,7 @@ const DoctorAssignmentTab = () => {
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type":
-                            "application/json",
+                        "Content-Type": "application/json",
                     },
                     body: JSON.stringify(body),
                 }
@@ -402,11 +464,15 @@ const DoctorAssignmentTab = () => {
             const data = await res.json();
 
             if (data.success) {
-                alert("Assigned");
+                alert("Assigned Successfully");
                 fetchAvailability();
+            } else {
+                alert(data.message || "Something went wrong");
             }
+
         } catch (error) {
             console.error(error);
+            alert("Server Error");
         }
     };
 
@@ -482,37 +548,39 @@ const DoctorAssignmentTab = () => {
 
                 {/* Company */}
 
-                <Field>
+                <DropField>
+                    <label>
+                        Company<RequiredAsterisk>*</RequiredAsterisk>
+                    </label>
 
-                    <label>Company<RequiredAsterisk>*</RequiredAsterisk></label>
+                    <Select
+                        options={companyOptions?.map((company) => ({
+                            label: company.name,
+                            value: company.name,
+                        }))}
 
-                    <select
-                        name="company"
-                        onChange={handleChange}
-                        value={formData.company}
+                        value={
+                            companyOptions
+                                ?.map((company) => ({
+                                    label: company.name,
+                                    value: company.name,
+                                }))
+                                .find((option) => option.value === formData.company) || null
+                        }
+
+                        onChange={(selected) =>
+                            setFormData((prev) => ({
+                                ...prev,
+                                company: selected ? selected.value : "",
+                            }))
+                        }
+
+                        placeholder="Search Company..."
+                        isSearchable
+                        isClearable
                         required
-                    >
-
-                        <option>Select Company</option>
-
-                        {companyOptions?.map(
-                            (company) => (
-
-                                <option
-                                    key={company.name}
-                                    value={company.name}
-                                >
-
-                                    {company.name}
-
-                                </option>
-
-                            )
-                        )}
-
-                    </select>
-
-                </Field>
+                    />
+                </DropField>
 
                 {/* Date */}
 
@@ -560,25 +628,44 @@ const DoctorAssignmentTab = () => {
                 </TimeField>
 
                 {/* Doctor */}
-                <Field>
-                    <label>Doctor<RequiredAsterisk>*</RequiredAsterisk></label>
-                    <select
-                        name="doctor_id"
-                        onChange={handleChange}
-                        value={formData.doctor_id}
-                        required
-                    >
-                        <option>Select Doctor</option>
-                        {practitioners?.map((doc) => (
-                            <option
-                                key={doc.name}
-                                value={doc.name}
-                            >
-                                {doc.practitioner_name}
-                            </option>
-                        ))}
-                    </select>
-                </Field>
+                <DropField>
+                    <label>
+                        Doctor<RequiredAsterisk>*</RequiredAsterisk>
+                    </label>
+
+                    <Select
+                        options={availableDoctors.map((doctorId) => ({
+                            label: doctorNameMap[doctorId] || "Loading...",
+                            value: doctorId,
+                        }))}
+
+                        value={
+                            availableDoctors
+                                .map((doctorId) => ({
+                                    label: doctorNameMap[doctorId] || "Loading...",
+                                    value: doctorId,
+                                }))
+                                .find((option) => option.value === formData.doctor_id) || null
+                        }
+
+                        onChange={(selected) =>
+                            setFormData((prev) => ({
+                                ...prev,
+                                doctor_id: selected ? selected.value : "",
+                            }))
+                        }
+
+                        placeholder={
+                            isDoctorRoomEnabled
+                                ? "Search Doctor..."
+                                : "Select Company & Date First"
+                        }
+
+                        isSearchable
+                        isClearable
+                        isDisabled={!isDoctorRoomEnabled}
+                    />
+                </DropField>
 
                 {/* Room */}
                 <Field>
@@ -591,8 +678,13 @@ const DoctorAssignmentTab = () => {
                         value={formData.room_id}
                         onChange={handleChange}
                         required
+                        disabled={!isDoctorRoomEnabled}
                     >
-                        <option value="">Select Room</option>
+                        <option value="">
+                            {isDoctorRoomEnabled
+                                ? "Select Room"
+                                : "Select Company & Date First"}
+                        </option>
 
                         {rooms.map((room) => (
                             <option key={room.id} value={room.id}>
@@ -615,19 +707,39 @@ const DoctorAssignmentTab = () => {
             <FormGrid style={{ paddingTop: "0", paddingBottom: "1rem" }}>
 
                 {/* Select Company */}
-                <Field>
-                    <label>Select Company</label>
-                    <select
-                        value={selectedCompany}
-                        onChange={(e) => setSelectedCompany(e.target.value)}
-                    >
-                        {companyOptions?.map((company) => (
-                            <option key={company.name} value={company.name}>
-                                {company.name}
-                            </option>
-                        ))}
-                    </select>
-                </Field>
+                <DropField>
+                    <label>
+                        Company<RequiredAsterisk>*</RequiredAsterisk>
+                    </label>
+
+                    <Select
+                        options={companyOptions?.map((company) => ({
+                            label: company.name,
+                            value: company.name,
+                        }))}
+
+                        value={
+                            companyOptions
+                                ?.map((company) => ({
+                                    label: company.name,
+                                    value: company.name,
+                                }))
+                                .find((option) => option.value === formData.company) || null
+                        }
+
+                        onChange={(selected) =>
+                            setFormData((prev) => ({
+                                ...prev,
+                                company: selected ? selected.value : "",
+                            }))
+                        }
+
+                        placeholder="Search Company..."
+                        isSearchable
+                        isClearable
+                        required
+                    />
+                </DropField>
 
             </FormGrid>
 

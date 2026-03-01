@@ -1606,7 +1606,10 @@ const AddBilling = () => {
 
               <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
-                {billingData.company?.toLowerCase() === "ramakrishna mission sargachi" && (
+                {(
+                      billingData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
+                      billingData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
+                    ) && (
                   <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
                     <input
                       type="checkbox"

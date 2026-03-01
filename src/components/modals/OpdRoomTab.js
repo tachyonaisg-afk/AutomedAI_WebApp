@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import Select from "react-select";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -46,6 +47,29 @@ const FormField = styled.div`
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
     }
+  }
+`;
+const DropField = styled.div`
+  grid-column: span 4;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  input,
+  select {
+    height: 20px;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
   }
 `;
 
@@ -143,6 +167,10 @@ const ToggleSlider = styled.span`
     transition: 0.3s;
   }
 `;
+const RequiredAsterisk = styled.span`
+  color: #dc2626;
+  margin-left: 4px;
+`;
 
 const OpdRoomTab = () => {
 
@@ -157,27 +185,24 @@ const OpdRoomTab = () => {
 
     useEffect(() => {
         try {
-          const userData = localStorage.getItem("user");
-    
-          if (!userData) return;
-    
-          const parsedUser = JSON.parse(userData);
-    
-          if (parsedUser?.full_name) {
-            setCurrentUser(parsedUser.full_name);
-          }
-    
-        } catch (error) {
-          console.error("Error reading user from localStorage:", error);
-        }
-      }, []);
+            const userData = localStorage.getItem("user");
 
+            if (!userData) return;
+
+            const parsedUser = JSON.parse(userData);
+
+            if (parsedUser?.full_name) {
+                setCurrentUser(parsedUser.full_name);
+            }
+
+        } catch (error) {
+            console.error("Error reading user from localStorage:", error);
+        }
+    }, []);
 
     // ✅ Fetch Company List
     const fetchCompanyOptions = async () => {
-
         try {
-
             const response = await fetch(
                 "https://hms.automedai.in/api/resource/Company",
                 {
@@ -188,16 +213,18 @@ const OpdRoomTab = () => {
 
             const data = await response.json();
 
-            if (data?.data) {
+            if (data?.data && data.data.length > 0) {
                 setCompanyOptions(data.data);
+
+                // ✅ Auto select first company
+                setFormData((prev) => ({
+                    ...prev,
+                    company: data.data[0].name,
+                }));
             }
-
         } catch (error) {
-
             console.error(error);
-
         }
-
     };
 
 
@@ -358,24 +385,39 @@ const OpdRoomTab = () => {
         <SectionWrapper>
             {/* FORM */}
             <FormGrid>
-                <FormField>
-                    <label>Company</label>
-                    <select
-                        name="company"
-                        value={formData.company}
-                        onChange={handleChange}
-                    >
-                        <option value="">Select Company</option>
-                        {companyOptions.map((company) => (
-                            <option
-                                key={company.name}
-                                value={company.name}
-                            >
-                                {company.name}
-                            </option>
-                        ))}
-                    </select>
-                </FormField>
+                <DropField>
+                    <label>
+                        Company<RequiredAsterisk>*</RequiredAsterisk>
+                    </label>
+
+                    <Select
+                        options={companyOptions?.map((company) => ({
+                            label: company.name,
+                            value: company.name,
+                        }))}
+
+                        value={
+                            companyOptions
+                                ?.map((company) => ({
+                                    label: company.name,
+                                    value: company.name,
+                                }))
+                                .find((option) => option.value === formData.company) || null
+                        }
+
+                        onChange={(selected) =>
+                            setFormData((prev) => ({
+                                ...prev,
+                                company: selected ? selected.value : "",
+                            }))
+                        }
+
+                        placeholder="Search Company..."
+                        isSearchable
+                        isClearable
+                        required
+                    />
+                </DropField>
 
                 <FormField>
                     <label>Room Name</label>

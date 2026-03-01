@@ -1011,7 +1011,7 @@ const ResultPrint = () => {
                   <InfoValue>-</InfoValue>
                 </InfoField>
                 <InfoField>
-                  <InfoLabel>Sample Date and Time</InfoLabel>
+                  <InfoLabel>Sample Collection Date and Time</InfoLabel>
                   <InfoValue>{formatDateTime(sampleDetails?.collected_time)}</InfoValue>
                 </InfoField>
                 <InfoField>
