@@ -790,7 +790,7 @@ const Dashboard = () => {
       } else {
         setDoctorRoomMap((prev) => ({
           ...prev,
-          [`${doctorId}_${date}_${company}`]: "—",
+          [`${doctorId}_${date}_${company}`]: "Not Assigned Yet",
         }));
       }
     } catch (error) {
@@ -982,7 +982,7 @@ const Dashboard = () => {
                           <td style={tdStyle}>
                             {doctorRoomMap[
                               `${slot.doctor_id}_${selectedDate}_${selectedCompany}`
-                            ] || "Not Assigned Yet"}
+                            ] || "Loading..."}
                           </td>
                         </tr>
                       ))}
