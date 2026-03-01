@@ -668,31 +668,44 @@ const DoctorAssignmentTab = () => {
                 </DropField>
 
                 {/* Room */}
-                <Field>
+                <DropField>
                     <label>
                         Room<RequiredAsterisk>*</RequiredAsterisk>
                     </label>
 
-                    <select
-                        name="room_id"
-                        value={formData.room_id}
-                        onChange={handleChange}
-                        required
-                        disabled={!isDoctorRoomEnabled}
-                    >
-                        <option value="">
-                            {isDoctorRoomEnabled
-                                ? "Select Room"
-                                : "Select Company & Date First"}
-                        </option>
+                    <Select
+                        options={rooms.map((room) => ({
+                            label: room.room_name,
+                            value: room.id,
+                        }))}
 
-                        {rooms.map((room) => (
-                            <option key={room.id} value={room.id}>
-                                {room.room_name}
-                            </option>
-                        ))}
-                    </select>
-                </Field>
+                        value={
+                            rooms
+                                .map((room) => ({
+                                    label: room.room_name,
+                                    value: room.id,
+                                }))
+                                .find((option) => option.value === formData.room_id) || null
+                        }
+
+                        onChange={(selected) =>
+                            setFormData((prev) => ({
+                                ...prev,
+                                room_id: selected ? selected.value : "",
+                            }))
+                        }
+
+                        placeholder={
+                            isDoctorRoomEnabled
+                                ? "Search Room..."
+                                : "Select Company & Date First"
+                        }
+
+                        isSearchable
+                        isClearable
+                        isDisabled={!isDoctorRoomEnabled}
+                    />
+                </DropField>
 
                 <Button onClick={handleAssign}>
 
