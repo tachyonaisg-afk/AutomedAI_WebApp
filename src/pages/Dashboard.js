@@ -542,7 +542,7 @@ const Dashboard = () => {
   const insights = [
     {
       title: "Total Patients Today",
-      value: "124",
+      value: "-",
       color: "default",
       icon: UsersIcon,
       accentColor: "#3b82f6",
@@ -551,7 +551,7 @@ const Dashboard = () => {
     },
     {
       title: "Fees Collected",
-      value: "₹8,250",
+      value: "-",
       color: "default",
       icon: IndianRupee,
       accentColor: "#10b981",
@@ -560,7 +560,7 @@ const Dashboard = () => {
     },
     {
       title: "Pending Queue",
-      value: "8",
+      value: "-",
       color: "orange",
       icon: Clock,
       accentColor: "#f59e0b",
@@ -569,7 +569,7 @@ const Dashboard = () => {
     },
     {
       title: "New Prescriptions",
-      value: "32",
+      value: "-",
       color: "green",
       icon: Pill,
       accentColor: "#10b981",
