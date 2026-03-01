@@ -1962,15 +1962,37 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Gender<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="gender" value={formData.gender} onChange={handleInputChange} disabled={disabledFields.gender} required>
-                      <option value="">Select</option>
-                      {genderOptions.map((option) => (
-                        <option key={option.name} value={option.name}>
-                          {option.name}
-                        </option>
-                      ))}
-                    </FormSelect>
+                    <FormLabel>
+                      Gender<RequiredAsterisk>*</RequiredAsterisk>
+                    </FormLabel>
+
+                    <Select
+                      options={genderOptions.map((option) => ({
+                        label: option.name,
+                        value: option.name,
+                      }))}
+
+                      value={
+                        genderOptions
+                          .map((option) => ({
+                            label: option.name,
+                            value: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.gender) || null
+                      }
+
+                      onChange={(selected) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          gender: selected ? selected.value : "",
+                        }))
+                      }
+
+                      placeholder="Select Gender"
+                      isSearchable
+                      isClearable
+                      required
+                    />
                   </FormGroup>
 
                   <FormGroup>
@@ -1993,15 +2015,37 @@ const PatientRegistration = () => {
                   </FormGroup>
 
                   <FormGroup>
-                    <FormLabel>Clinic<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
-                    <FormSelect name="company" value={formData.company} onChange={handleInputChange} required>
-                      <option value="">Select clinic</option>
-                      {companyOptions.map((option) => (
-                        <option key={option.name} value={option.name}>
-                          {option.name}
-                        </option>
-                      ))}
-                    </FormSelect>
+                    <FormLabel>
+                      Clinic<RequiredAsterisk>*</RequiredAsterisk>
+                    </FormLabel>
+
+                    <Select
+                      options={companyOptions.map((option) => ({
+                        label: option.name,
+                        value: option.name,
+                      }))}
+
+                      value={
+                        companyOptions
+                          .map((option) => ({
+                            label: option.name,
+                            value: option.name,
+                          }))
+                          .find((opt) => opt.value === formData.company) || null
+                      }
+
+                      onChange={(selected) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          company: selected ? selected.value : "",
+                        }))
+                      }
+
+                      placeholder="Search clinic..."
+                      isSearchable
+                      isClearable
+                      required
+                    />
                   </FormGroup>
 
                   <FormGroup>

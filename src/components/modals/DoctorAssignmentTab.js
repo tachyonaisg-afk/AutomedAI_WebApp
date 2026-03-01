@@ -215,7 +215,7 @@ const DoctorAssignmentTab = () => {
     const [formData, setFormData] = useState({
         doctor_id: "",
         company: "",
-        available_date: "",
+        available_date: getTodayDate(),
         start_time: "09:00",
         end_time: "13:00",
         room_id: "",
@@ -466,6 +466,16 @@ const DoctorAssignmentTab = () => {
             if (data.success) {
                 alert("Assigned Successfully");
                 fetchAvailability();
+
+                // ✅ Reset form to default
+                setFormData((prev) => ({
+                    doctor_id: "",
+                    company: prev.company, // keep same company
+                    available_date: getTodayDate(),
+                    start_time: "09:00",
+                    end_time: "13:00",
+                    room_id: "",
+                }));
             } else {
                 alert(data.message || "Something went wrong");
             }

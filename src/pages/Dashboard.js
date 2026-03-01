@@ -406,8 +406,8 @@ const DoctorAvailabilityCard = styled.div`
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 60px 40px;
-  min-height: 300px;
+  padding: 10px 10px;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -529,6 +529,7 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(getTodayDate());
   const [doctorNameMap, setDoctorNameMap] = useState({});
   const [availableSlots, setAvailableSlots] = useState([]);
+  const [doctorRoomMap, setDoctorRoomMap] = useState({});
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
@@ -635,13 +636,22 @@ const Dashboard = () => {
         if (data.success) {
           setAvailableSlots(data.available_slots || []);
 
-          // 🔥 Fetch doctor names
           data.available_slots.forEach((slot) => {
-            setDoctorNameMap((prev) => {
-              if (prev[slot.doctor_id]) return prev;
+            const key = `${slot.doctor_id}_${selectedDate}_${selectedCompany}`;
+
+            // Fetch doctor name (existing logic)
+            if (!doctorNameMap[slot.doctor_id]) {
               fetchDoctorName(slot.doctor_id);
-              return prev;
-            });
+            }
+
+            // 🔥 Fetch room name (NEW)
+            if (!doctorRoomMap[key]) {
+              fetchDoctorRoom(
+                slot.doctor_id,
+                selectedDate,
+                selectedCompany
+              );
+            }
           });
         } else {
           setAvailableSlots([]);
@@ -760,6 +770,32 @@ const Dashboard = () => {
       minute: "2-digit",
       hour12: true,
     });
+  };
+
+  const fetchDoctorRoom = async (doctorId, date, company) => {
+    try {
+      const response = await fetch(
+        `https://midl.automedai.in/doctor_room/doctor_room?doctor_id=${doctorId}&schedule_date=${date}&company=${encodeURIComponent(company)}`
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.data.length > 0) {
+        const roomName = data.data[0].room_name;
+
+        setDoctorRoomMap((prev) => ({
+          ...prev,
+          [`${doctorId}_${date}_${company}`]: roomName,
+        }));
+      } else {
+        setDoctorRoomMap((prev) => ({
+          ...prev,
+          [`${doctorId}_${date}_${company}`]: "—",
+        }));
+      }
+    } catch (error) {
+      console.error("Room fetch error:", error);
+    }
   };
 
   const formatSlotName = (slotName) => {
@@ -881,7 +917,7 @@ const Dashboard = () => {
 
         <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
           <Section>
-            <SectionTitle>Doctor Availability</SectionTitle>
+            <SectionTitle>Assigned Doctors</SectionTitle>
 
             {/* 🔥 Controls */}
             <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
@@ -927,6 +963,7 @@ const Dashboard = () => {
                         <th style={thStyle}>Available Date</th>
                         <th style={thStyle}>Start Time</th>
                         <th style={thStyle}>End Time</th>
+                        <th style={thStyle}>Room Name</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -942,6 +979,11 @@ const Dashboard = () => {
                           </td>
                           <td style={tdStyle}>{formatTimeToAMPM(slot.start_time)}</td>
                           <td style={tdStyle}>{formatTimeToAMPM(slot.end_time)}</td>
+                          <td style={tdStyle}>
+                            {doctorRoomMap[
+                              `${slot.doctor_id}_${selectedDate}_${selectedCompany}`
+                            ] || "Not Assigned Yet"}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

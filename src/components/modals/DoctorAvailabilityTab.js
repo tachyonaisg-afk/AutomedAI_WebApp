@@ -193,7 +193,7 @@ const DoctorAvailabilityTab = () => {
 
     company: "",
 
-    available_date: "",
+    available_date: getTodayDate(),
 
     start_time: "09:00",
     end_time: "13:00",
@@ -368,6 +368,14 @@ const DoctorAvailabilityTab = () => {
         if (result.success) {
           alert("Availability Created Successfully");
           fetchAvailability();
+
+          setFormData({
+            doctor_id: "",
+            company: formData.company, // keep same company selected
+            available_date: getTodayDate(),
+            start_time: "09:00",
+            end_time: "13:00",
+          });
         } else {
           alert(result.message || "Failed to create availability");
         }

@@ -378,8 +378,6 @@ const OpdRoomTab = () => {
 
     };
 
-
-
     return (
 
         <SectionWrapper>
@@ -391,6 +389,11 @@ const OpdRoomTab = () => {
                     </label>
 
                     <Select
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
                         options={companyOptions?.map((company) => ({
                             label: company.name,
                             value: company.name,

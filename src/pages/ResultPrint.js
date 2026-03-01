@@ -999,7 +999,7 @@ const ResultPrint = () => {
                   <InfoValue>{selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
-                  <InfoLabel>Ref Doctor</InfoLabel>
+                  <InfoLabel>Ref By</InfoLabel>
                   <InfoValue>{selectedTestDetails[0]?.practitioner_name || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
@@ -1021,7 +1021,7 @@ const ResultPrint = () => {
                   </InfoValue>
                 </InfoField>
                 <InfoField>
-                  <InfoLabel>Report Status Date</InfoLabel>
+                  <InfoLabel>Report Generated on</InfoLabel>
                   <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
                 </InfoField>
                 <InfoField>
