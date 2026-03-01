@@ -326,73 +326,57 @@ const DoctorAvailabilityTab = () => {
   // ✅ CREATE AVAILABILITY
   const handleCreate = async () => {
     if (!formData.doctor_id || !formData.company || !formData.available_date) {
-
       alert("Input Required Fields");
-
       return;
-
     }
+
     try {
-
       const body = [
-
         {
-
           doctor_id: formData.doctor_id,
-
           company: formData.company,
-
-          available_date:
-            formData.available_date,
-
+          available_date: formData.available_date,
           start_time: formData.start_time,
-
           end_time: formData.end_time,
-
           created_by: currentUser,
-
         },
-
       ];
-
-
 
       const res = await fetch(
         "https://midl.automedai.in/doctor_available/Create",
         {
-
           method: "POST",
-
           headers: {
-            "Content-Type":
-              "application/json",
+            "Content-Type": "application/json",
           },
-
           body: JSON.stringify(body),
-
         }
       );
 
-
-
       const data = await res.json();
 
+      // ✅ If API failed completely
+      if (!data.success) {
+        alert(data.message || "Something went wrong");
+        return;
+      }
 
+      // ✅ Handle individual result
+      if (Array.isArray(data.results) && data.results.length > 0) {
+        const result = data.results[0];
 
-      if (data.success) {
-
-        alert("Created");
-
-        fetchAvailability();
-
+        if (result.success) {
+          alert("Availability Created Successfully");
+          fetchAvailability();
+        } else {
+          alert(result.message || "Failed to create availability");
+        }
       }
 
     } catch (error) {
-
       console.error(error);
-
+      alert("Server Error");
     }
-
   };
 
   // ✅ Fetch Availability List
@@ -474,6 +458,11 @@ const DoctorAvailabilityTab = () => {
           </label>
 
           <Select
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            styles={{
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+            }}
             options={practitioners?.map((doc) => ({
               label: doc.practitioner_name || doc.name,
               value: doc.name,
@@ -513,6 +502,11 @@ const DoctorAvailabilityTab = () => {
           </label>
 
           <Select
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            styles={{
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+            }}
             options={companyOptions?.map((company) => ({
               label: company.name,
               value: company.name,
@@ -552,6 +546,7 @@ const DoctorAvailabilityTab = () => {
             name="available_date"
             onChange={handleChange}
             value={formData.available_date}
+            min={new Date().toISOString().split("T")[0]}
             required
           />
 
@@ -603,11 +598,14 @@ const DoctorAvailabilityTab = () => {
 
         {/* Select Company */}
         <DropField>
-          <label>
-            Company<RequiredAsterisk>*</RequiredAsterisk>
-          </label>
+          <label>Select Company</label>
 
           <Select
+            menuPortalTarget={document.body}
+            menuPosition="fixed"
+            styles={{
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+            }}
             options={companyOptions?.map((company) => ({
               label: company.name,
               value: company.name,
@@ -619,20 +617,16 @@ const DoctorAvailabilityTab = () => {
                   label: company.name,
                   value: company.name,
                 }))
-                .find((option) => option.value === formData.company) || null
+                .find((option) => option.value === selectedCompany) || null
             }
 
             onChange={(selected) =>
-              setFormData((prev) => ({
-                ...prev,
-                company: selected ? selected.value : "",
-              }))
+              setSelectedCompany(selected ? selected.value : "")
             }
 
             placeholder="Search Company..."
             isSearchable
             isClearable
-            required
           />
         </DropField>
 

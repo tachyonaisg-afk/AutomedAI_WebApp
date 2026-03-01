@@ -554,6 +554,11 @@ const DoctorAssignmentTab = () => {
                     </label>
 
                     <Select
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
                         options={companyOptions?.map((company) => ({
                             label: company.name,
                             value: company.name,
@@ -593,6 +598,7 @@ const DoctorAssignmentTab = () => {
                         name="available_date"
                         onChange={handleChange}
                         value={formData.available_date}
+                        min={new Date().toISOString().split("T")[0]}
                         required
                     />
 
@@ -634,6 +640,11 @@ const DoctorAssignmentTab = () => {
                     </label>
 
                     <Select
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
                         options={availableDoctors.map((doctorId) => ({
                             label: doctorNameMap[doctorId] || "Loading...",
                             value: doctorId,
@@ -674,6 +685,11 @@ const DoctorAssignmentTab = () => {
                     </label>
 
                     <Select
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
                         options={rooms.map((room) => ({
                             label: room.room_name,
                             value: room.id,
@@ -721,11 +737,14 @@ const DoctorAssignmentTab = () => {
 
                 {/* Select Company */}
                 <DropField>
-                    <label>
-                        Company<RequiredAsterisk>*</RequiredAsterisk>
-                    </label>
+                    <label>Select Company</label>
 
                     <Select
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
                         options={companyOptions?.map((company) => ({
                             label: company.name,
                             value: company.name,
@@ -737,20 +756,16 @@ const DoctorAssignmentTab = () => {
                                     label: company.name,
                                     value: company.name,
                                 }))
-                                .find((option) => option.value === formData.company) || null
+                                .find((option) => option.value === selectedCompany) || null
                         }
 
                         onChange={(selected) =>
-                            setFormData((prev) => ({
-                                ...prev,
-                                company: selected ? selected.value : "",
-                            }))
+                            setSelectedCompany(selected ? selected.value : "")
                         }
 
                         placeholder="Search Company..."
                         isSearchable
                         isClearable
-                        required
                     />
                 </DropField>
 
