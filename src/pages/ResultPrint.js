@@ -288,7 +288,7 @@ const BackButton = styled.button`
 `;
 
 const ReportPreview = styled.div`
-  padding: 2px 15px;
+  padding: 10px 15px;
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
@@ -306,7 +306,7 @@ const PatientInfoSection = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
   padding: 5px;
   background-color: #ffffff;
   border-radius: 4px;
@@ -384,7 +384,7 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 3px;
+  padding: 4px;
   font-size: 12px;
   color: #000000;
 `;
@@ -1026,6 +1026,10 @@ const ResultPrint = () => {
                 <InfoField>
                   <InfoLabel>Collected By</InfoLabel>
                   <InfoValue>{employees[0]?.employee_name || "N/A"}</InfoValue>
+                </InfoField>
+                <InfoField>
+                  <InfoLabel>Report Status</InfoLabel>
+                  <InfoValue>Final</InfoValue>
                 </InfoField>
               </PatientInfoSection>
 

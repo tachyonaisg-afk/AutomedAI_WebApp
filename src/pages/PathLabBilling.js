@@ -448,7 +448,25 @@ const PathLabBilling = () => {
   const [toDate, setToDate] = useState("");
   const invoiceRef = useRef();
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [currentUser, setCurrentUser] = useState("");
+  const currentDateTime = new Date().toLocaleString("en-IN");
 
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem("user");
+
+      if (!userData) return;
+
+      const parsedUser = JSON.parse(userData);
+
+      if (parsedUser?.full_name) {
+        setCurrentUser(parsedUser.full_name);
+      }
+
+    } catch (error) {
+      console.error("Error reading user from localStorage:", error);
+    }
+  }, []);
 
   // Determine base path for navigation
   const basePath = "/pathlab/billing";
@@ -925,6 +943,19 @@ const PathLabBilling = () => {
             </div>
             <p class="text-[9px] text-center mt-1 italic text-gray-600">This is a computer-generated receipt and does
                 not require a physical stamp for validation.</p>
+                <div class="flex justify-between items-center ">
+
+                <!-- Extreme Left -->
+                <span class="text-[8px] text-gray-600">
+                    ${currentUser} - Printed at ${currentDateTime}
+                </span>
+
+                <!-- Extreme Right -->
+                <span class="text-[8px] font-bold text-gray-700">
+                    Automed AI
+                </span>
+
+            </div>
         </footer>
         <!-- END: Billing Summary and Footer -->
     </main>
