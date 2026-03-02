@@ -632,7 +632,7 @@ const DoctorAssignmentTab = () => {
                         }}
 
                         options={practitioners.map((doc) => ({
-                            label: `${doc.practitioner_name} (${doc.department || "No Department"})`,
+                            label: `${doc.practitioner_name}`,
                             value: doc.name,
                             doctor_name: doc.practitioner_name,
                         }))}
