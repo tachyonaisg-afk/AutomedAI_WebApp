@@ -366,7 +366,12 @@ const PatientDetail = () => {
           <ActionButtons>
             <EditButton onClick={handleEditProfile}>Edit Profile</EditButton>
             <BookButton onClick={handleBookAppointment}>Book Appointment/Billing</BookButton>
-            <PrescriptionButton onClick={handlePrescription}>Prescription</PrescriptionButton>
+            {patientData?.custom_company?.toLowerCase() ===
+              "ramakrishna mission sargachi" && (
+                <PrescriptionButton onClick={handlePrescription}>
+                  Prescription
+                </PrescriptionButton>
+              )}
           </ActionButtons>
         </PatientHeader>
 
