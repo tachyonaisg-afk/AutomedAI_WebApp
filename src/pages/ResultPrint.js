@@ -631,8 +631,9 @@ const ResultPrint = () => {
       try {
         setLoading(true);
         const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
-          fields: '["name","patient_name","result_date","lab_test_name"]',
+          fields: '["name","patient_name","result_date","lab_test_name","department"]',
           filters: JSON.stringify([["Lab Test", "patient", "=", patientId], ["Lab Test", "status", "=", "Completed"]]),
+          order_by: "department asc"
         });
 
         console.log("Lab Tests API Response:", response);

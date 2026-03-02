@@ -684,7 +684,7 @@ const PathLabBilling = () => {
     const itemsHTML = buildItemsRows(invoice.items);
     const companyAddressMap = {
       "Ramakrishna Mission Sargachi": {
-        heading: "RAMAKRISHNA MISSION SARGACHI",
+        heading: "RAMAKRISHNA MISSION ASHRAMA SARGACHI",
         subHeading: "Charitable Dispensary & Diagnostic Centre",
         area: "Sargachi, P.O. Sargachi Ashram, Dist. Murshidabad, West Bengal - 742134",
         iso: "ISO 9001:2008 Certified",
