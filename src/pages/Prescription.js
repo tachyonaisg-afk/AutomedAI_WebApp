@@ -1070,9 +1070,9 @@ const Prescription = () => {
                 <StaticInfoBox style={{ borderBottom: 'none' }}>
                   <StaticInfoTitle paperSize={paperSize}>Advice for Investigation</StaticInfoTitle>
                   <StaticInfoContent paperSize={paperSize}>
-                    Pathology<br /><br /> <br /> <br />
+                    Pathology-<br /><br /> <br /> 
                     X-Ray-<br /><br />
-                    USG-<br />
+                    USG-<br /><br />
                     ECG-<br />
                     OPG-
                   </StaticInfoContent>
