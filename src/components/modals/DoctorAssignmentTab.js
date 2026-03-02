@@ -796,9 +796,7 @@ const DoctorAssignmentTab = () => {
                             <tr key={item.id}>
 
                                 <td>
-                                    {doctorNameMap[item.doctor_id]
-                                        ? doctorNameMap[item.doctor_id]
-                                        : "Loading..."}
+                                    {item.doctor_name}
                                 </td>
 
                                 <td>

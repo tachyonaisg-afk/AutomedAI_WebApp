@@ -628,7 +628,7 @@ const Dashboard = () => {
         setIsLoading(true);
 
         const res = await fetch(
-          `https://midl.automedai.in/doctor_available/fetch?company=${selectedCompany}&date=${selectedDate}`
+          `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${selectedCompany}&schedule_date=${selectedDate}`
         );
 
         const data = await res.json();
@@ -971,7 +971,7 @@ const Dashboard = () => {
                         <tr key={slot.id}>
                           <td style={tdStyle}>{slot.doctor_id}</td>
                           <td style={tdStyle}>
-                            {doctorNameMap[slot.doctor_id] || "Loading..."}
+                            {slot.doctor_name}
                           </td>
                           <td style={tdStyle}>{slot.company}</td>
                           <td style={tdStyle}>
@@ -980,9 +980,7 @@ const Dashboard = () => {
                           <td style={tdStyle}>{formatTimeToAMPM(slot.start_time)}</td>
                           <td style={tdStyle}>{formatTimeToAMPM(slot.end_time)}</td>
                           <td style={tdStyle}>
-                            {doctorRoomMap[
-                              `${slot.doctor_id}_${selectedDate}_${selectedCompany}`
-                            ] || "Loading..."}
+                            {slot.room_name}
                           </td>
                         </tr>
                       ))}
