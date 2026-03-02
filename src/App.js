@@ -28,6 +28,7 @@ import SalesReport from './pages/SalesReport';
 import './App.css';
 import OpdAdmin from './pages/OpdAdmin';
 import RecentOPDPatients from './pages/RecentOPDPatients';
+import OPDPatientRegistration from './pages/OPDPatientRegistration';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -107,7 +108,7 @@ function App() {
             path="/opd/patient-registration"
             element={
               <ProtectedRoute>
-                <PatientRegistration />
+                <OPDPatientRegistration />
               </ProtectedRoute>
             }
           />
