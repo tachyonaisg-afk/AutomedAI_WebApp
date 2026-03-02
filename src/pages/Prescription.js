@@ -1016,7 +1016,7 @@ const Prescription = () => {
               <HeaderTitle paperSize={paperSize}>Ramakrishna Mission Ashrama Sargachi</HeaderTitle>
               <HeaderSubtitle paperSize={paperSize}>Charitable Dispensary & Diagnostic Centre ( ISO 9001:2008 Certified, LIC No.:S/PC/27 )</HeaderSubtitle>
               <HeaderAddress paperSize={paperSize}>
-                P.0 - Sargachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India, Mobile : 9775831847
+                P.O - Sargachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India, Mobile : 9775831847
               </HeaderAddress>
             </PrescriptionHeader>
 

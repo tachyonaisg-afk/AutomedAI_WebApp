@@ -297,7 +297,7 @@ const TabDot = styled.span`
 const OpdAdmin = () => {
     usePageTitle("OPD Admin Dashboard");
     const [isManageSlotsOpen, setIsManageSlotsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState("availability");
+    const [activeTab, setActiveTab] = useState("assignment");
 
     const [rooms, setRooms] = useState([]);
     const [availability, setAvailability] = useState([]);
@@ -382,13 +382,13 @@ const OpdAdmin = () => {
 
                         <ModalContent>
                             <TabBar>
-                                <TabButton
+                                {/* <TabButton
                                     active={activeTab === "availability"}
                                     onClick={() => setActiveTab("availability")}
                                 >
                                     <TabDot color="#14b8a6" />
                                     Doctor Availability
-                                </TabButton>
+                                </TabButton> */}
                                 <TabButton
                                     active={activeTab === "assignment"}
                                     onClick={() => setActiveTab("assignment")}

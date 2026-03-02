@@ -3,6 +3,7 @@ import styled from "styled-components";
 import apiService from "../../services/api/apiService";
 import API_ENDPOINTS from "../../services/api/endpoints";
 import Select from "react-select";
+import { Pencil, Trash2 } from "lucide-react";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -202,8 +203,6 @@ const DoctorAssignmentTab = () => {
     const [availabilityList, setAvailabilityList] = useState([]);
     const [doctorNameMap, setDoctorNameMap] = useState({});
     const [rooms, setRooms] = useState([]);
-    const [availableDoctors, setAvailableDoctors] = useState([]);
-    const [isDoctorRoomEnabled, setIsDoctorRoomEnabled] = useState(false);
     const getTodayDate = () => {
         const today = new Date();
         return today.toISOString().split("T")[0];
@@ -214,6 +213,7 @@ const DoctorAssignmentTab = () => {
 
     const [formData, setFormData] = useState({
         doctor_id: "",
+        doctor_name: "",   // ✅ ADD THIS
         company: "",
         available_date: getTodayDate(),
         start_time: "09:00",
@@ -283,29 +283,21 @@ const DoctorAssignmentTab = () => {
 
     // ✅ Fetch Doctors
     const fetchPractitioners = async () => {
-
         try {
+            const res = await fetch(
+                `https://hms.automedai.in/api/resource/Healthcare Practitioner?limit_page_length=5000&filters=[["practitioner_type","=","Internal"]]&fields=["name","practitioner_name","department"]`,
+                { credentials: "include" }
+            );
 
-            const practitionerRes =
-                await apiService.get(
-                    API_ENDPOINTS.PRACTITIONERS.LIST,
-                    {
-                        fields:
-                            '["name", "practitioner_name"]',
-                        limit_page_length: 5000,
-                    }
-                );
+            const data = await res.json();
 
-            if (practitionerRes.data?.data) {
-
-                setPractitioners(
-                    practitionerRes.data.data
-                );
-
+            if (data?.data) {
+                setPractitioners(data.data);
             }
 
-        } catch { }
-
+        } catch (error) {
+            console.error("Error fetching doctors:", error);
+        }
     };
 
     const fetchDoctorName = async (doctorId) => {
@@ -328,40 +320,7 @@ const DoctorAssignmentTab = () => {
             console.error(error);
         }
     };
-    const fetchAvailableDoctors = async (company, date) => {
-        try {
-            const res = await fetch(
-                `https://midl.automedai.in/doctor_available/fetch?company=${company}&date=${date}`
-            );
 
-            const data = await res.json();
-
-            if (data.success && Array.isArray(data.available_slots)) {
-                const doctorIds = [
-                    ...new Set(data.available_slots.map(slot => slot.doctor_id))
-                ];
-
-                setAvailableDoctors(doctorIds);
-                setIsDoctorRoomEnabled(true);
-
-                // Fetch doctor names
-                doctorIds.forEach(id => {
-                    if (!doctorNameMap[id]) {
-                        fetchDoctorName(id);
-                    }
-                });
-
-            } else {
-                setAvailableDoctors([]);
-                setIsDoctorRoomEnabled(false);
-            }
-
-        } catch (error) {
-            console.error(error);
-            setAvailableDoctors([]);
-            setIsDoctorRoomEnabled(false);
-        }
-    };
     const fetchRooms = async (company) => {
         if (!company) {
             setRooms([]);
@@ -393,14 +352,6 @@ const DoctorAssignmentTab = () => {
             setRooms([]);
         }
     };
-    useEffect(() => {
-        if (formData.company && formData.available_date) {
-            fetchAvailableDoctors(formData.company, formData.available_date);
-        } else {
-            setAvailableDoctors([]);
-            setIsDoctorRoomEnabled(false);
-        }
-    }, [formData.company, formData.available_date]);
 
     useEffect(() => {
         if (formData.company) {
@@ -442,6 +393,7 @@ const DoctorAssignmentTab = () => {
         try {
             const body = {
                 doctor_id: formData.doctor_id,
+                doctor_name: formData.doctor_name,
                 company: formData.company,
                 room_id: formData.room_id,
                 schedule_date: formData.available_date,
@@ -470,7 +422,8 @@ const DoctorAssignmentTab = () => {
                 // ✅ Reset form to default
                 setFormData((prev) => ({
                     doctor_id: "",
-                    company: prev.company, // keep same company
+                    doctor_name: "",
+                    company: prev.company,
                     available_date: getTodayDate(),
                     start_time: "09:00",
                     end_time: "13:00",
@@ -488,41 +441,30 @@ const DoctorAssignmentTab = () => {
 
     // ✅ Fetch Availability List
     const fetchAvailability = async () => {
-        if (!selectedCompany) return;
+        if (!selectedCompany || !selectedDate) return;
 
         try {
             const res = await fetch(
-                `https://midl.automedai.in/doctor_room/all?company=${selectedCompany}`
+                `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${selectedCompany}&schedule_date=${selectedDate}`
             );
 
             const data = await res.json();
 
             if (data.success && Array.isArray(data.data)) {
                 setAvailabilityList(data.data);
-
-                // ✅ Extract unique doctor_ids correctly
-                const uniqueDoctorIds = [
-                    ...new Set(data.data.map((slot) => slot.doctor_id))
-                ];
-
-                uniqueDoctorIds.forEach((id) => {
-                    if (!doctorNameMap[id]) {
-                        fetchDoctorName(id);
-                    }
-                });
-
             } else {
                 setAvailabilityList([]);
             }
+
         } catch (error) {
-            console.error(error);
+            console.error("Error fetching assignments:", error);
             setAvailabilityList([]);
         }
     };
 
     useEffect(() => {
         if (selectedCompany && selectedDate) {
-            setCurrentPage(1); // reset page
+            setCurrentPage(1);
             fetchAvailability();
         }
     }, [selectedCompany, selectedDate]);
@@ -547,6 +489,39 @@ const DoctorAssignmentTab = () => {
         const year = date.getFullYear();
 
         return `${day}-${month}-${year}`;
+    };
+
+    const handleDelete = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this assignment?");
+        if (!confirmDelete) return;
+
+        try {
+            const res = await fetch(
+                `http://localhost:3008/doctor_room/delete/${id}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        company: selectedCompany,
+                    }),
+                }
+            );
+
+            const data = await res.json();
+
+            if (data.success) {
+                alert("Deleted Successfully");
+                fetchAvailability();
+            } else {
+                alert(data.message || "Delete failed");
+            }
+
+        } catch (error) {
+            console.error("Delete error:", error);
+            alert("Server error while deleting");
+        }
     };
 
     return (
@@ -655,16 +630,19 @@ const DoctorAssignmentTab = () => {
                         styles={{
                             menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                         }}
-                        options={availableDoctors.map((doctorId) => ({
-                            label: doctorNameMap[doctorId] || "Loading...",
-                            value: doctorId,
+
+                        options={practitioners.map((doc) => ({
+                            label: `${doc.practitioner_name} (${doc.department || "No Department"})`,
+                            value: doc.name,
+                            doctor_name: doc.practitioner_name,
                         }))}
 
                         value={
-                            availableDoctors
-                                .map((doctorId) => ({
-                                    label: doctorNameMap[doctorId] || "Loading...",
-                                    value: doctorId,
+                            practitioners
+                                .map((doc) => ({
+                                    label: `${doc.practitioner_name} (${doc.department || "No Department"})`,
+                                    value: doc.name,
+                                    doctor_name: doc.practitioner_name,
                                 }))
                                 .find((option) => option.value === formData.doctor_id) || null
                         }
@@ -673,18 +651,13 @@ const DoctorAssignmentTab = () => {
                             setFormData((prev) => ({
                                 ...prev,
                                 doctor_id: selected ? selected.value : "",
+                                doctor_name: selected ? selected.doctor_name : "",
                             }))
                         }
 
-                        placeholder={
-                            isDoctorRoomEnabled
-                                ? "Search Doctor..."
-                                : "Select Company & Date First"
-                        }
-
+                        placeholder="Search Doctor..."
                         isSearchable
                         isClearable
-                        isDisabled={!isDoctorRoomEnabled}
                     />
                 </DropField>
 
@@ -722,14 +695,14 @@ const DoctorAssignmentTab = () => {
                         }
 
                         placeholder={
-                            isDoctorRoomEnabled
+                            formData.company
                                 ? "Search Room..."
-                                : "Select Company & Date First"
+                                : "Select Company First"
                         }
 
                         isSearchable
                         isClearable
-                        isDisabled={!isDoctorRoomEnabled}
+                        isDisabled={!formData.company}
                     />
                 </DropField>
 
@@ -778,6 +751,14 @@ const DoctorAssignmentTab = () => {
                         isClearable
                     />
                 </DropField>
+                <Field>
+                    <label>Select Date</label>
+                    <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                    />
+                </Field>
 
             </FormGrid>
 
@@ -800,6 +781,8 @@ const DoctorAssignmentTab = () => {
                         <th>End</th>
 
                         <th>Company</th>
+
+                        <th>Actions</th>
 
                     </tr>
 
@@ -830,6 +813,24 @@ const DoctorAssignmentTab = () => {
 
                                 <td>
                                     {item.company}
+                                </td>
+
+                                <td>
+                                    <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+
+                                        <Pencil
+                                            size={18}
+                                            style={{ cursor: "pointer" }}
+                                            onClick={() => console.log("Edit clicked", item)}
+                                        />
+
+                                        <Trash2
+                                            size={18}
+                                            style={{ cursor: "pointer", color: "red" }}
+                                            onClick={() => handleDelete(item.id)}
+                                        />
+
+                                    </div>
                                 </td>
 
                             </tr>
