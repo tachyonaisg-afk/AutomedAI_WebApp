@@ -634,9 +634,9 @@ const Dashboard = () => {
         const data = await res.json();
 
         if (data.success) {
-          setAvailableSlots(data.available_slots || []);
+          setAvailableSlots(data.data  || []);
 
-          data.available_slots.forEach((slot) => {
+          data.data.forEach((slot) => {
             const key = `${slot.doctor_id}_${selectedDate}_${selectedCompany}`;
 
             // Fetch doctor name (existing logic)
@@ -975,10 +975,10 @@ const Dashboard = () => {
                           </td>
                           <td style={tdStyle}>{slot.company}</td>
                           <td style={tdStyle}>
-                            {new Date(slot.available_date).toLocaleDateString("en-IN")}
+                            {new Date(slot.schedule_date).toLocaleDateString("en-IN")}
                           </td>
-                          <td style={tdStyle}>{formatTimeToAMPM(slot.start_time)}</td>
-                          <td style={tdStyle}>{formatTimeToAMPM(slot.end_time)}</td>
+                          <td style={tdStyle}>{formatTimeToAMPM(slot.from_time)}</td>
+                          <td style={tdStyle}>{formatTimeToAMPM(slot.to_time)}</td>
                           <td style={tdStyle}>
                             {slot.room_name}
                           </td>

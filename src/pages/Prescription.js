@@ -919,7 +919,7 @@ const Prescription = () => {
           <SectionTitle>Doctor Selection</SectionTitle>
 
           <FormGroup>
-            <Label>Select Doctor *</Label>
+            <Label>Doctor</Label>
 
             <ReactSelect
               classNamePrefix="react-select"
@@ -940,7 +940,7 @@ const Prescription = () => {
           </FormGroup>
           <SidebarSection>
             <FormGroup>
-              <Label>Select Clinic *</Label>
+              <Label>Clinic</Label>
 
               <ReactSelect
                 classNamePrefix="react-select"
@@ -949,6 +949,7 @@ const Prescription = () => {
                 isSearchable
                 isClearable={false}
                 value={selectedClinic}
+                isDisabled={true}
                 onChange={(selected) => {
                   setSelectedClinic(selected);
 
@@ -960,12 +961,13 @@ const Prescription = () => {
               />
             </FormGroup>
             <FormGroup>
-              <Label>Select Date *</Label>
+              <Label>Date</Label>
               <Input
                 type="date"
                 name="selectedDate"
                 value={formData.selectedDate}
                 onChange={handleFormChange}
+                isDisabled={true}
               />
             </FormGroup>
           </SidebarSection>
