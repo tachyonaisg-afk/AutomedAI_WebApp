@@ -1650,6 +1650,7 @@ const PatientRegistration = () => {
               appointment_id: appointmentId,
               doctor_id: billingData.referringPractitioner,
               patient_id: patientId,
+              company: formData.company,
               appointment_date: formData.appointmentDate,
             };
 
