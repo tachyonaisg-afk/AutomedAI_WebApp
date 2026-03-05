@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Select from "react-select";
+import { Pencil, Trash2 } from "lucide-react";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -171,11 +172,46 @@ const RequiredAsterisk = styled.span`
   color: #dc2626;
   margin-left: 4px;
 `;
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ModalButtonRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+`;
+
+const ModalButton = styled.button`
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+`;
 
 const OpdRoomTab = () => {
 
     const [companyOptions, setCompanyOptions] = useState([]);
     const [currentUser, setCurrentUser] = useState("");
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editRoom, setEditRoom] = useState(null);
+    const [editRoomName, setEditRoomName] = useState("");
     const [formData, setFormData] = useState({
         company: "",
         room_name: "",
@@ -339,7 +375,80 @@ const OpdRoomTab = () => {
 
     };
 
+    const handleDelete = async (room) => {
+        const confirmDelete = window.confirm(
+            `Are you sure you want to delete ${room.room_name}?`
+        );
 
+        if (!confirmDelete) return;
+
+        try {
+            const response = await fetch(
+                `https://midl.automedai.in/rooms/delete/${room.id}`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        company: room.company,
+                        user_id: currentUser,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                fetchRooms(room.company);
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleEdit = (room) => {
+        setEditRoom(room);
+        setEditRoomName(room.room_name);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateRoom = async () => {
+        if (!editRoomName) {
+            alert("Room name is required");
+            return;
+        }
+
+        try {
+            const response = await fetch(
+                `https://midl.automedai.in/rooms/update/${editRoom.id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        room_name: editRoomName,
+                        user_id: currentUser,
+                        company: editRoom.company,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                setIsEditModalOpen(false);
+                fetchRooms(editRoom.company);
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     // ✅ Toggle Status API
     const handleToggleStatus = async (room) => {
@@ -443,6 +552,7 @@ const OpdRoomTab = () => {
                         <th>Room</th>
                         <th>Company</th>
                         <th>Status</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
 
@@ -456,17 +566,59 @@ const OpdRoomTab = () => {
                                     <ToggleInput
                                         type="checkbox"
                                         checked={room.status === "active"}
-                                        onChange={() =>
-                                            handleToggleStatus(room)
-                                        }
+                                        onChange={() => handleToggleStatus(room)}
                                     />
                                     <ToggleSlider />
                                 </ToggleWrapper>
+                            </td>
+
+                            <td>
+                                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                                    <Pencil
+                                        size={18}
+                                        style={{ cursor: "pointer" }}
+                                        onClick={() => handleEdit(room)}
+                                    />
+
+                                    <Trash2
+                                        size={18}
+                                        style={{ cursor: "pointer", color: "red" }}
+                                        onClick={() => handleDelete(room)}
+                                    />
+                                </div>
                             </td>
                         </tr>
                     ))}
                 </tbody>
             </Table>
+            {isEditModalOpen && (
+                <ModalOverlay>
+                    <ModalContent>
+                        <h3>Edit Room</h3>
+
+                        <input
+                            value={editRoomName}
+                            onChange={(e) => setEditRoomName(e.target.value)}
+                        />
+
+                        <ModalButtonRow>
+                            <ModalButton
+                                style={{ background: "#e2e8f0" }}
+                                onClick={() => setIsEditModalOpen(false)}
+                            >
+                                Cancel
+                            </ModalButton>
+
+                            <ModalButton
+                                style={{ background: "#3b82f6", color: "white" }}
+                                onClick={handleUpdateRoom}
+                            >
+                                Update
+                            </ModalButton>
+                        </ModalButtonRow>
+                    </ModalContent>
+                </ModalOverlay>
+            )}
         </SectionWrapper>
     );
 };
