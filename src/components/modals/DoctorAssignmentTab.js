@@ -75,9 +75,84 @@ const DropField = styled.div`
 
   }
 `;
+const DroppField = styled.div`
+  grid-column: span 8;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  input,
+  select {
+    height: 20px;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
+  }
+`;
+const RoomField = styled.div`
+  grid-column: span 4;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  input,
+  select {
+    height: 20px;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
+  }
+`;
 
 const TimeField = styled.div`
-  grid-column: span 2;
+  grid-column: span 4;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  input,
+  select {
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 0 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: all 0.2s;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+    }
+  }
+`;
+const TimeMField = styled.div`
+  grid-column: span 4;
 
   display: flex;
   flex-direction: column;
@@ -540,19 +615,22 @@ const DoctorAssignmentTab = () => {
 
     const handleEdit = (item) => {
 
+        const formattedDate = item.schedule_date
+            ? new Date(item.schedule_date).toISOString().split("T")[0]
+            : "";
+
         setEditData({
             id: item.id,
             doctor_id: item.doctor_id,
             doctor_name: item.doctor_name,
             company: item.company,
             room_id: item.room_id,
-            schedule_date: item.schedule_date,
-            from_time: item.from_time.slice(0, 5),
-            to_time: item.to_time.slice(0, 5),
+            schedule_date: formattedDate,
+            from_time: item.from_time?.slice(0, 5),
+            to_time: item.to_time?.slice(0, 5),
         });
 
         fetchRooms(item.company);
-
         setIsEditOpen(true);
     };
 
@@ -879,6 +957,7 @@ const DoctorAssignmentTab = () => {
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
+                        min={new Date().toISOString().split("T")[0]}
                     />
                 </Field>
 
@@ -999,7 +1078,7 @@ const DoctorAssignmentTab = () => {
 
                         <FormGrid>
 
-                            <DropField>
+                            <DroppField>
                                 <label>
                                     Doctor<RequiredAsterisk>*</RequiredAsterisk>
                                 </label>
@@ -1039,7 +1118,7 @@ const DoctorAssignmentTab = () => {
                                     isSearchable
                                     isClearable
                                 />
-                            </DropField>
+                            </DroppField>
 
                             <Field>
                                 <label>Date</label>
@@ -1051,7 +1130,7 @@ const DoctorAssignmentTab = () => {
                                 />
                             </Field>
 
-                            <TimeField>
+                            <TimeMField>
                                 <label>Start</label>
                                 <input
                                     type="time"
@@ -1059,9 +1138,9 @@ const DoctorAssignmentTab = () => {
                                     value={editData.from_time}
                                     onChange={handleEditChange}
                                 />
-                            </TimeField>
+                            </TimeMField>
 
-                            <TimeField>
+                            <TimeMField>
                                 <label>End</label>
                                 <input
                                     type="time"
@@ -1069,9 +1148,9 @@ const DoctorAssignmentTab = () => {
                                     value={editData.to_time}
                                     onChange={handleEditChange}
                                 />
-                            </TimeField>
+                            </TimeMField>
 
-                            <DropField>
+                            <RoomField>
                                 <label>Room</label>
 
                                 <Select
@@ -1097,7 +1176,7 @@ const DoctorAssignmentTab = () => {
                                     }
                                 />
 
-                            </DropField>
+                            </RoomField>
 
                         </FormGrid>
 
