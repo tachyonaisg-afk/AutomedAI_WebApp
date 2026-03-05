@@ -410,40 +410,46 @@ const EndOfReport = styled.div`
   }
 `;
 const PrintStyles = createGlobalStyle`
-  @media print {
-    
+@media print {
 
-    /* ✅ KEY FIXES */
-    img {
-  max-width: 100%;
-  page-break-inside: avoid;
-}
-
-    table {
-      page-break-inside: auto;
-    }
-
-    tr {
-      page-break-inside: avoid;
-      page-break-after: auto;
-    }
-
-    thead {
-      display: table-header-group;
-    }
-
-    tfoot {
-      display: table-footer-group;
-    }
-
-    .test-section {
-      page-break-inside: avoid;
-    }
-
-    .page-break {
-      page-break-before: always;
-    }
+  .department-block {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
   }
+
+  .page {
+    height: 1122px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .pdf-body {
+    min-height: 625px;
+  }
+
+  img {
+    max-width: 100%;
+    page-break-inside: avoid;
+  }
+
+  table {
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+
+}
 `;
 const WhatsAppButton = styled(Button)`
   background-color: #25D366;   /* WhatsApp green */
@@ -843,14 +849,21 @@ const ResultPrint = () => {
       alert('Failed to generate PDF. Please try again or use the Print option.');
     }
   };
+
   const handleSendToWhatsapp = () => {
     console.log("WhatsApp Message Sent");
   };
 
-
   const selectedTests = tests.filter((test) => test.selected);
   const activeTests = tests.filter((test) => !test.disabled);
   const disabledTests = tests.filter((test) => test.disabled);
+
+  const groupedByDepartment = selectedTestDetails.reduce((acc, test) => {
+    const dept = test.department || "Laboratory";
+    if (!acc[dept]) acc[dept] = [];
+    acc[dept].push(test);
+    return acc;
+  }, {});
 
   return (
     <Container>
@@ -1035,51 +1048,49 @@ const ResultPrint = () => {
               </PatientInfoSection>
 
               <ResultsTable>
-                <thead>
-                  <tr>
-                    <TableHeader>Test Parameter</TableHeader>
-                    <TableHeader style={{ textAlign: "right" }}>Result</TableHeader>
-                    <TableHeader style={{ textAlign: "right" }}>Units</TableHeader>
-                    <TableHeader style={{ textAlign: "right" }}>Reference Interval</TableHeader>
-                  </tr>
-                </thead>
-
                 <tbody>
-
                   {selectedTestDetails.map((testDetail, index) => {
+                    const currentDept = testDetail.department || "Laboratory";
+                    const prevDept = selectedTestDetails[index - 1]?.department;
 
-                    const showDepartment =
-                      index === 0 ||
-                      selectedTestDetails[index - 1]?.department !== testDetail.department;
+                    const showDepartment = index === 0 || currentDept !== prevDept;
 
                     return (
                       <React.Fragment key={testDetail.name}>
 
-                        {/* Department heading */}
+                        {/* Department Title */}
                         {showDepartment && (
-                          <tr>
-                            <td colSpan="4">
-                              <TestCategory>
-                                Department of {testDetail.department || "Laboratory Test"}
-                              </TestCategory>
-                            </td>
-                          </tr>
+                          <>
+                            <tr>
+                              <td colSpan="4">
+                                <TestCategory>
+                                  Department of {currentDept}
+                                </TestCategory>
+                              </td>
+                            </tr>
+
+                            {/* Table Header again */}
+                            <tr>
+                              <TableHeader>Test Parameter</TableHeader>
+                              <TableHeader style={{ textAlign: "right" }}>Result</TableHeader>
+                              <TableHeader style={{ textAlign: "right" }}>Units</TableHeader>
+                              <TableHeader style={{ textAlign: "right" }}>Reference Interval</TableHeader>
+                            </tr>
+                          </>
                         )}
 
                         {/* Test Name */}
-                        <tr>
-                          <td colSpan="4">
+                        <TableRow>
+                          <TableCell colSpan="4">
                             <TestName>
                               {removeTestPrefix(testDetail.lab_test_name)}
                             </TestName>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
 
                         {/* Parameters */}
-                        {testDetail.normal_test_items.map((item, itemIndex) => (
-
-                          <TableRow key={itemIndex}>
-
+                        {testDetail.normal_test_items.map((item, i) => (
+                          <TableRow key={i}>
                             <TableCell>
                               {removeTestPrefix(item.lab_test_name)}
                             </TableCell>
@@ -1095,15 +1106,12 @@ const ResultPrint = () => {
                             <TableCell style={{ textAlign: "right" }}>
                               {item.normal_range}
                             </TableCell>
-
                           </TableRow>
-
                         ))}
 
                       </React.Fragment>
                     );
                   })}
-
                 </tbody>
               </ResultsTable>
 
