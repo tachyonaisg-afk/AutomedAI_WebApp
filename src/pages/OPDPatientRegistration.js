@@ -741,6 +741,8 @@ const OPDPatientRegistration = () => {
     const [medicalHistory, setMedicalHistory] = useState({
         occupation: "",
         maritalStatus: "",
+        custom_religion: "",
+        custom_cast: "",
         allergies: "",
         preExistingConditions: "",
         regularMedication: "",
@@ -790,6 +792,36 @@ const OPDPatientRegistration = () => {
     const [showItemResults, setShowItemResults] = useState(false);
     const [searchingItem, setSearchingItem] = useState(false);
     const [showPHCOnly, setShowPHCOnly] = useState(false);
+
+    const casteOptions = [
+        { label: "General", value: "General" },
+        { label: "SC", value: "SC" },
+        { label: "ST", value: "ST" },
+        { label: "OBC-A", value: "OBC-A" },
+        { label: "OBC-B", value: "OBC-B" },
+        { label: "Other", value: "Other" },
+        { label: "Prefer Not to Say", value: "Prefer Not to Say" },
+    ];
+    const getFilteredCastes = () => {
+        const religion = medicalHistory.custom_religion;
+
+        if (!religion) return [];
+
+        if (religion === "Hindu") {
+            // All except OBC-B
+            return casteOptions.filter(caste => caste.value !== "OBC-B");
+        }
+
+        if (religion === "Muslim") {
+            // Only General and OBC-B
+            return casteOptions.filter(caste =>
+                caste.value === "General" || caste.value === "OBC-B"
+            );
+        }
+
+        // For all other religions → return all but disabled
+        return casteOptions;
+    };
 
     // If address line 1 has a value, other address fields (except line 2) become required
     const hasAnyAddressValue = formData.address_line1?.trim().length > 0;
@@ -1155,9 +1187,11 @@ const OPDPatientRegistration = () => {
 
     const handleMedicalHistoryChange = (e) => {
         const { name, value } = e.target;
-        setMedicalHistory((prev) => ({
+
+        setMedicalHistory(prev => ({
             ...prev,
             [name]: value,
+            ...(name === "custom_religion" && { custom_cast: "" })
         }));
     };
 
@@ -1491,6 +1525,8 @@ const OPDPatientRegistration = () => {
                 alcohol_current_use: medicalHistory.alcoholCurrentUse,
                 other_risk_factors: medicalHistory.otherRiskFactors,
                 marital_status: medicalHistory.maritalStatus,
+                custom_religion: medicalHistory.custom_religion,
+                custom_cast: medicalHistory.custom_cast
             };
 
             // Add optional fields
@@ -1577,6 +1613,7 @@ const OPDPatientRegistration = () => {
                         const queuePayload = {
                             appointment_id: appointmentId,
                             doctor_id: billingData.referringPractitioner,
+                            company: formData.company,
                             patient_id: patientId,
                             appointment_date: formData.appointmentDate,
                         };
@@ -2164,6 +2201,48 @@ const OPDPatientRegistration = () => {
                                             <option value="Widowed">Widowed</option>
                                         </FormSelect>
                                     </FormGroup>
+                                    <FormGroup>
+                                        <FormLabel>Religion</FormLabel>
+                                        <FormSelect name="custom_religion" value={medicalHistory.custom_religion} onChange={handleMedicalHistoryChange}>
+                                            <option value="">Select Religion</option>
+                                            <option value="Hindu">Hindu</option>
+                                            <option value="Muslim">Muslim</option>
+                                            <option value="Christian">Christian</option>
+                                            <option value="Sikh">Sikh</option>
+                                            <option value="Buddhist">Buddhist</option>
+                                            <option value="Jain">Jain</option>
+                                            <option value="Parsi">Parsi</option>
+                                            <option value="Jewish">Jewish</option>
+                                            <option value="Atheist / No Religion">Atheist / No Religion</option>
+                                            <option value="Other">Other</option>
+                                        </FormSelect>
+                                    </FormGroup>
+                                    {medicalHistory.custom_religion === "Hindu" ||
+                                        medicalHistory.custom_religion === "Muslim" ||
+                                        medicalHistory.custom_religion ? (
+
+                                        <FormGroup>
+                                            <FormLabel>Caste</FormLabel>
+                                            <FormSelect
+                                                name="custom_cast"
+                                                value={medicalHistory.custom_cast}
+                                                onChange={handleMedicalHistoryChange}
+                                                disabled={
+                                                    medicalHistory.custom_religion !== "Hindu" &&
+                                                    medicalHistory.custom_religion !== "Muslim"
+                                                }
+                                            >
+                                                <option value="">Select Caste</option>
+
+                                                {getFilteredCastes().map((caste) => (
+                                                    <option key={caste.value} value={caste.value}>
+                                                        {caste.label}
+                                                    </option>
+                                                ))}
+                                            </FormSelect>
+                                        </FormGroup>
+
+                                    ) : null}
                                 </FormGrid>
                             </FormSection>
 

@@ -531,6 +531,7 @@ const Dashboard = () => {
   const [doctorNameMap, setDoctorNameMap] = useState({});
   const [availableSlots, setAvailableSlots] = useState([]);
   const [doctorRoomMap, setDoctorRoomMap] = useState({});
+  const [totalPatientsToday, setTotalPatientsToday] = useState("-");
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
@@ -544,7 +545,7 @@ const Dashboard = () => {
   const insights = [
     {
       title: "Total Patients Today",
-      value: "-",
+      value: totalPatientsToday,
       color: "default",
       icon: UsersIcon,
       accentColor: "#3b82f6",
@@ -654,11 +655,33 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    if (selectedCompany) {
-      fetchFeesCollected(selectedCompany);
+  const fetchTotalPatientsToday = async (company, date) => {
+    if (!company || !date) return;
+
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/appointments/company-patient-count?company=${encodeURIComponent(company)}&appointment_date=${date}`
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setTotalPatientsToday(data.data?.total_patients || 0);
+      } else {
+        setTotalPatientsToday(0);
+      }
+    } catch (error) {
+      console.error("Total patients fetch error:", error);
+      setTotalPatientsToday(0);
     }
-  }, [selectedCompany]);
+  };
+
+  useEffect(() => {
+    if (selectedCompany && selectedDate) {
+      fetchFeesCollected(selectedCompany);
+      fetchTotalPatientsToday(selectedCompany, selectedDate);
+    }
+  }, [selectedCompany, selectedDate]);
 
   const fetchDoctorName = async (doctorId) => {
     try {
@@ -727,6 +750,7 @@ const Dashboard = () => {
 
     fetchDoctorAvailability();
   }, [selectedCompany, selectedDate]);
+
 
   // Search patients function
   const searchPatients = async (query) => {

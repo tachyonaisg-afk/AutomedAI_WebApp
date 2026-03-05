@@ -460,7 +460,7 @@ const LabTestResult = () => {
   useEffect(() => {
     if (labTestData && labTestData.normal_test_items) {
       const formattedResults = labTestData.normal_test_items.map((item) => ({
-        parameter: removeTestPrefix(item.lab_test_name) || "",
+        parameter: removeTestPrefix(item.template) || "",
         value: item.result_value || "",
         unit: item.lab_test_uom || "",
         normalRange: item.normal_range || "",
