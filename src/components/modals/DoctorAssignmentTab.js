@@ -191,6 +191,51 @@ const PageButton = styled.button`
     cursor: not-allowed;
   }
 `;
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+`;
+
+const ModalBox = styled.div`
+  width: 600px;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+`;
+
+const ModalTitle = styled.h3`
+  margin-bottom: 1rem;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+`;
+
+const CancelButton = styled.button`
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  cursor: pointer;
+`;
+
+const SaveButton = styled.button`
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  cursor: pointer;
+`;
 
 const DoctorAssignmentTab = () => {
 
@@ -202,6 +247,8 @@ const DoctorAssignmentTab = () => {
 
     const [availabilityList, setAvailabilityList] = useState([]);
     const [doctorNameMap, setDoctorNameMap] = useState({});
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editData, setEditData] = useState(null);
     const [rooms, setRooms] = useState([]);
     const getTodayDate = () => {
         const today = new Date();
@@ -491,13 +538,88 @@ const DoctorAssignmentTab = () => {
         return `${day}-${month}-${year}`;
     };
 
+    const handleEdit = (item) => {
+
+        setEditData({
+            id: item.id,
+            doctor_id: item.doctor_id,
+            doctor_name: item.doctor_name,
+            company: item.company,
+            room_id: item.room_id,
+            schedule_date: item.schedule_date,
+            from_time: item.from_time.slice(0, 5),
+            to_time: item.to_time.slice(0, 5),
+        });
+
+        fetchRooms(item.company);
+
+        setIsEditOpen(true);
+    };
+
+    const handleEditChange = (e) => {
+        setEditData({
+            ...editData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleUpdate = async () => {
+
+        try {
+
+            const body = {
+                doctor_id: editData.doctor_id,
+                doctor_name: editData.doctor_name,
+                company: editData.company,
+                room_id: editData.room_id,
+                schedule_date: editData.schedule_date,
+                from_time: editData.from_time,
+                to_time: editData.to_time,
+                user_id: currentUser
+            };
+
+            const res = await fetch(
+                `https://midl.automedai.in/doctor_room/update/${editData.id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(body)
+                }
+            );
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                alert("Updated Successfully");
+
+                setIsEditOpen(false);
+                fetchAvailability();
+
+            } else {
+
+                alert(data.message);
+
+            }
+
+        } catch (error) {
+
+            console.error(error);
+            alert("Server Error");
+
+        }
+    };
+
+
     const handleDelete = async (id) => {
         const confirmDelete = window.confirm("Are you sure you want to delete this assignment?");
         if (!confirmDelete) return;
 
         try {
             const res = await fetch(
-                `http://localhost:3008/doctor_room/delete/${id}`,
+                `https://midl.automedai.in/doctor_room/delete/${id}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -819,7 +941,7 @@ const DoctorAssignmentTab = () => {
                                         <Pencil
                                             size={18}
                                             style={{ cursor: "pointer" }}
-                                            onClick={() => console.log("Edit clicked", item)}
+                                            onClick={() => handleEdit(item)}
                                         />
 
                                         <Trash2
@@ -865,6 +987,136 @@ const DoctorAssignmentTab = () => {
                         Next
                     </PageButton>
                 </PaginationWrapper>
+            )}
+
+            {isEditOpen && editData && (
+
+                <ModalOverlay>
+
+                    <ModalBox>
+
+                        <ModalTitle>Edit Doctor Assignment</ModalTitle>
+
+                        <FormGrid>
+
+                            <DropField>
+                                <label>
+                                    Doctor<RequiredAsterisk>*</RequiredAsterisk>
+                                </label>
+
+                                <Select
+                                    menuPortalTarget={document.body}
+                                    menuPosition="fixed"
+                                    styles={{
+                                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                    }}
+
+                                    options={practitioners.map((doc) => ({
+                                        label: `${doc.practitioner_name}`,
+                                        value: doc.name,
+                                        doctor_name: doc.practitioner_name,
+                                    }))}
+
+                                    value={
+                                        practitioners
+                                            .map((doc) => ({
+                                                label: `${doc.practitioner_name}`,
+                                                value: doc.name,
+                                                doctor_name: doc.practitioner_name,
+                                            }))
+                                            .find((option) => option.value === editData.doctor_id) || null
+                                    }
+
+                                    onChange={(selected) =>
+                                        setEditData((prev) => ({
+                                            ...prev,
+                                            doctor_id: selected ? selected.value : "",
+                                            doctor_name: selected ? selected.doctor_name : "",
+                                        }))
+                                    }
+
+                                    placeholder="Search Doctor..."
+                                    isSearchable
+                                    isClearable
+                                />
+                            </DropField>
+
+                            <Field>
+                                <label>Date</label>
+                                <input
+                                    type="date"
+                                    name="schedule_date"
+                                    value={editData.schedule_date}
+                                    onChange={handleEditChange}
+                                />
+                            </Field>
+
+                            <TimeField>
+                                <label>Start</label>
+                                <input
+                                    type="time"
+                                    name="from_time"
+                                    value={editData.from_time}
+                                    onChange={handleEditChange}
+                                />
+                            </TimeField>
+
+                            <TimeField>
+                                <label>End</label>
+                                <input
+                                    type="time"
+                                    name="to_time"
+                                    value={editData.to_time}
+                                    onChange={handleEditChange}
+                                />
+                            </TimeField>
+
+                            <DropField>
+                                <label>Room</label>
+
+                                <Select
+                                    options={rooms.map((room) => ({
+                                        label: room.room_name,
+                                        value: room.id,
+                                    }))}
+
+                                    value={
+                                        rooms
+                                            .map((room) => ({
+                                                label: room.room_name,
+                                                value: room.id,
+                                            }))
+                                            .find((opt) => opt.value === editData.room_id) || null
+                                    }
+
+                                    onChange={(selected) =>
+                                        setEditData((prev) => ({
+                                            ...prev,
+                                            room_id: selected.value
+                                        }))
+                                    }
+                                />
+
+                            </DropField>
+
+                        </FormGrid>
+
+                        <ModalButtons>
+
+                            <CancelButton onClick={() => setIsEditOpen(false)}>
+                                Cancel
+                            </CancelButton>
+
+                            <SaveButton onClick={handleUpdate}>
+                                Update
+                            </SaveButton>
+
+                        </ModalButtons>
+
+                    </ModalBox>
+
+                </ModalOverlay>
+
             )}
 
         </SectionWrapper>

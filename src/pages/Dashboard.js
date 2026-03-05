@@ -523,6 +523,7 @@ const Dashboard = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchTimeoutRef = useRef(null);
   const [availableDoctors, setAvailableDoctors] = useState([]);
+  const [feesCollected, setFeesCollected] = useState("-");
   const [isLoading, setIsLoading] = useState(true);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -552,7 +553,7 @@ const Dashboard = () => {
     },
     {
       title: "Fees Collected",
-      value: "-",
+      value: feesCollected,
       color: "default",
       icon: IndianRupee,
       accentColor: "#10b981",
@@ -600,6 +601,65 @@ const Dashboard = () => {
     fetchCompanies();
   }, []);
 
+  const fetchFeesCollected = async (company) => {
+    if (!company) return;
+
+    try {
+      const today = getTodayDate();
+
+      let accountName = "";
+
+      if (company === "Ramakrishna Mission Sargachi") {
+        accountName = "Sales - RKMS";
+      } else if (company === "ALFA DIAGNOSTIC CENTRE & POLYCLINIC") {
+        accountName = "Sales - ADC&P";
+      } else {
+        setFeesCollected("₹0");
+        return;
+      }
+
+      const filters = {
+        company: company,
+        from_date: today,
+        to_date: today,
+        account: [accountName],
+        party: [],
+        categorize_by: "Categorize by Voucher (Consolidated)",
+        cost_center: [],
+        project: [],
+        include_dimensions: 1,
+        include_default_book_entries: 1,
+      };
+
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+
+      const url = `https://hms.automedai.in/api/method/frappe.desk.query_report.run?report_name=General+Ledger&filters=${encodedFilters}&ignore_prepared_report=false&are_default_filters=true`;
+
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+
+      const result = data?.message?.result || [];
+
+      // Find the Total row
+      const totalRow = result.find(
+        (row) => row.account === "'Total'"
+      );
+
+      const totalAmount = totalRow?.credit || 0;
+
+      setFeesCollected(`₹${totalAmount}`);
+    } catch (error) {
+      console.error("Fees fetch error:", error);
+      setFeesCollected("₹0");
+    }
+  };
+
+  useEffect(() => {
+    if (selectedCompany) {
+      fetchFeesCollected(selectedCompany);
+    }
+  }, [selectedCompany]);
+
   const fetchDoctorName = async (doctorId) => {
     try {
       const res = await fetch(
@@ -634,7 +694,7 @@ const Dashboard = () => {
         const data = await res.json();
 
         if (data.success) {
-          setAvailableSlots(data.data  || []);
+          setAvailableSlots(data.data || []);
 
           data.data.forEach((slot) => {
             const key = `${slot.doctor_id}_${selectedDate}_${selectedCompany}`;
@@ -925,6 +985,7 @@ const Dashboard = () => {
                 value={selectedCompany}
                 onChange={(e) => setSelectedCompany(e.target.value)}
                 style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
+                hidden
               >
                 {companies.length === 0 ? (
                   <option>Loading companies...</option>
