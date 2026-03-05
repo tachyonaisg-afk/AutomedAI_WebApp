@@ -595,12 +595,14 @@ const OpdRoomTab = () => {
                 <ModalOverlay>
                     <ModalContent>
                         <h3>Edit Room</h3>
+                        <FormField>
+                            <label>Update Room Name</label>
+                            <input
+                                value={editRoomName}
+                                onChange={(e) => setEditRoomName(e.target.value)}
+                            />
 
-                        <input
-                            value={editRoomName}
-                            onChange={(e) => setEditRoomName(e.target.value)}
-                        />
-
+                        </FormField>
                         <ModalButtonRow>
                             <ModalButton
                                 style={{ background: "#e2e8f0" }}
