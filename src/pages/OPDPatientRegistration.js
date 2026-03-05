@@ -1755,7 +1755,7 @@ const OPDPatientRegistration = () => {
                     alert("Patient registered successfully!");
                 }
 
-                navigate("/patients");
+                navigate("/opd/recent-opd-patients");
             } else {
                 console.error("Error creating patient:", data);
                 alert(`Error creating patient: ${data.message || "Unknown error"}`);
