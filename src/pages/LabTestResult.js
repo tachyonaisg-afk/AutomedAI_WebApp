@@ -458,16 +458,53 @@ const LabTestResult = () => {
 
   // Populate test results from lab test data
   useEffect(() => {
-    if (labTestData && labTestData.normal_test_items) {
-      const formattedResults = labTestData.normal_test_items.map((item) => ({
-        parameter: removeTestPrefix(item.template) || "",
+    if (!labTestData) return;
+
+    let results = [];
+
+    // ---------------- NORMAL TEST ITEMS ----------------
+    if (labTestData.normal_test_items) {
+      const normalItems = labTestData.normal_test_items.map((item) => ({
+        type: "normal",
+        parameter: removeTestPrefix(item.template) || item.lab_test_name || "",
         value: item.result_value || "",
         unit: item.lab_test_uom || "",
         normalRange: item.normal_range || "",
         flag: "none",
       }));
-      setTestResults(formattedResults);
+
+      results = [...results, ...normalItems];
     }
+
+    // ---------------- DESCRIPTIVE TEST ITEMS ----------------
+    if (labTestData.descriptive_test_items) {
+      const descriptiveItems = labTestData.descriptive_test_items.map((item) => ({
+        type: "descriptive",
+        parameter: removeTestPrefix(item.template) || item.lab_test_name || "",
+        value: item.result_value || "",
+        unit: "",
+        normalRange: "",
+        flag: "none",
+      }));
+
+      results = [...results, ...descriptiveItems];
+    }
+
+    // ---------------- SENSITIVITY TEST ITEMS ----------------
+    if (labTestData.sensitivity_test_items) {
+      const sensitivityItems = labTestData.sensitivity_test_items.map((item) => ({
+        type: "sensitivity",
+        parameter: item.antibiotic || item.lab_test_name || "",
+        value: item.result || "",
+        unit: "",
+        normalRange: "",
+        flag: "none",
+      }));
+
+      results = [...results, ...sensitivityItems];
+    }
+
+    setTestResults(results);
   }, [labTestData]);
 
   const [formData, setFormData] = useState({
@@ -593,11 +630,13 @@ const LabTestResult = () => {
     const updatedResults = [...testResults];
     updatedResults[index].value = value;
 
-    updatedResults[index].flag = getFlagFromRange(
-      value,
-      updatedResults[index].normalRange,
-      patientData?.sex
-    );
+    if (updatedResults[index].type === "normal") {
+      updatedResults[index].flag = getFlagFromRange(
+        value,
+        updatedResults[index].normalRange,
+        patientData?.sex
+      );
+    }
 
     setTestResults(updatedResults);
   };
@@ -625,16 +664,34 @@ const LabTestResult = () => {
       setPublishing(true);
 
       // Map testResults to normal_test_items format expected by the API
-      const normal_test_items = testResults.map((result) => ({
-        lab_test_name: result.parameter,
-        result_value: result.value,
-        lab_test_uom: result.unit,
-        normal_range: result.normalRange,
-      }));
+      const normal_test_items = testResults
+        .filter((r) => r.type === "normal")
+        .map((result) => ({
+          lab_test_name: result.parameter,
+          result_value: result.value,
+          lab_test_uom: result.unit,
+          normal_range: result.normalRange,
+        }));
+
+      const descriptive_test_items = testResults
+        .filter((r) => r.type === "descriptive")
+        .map((result) => ({
+          lab_test_name: result.parameter,
+          result_value: result.value,
+        }));
+
+      const sensitivity_test_items = testResults
+        .filter((r) => r.type === "sensitivity")
+        .map((result) => ({
+          antibiotic: result.parameter,
+          result: result.value,
+        }));
 
       // Prepare the request body
       const requestBody = {
         normal_test_items,
+        descriptive_test_items,
+        sensitivity_test_items,
         status: formData.status,
         result_date: formData.reportDate,
       };
