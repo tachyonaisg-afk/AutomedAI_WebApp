@@ -554,7 +554,7 @@ const Dashboard = () => {
     },
     {
       title: "Fees Collected",
-      value: feesCollected,
+      value: `₹${Number(feesCollected).toFixed(2)}`,
       color: "default",
       icon: IndianRupee,
       accentColor: "#10b981",
@@ -615,7 +615,7 @@ const Dashboard = () => {
       } else if (company === "ALFA DIAGNOSTIC CENTRE & POLYCLINIC") {
         accountName = "Sales - ADC&P";
       } else {
-        setFeesCollected("₹0");
+        setFeesCollected(0);
         return;
       }
 
@@ -634,24 +634,28 @@ const Dashboard = () => {
 
       const encodedFilters = encodeURIComponent(JSON.stringify(filters));
 
-      const url = `https://hms.automedai.in/api/method/frappe.desk.query_report.run?report_name=General+Ledger&filters=${encodedFilters}&ignore_prepared_report=false&are_default_filters=true`;
+      const url =
+        `https://hms.automedai.in/api/method/frappe.desk.query_report.run` +
+        `?report_name=General+Ledger&filters=${encodedFilters}` +
+        `&ignore_prepared_report=false&are_default_filters=true`;
 
       const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
 
       const result = data?.message?.result || [];
 
-      // Find the Total row
-      const totalRow = result.find(
-        (row) => row.account === "'Total'"
-      );
+      // Same logic as your report page
+      const filteredRows = result.filter((row) => row.gl_entry);
 
-      const totalAmount = totalRow?.credit || 0;
+      const totalFees = filteredRows.reduce((sum, row) => {
+        const credit = parseFloat(row.credit);
+        return sum + (isNaN(credit) ? 0 : credit);
+      }, 0);
 
-      setFeesCollected(`₹${totalAmount}`);
+      setFeesCollected(totalFees);
     } catch (error) {
       console.error("Fees fetch error:", error);
-      setFeesCollected("₹0");
+      setFeesCollected(0);
     }
   };
 
