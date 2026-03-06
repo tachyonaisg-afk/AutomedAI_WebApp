@@ -257,10 +257,40 @@ const Sidebar = () => {
   const [dropdownHeight, setDropdownHeight] = useState(isPathLabActive ? "auto" : 0);
   const dropdownRef = useRef(null);
   const isInitialMount = useRef(true);
-
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const ADMIN_USERS = [
+    "suraj68bmc@gmail.com",
+    "admin.adcnp@automedai.in",
+    "paulsoumya2016@gmail.com",
+    "palsoumyadeep67@gmail.com",
+    "subhomoychatterjee155@gmail.com",
+    "falguni@automedai.in",
+    "tech@automedai.in",
+    "accounts@automedai.in"
+  ];
   // const menuItems = [
   //   { path: "/patients", label: "Patients", icon: Users },
   // ];
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem("user");
+
+      if (!userData) return;
+
+      const parsedUser = JSON.parse(userData);
+
+      if (parsedUser?.username) {
+        setCurrentUser(parsedUser.username);
+
+        if (ADMIN_USERS.includes(parsedUser.username)) {
+          setIsAdmin(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error reading user from localStorage:", error);
+    }
+  }, []);
 
   // OPD submenu items
   const opdSubItems = [
@@ -343,8 +373,8 @@ const Sidebar = () => {
 
     if (item.path === "/patients") {
       isActive = isActive ||
-                location.pathname === "/patient-registration" ||
-                location.pathname.startsWith("/patients/");
+        location.pathname === "/patient-registration" ||
+        location.pathname.startsWith("/patients/");
     }
 
     return (
@@ -379,21 +409,23 @@ const Sidebar = () => {
 
           <DropdownContent $height={opdDropdownHeight}>
             <DropdownInner ref={opdDropdownRef}>
-              {opdSubItems.map((item) => {
-                const IconComponent = item.icon;
-                const isActive = location.pathname === item.path;
+              {opdSubItems
+                .filter(item => item.path !== "/opd/admin" || isAdmin)
+                .map((item) => {
+                  const IconComponent = item.icon;
+                  const isActive = location.pathname === item.path;
 
-                return (
-                  <SubNavItem
-                    key={item.path}
-                    to={item.path}
-                    className={isActive ? "active" : ""}
-                  >
-                    <IconComponent />
-                    <SubNavLabel>{item.label}</SubNavLabel>
-                  </SubNavItem>
-                );
-              })}
+                  return (
+                    <SubNavItem
+                      key={item.path}
+                      to={item.path}
+                      className={isActive ? "active" : ""}
+                    >
+                      <IconComponent />
+                      <SubNavLabel>{item.label}</SubNavLabel>
+                    </SubNavItem>
+                  );
+                })}
             </DropdownInner>
           </DropdownContent>
         </DropdownWrapper>
@@ -413,21 +445,23 @@ const Sidebar = () => {
 
           <DropdownContent $height={dropdownHeight}>
             <DropdownInner ref={dropdownRef}>
-              {pathLabSubItems.map((item) => {
-                const IconComponent = item.icon;
-                const isActive = location.pathname === item.path;
+              {pathLabSubItems
+                .filter(item => item.path !== "/pathlab/admin" || isAdmin)
+                .map((item) => {
+                  const IconComponent = item.icon;
+                  const isActive = location.pathname === item.path;
 
-                return (
-                  <SubNavItem
-                    key={item.path}
-                    to={item.path}
-                    className={isActive ? "active" : ""}
-                  >
-                    <IconComponent />
-                    <SubNavLabel>{item.label}</SubNavLabel>
-                  </SubNavItem>
-                );
-              })}
+                  return (
+                    <SubNavItem
+                      key={item.path}
+                      to={item.path}
+                      className={isActive ? "active" : ""}
+                    >
+                      <IconComponent />
+                      <SubNavLabel>{item.label}</SubNavLabel>
+                    </SubNavItem>
+                  );
+                })}
             </DropdownInner>
           </DropdownContent>
         </DropdownWrapper>
