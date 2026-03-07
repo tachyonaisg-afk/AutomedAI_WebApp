@@ -534,7 +534,7 @@ function EmpanelDoctorModal({ onClose }) {
         </ModalHeader>
 
         <ModalBody>
-          <FormContent onSubmit={handleSubmit}>
+          <FormContent id="empanelDoctorForm" onSubmit={handleSubmit}>
             {/* Personal Info Section */}
             <Section>
               <SectionHeader>
@@ -734,7 +734,7 @@ function EmpanelDoctorModal({ onClose }) {
 
         <ModalFooter>
           <CancelButton onClick={onClose}>Cancel</CancelButton>
-          <SubmitButton type="submit">
+          <SubmitButton type="submit" form="empanelDoctorForm">
             <UserCheck size={18} />
             Empanel Doctor
           </SubmitButton>
