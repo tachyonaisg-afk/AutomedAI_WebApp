@@ -16,6 +16,7 @@ import usePageTitle from "../hooks/usePageTitle";
 import OpdRoomTab from "../components/modals/OpdRoomTab";
 import DoctorAvailabilityTab from "../components/modals/DoctorAvailabilityTab";
 import DoctorAssignmentTab from "../components/modals/DoctorAssignmentTab";
+import { useNavigate } from "react-router-dom";
 
 /* ---------------- Styled Components ---------------- */
 
@@ -302,6 +303,7 @@ const OpdAdmin = () => {
     const [rooms, setRooms] = useState([]);
     const [availability, setAvailability] = useState([]);
     const [assignments, setAssignments] = useState([]);
+    const navigate=useNavigate();
 
     return (
         <Layout>
@@ -323,7 +325,7 @@ const OpdAdmin = () => {
                             <ActionTitle>Manage Roles</ActionTitle>
                         </ActionCard>
 
-                        <ActionCard>
+                        <ActionCard onClick={() => navigate("/opd/admin/empanel-doctors")}>
                             <IconWrapper variant="green">
                                 <Stethoscope size={26} />
                             </IconWrapper>

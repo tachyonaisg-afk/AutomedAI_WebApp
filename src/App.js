@@ -29,6 +29,7 @@ import './App.css';
 import OpdAdmin from './pages/OpdAdmin';
 import RecentOPDPatients from './pages/RecentOPDPatients';
 import OPDPatientRegistration from './pages/OPDPatientRegistration';
+import EmpanelDoctor from './pages/EmpanelDoctor';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -165,6 +166,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OpdAdmin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/admin/empanel-doctors"
+            element={
+              <ProtectedRoute>
+                <EmpanelDoctor />
               </ProtectedRoute>
             }
           />

@@ -713,7 +713,7 @@ const Prescription = () => {
         if (!appointmentId) return;
 
         const response = await api.get(
-          `https://midl.automedai.in/appointments/queue/${appointmentId}`
+          `https://midl.automedai.in/appointments/queue/${selectedClinic}/${appointmentId}`
         );
 
         console.log("📌 Queue API Response:", response.data);
