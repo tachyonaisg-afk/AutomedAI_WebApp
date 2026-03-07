@@ -451,7 +451,7 @@ function EmpanelDoctorModal({ onClose }) {
     e.preventDefault();
 
     try {
-      // const practitionerName = `${formData.first_name} ${formData.last_name}`;
+      const practitionerName = `${formData.first_name} ${formData.last_name}`;
 
       const payload = {
         doctype: "Healthcare Practitioner",
