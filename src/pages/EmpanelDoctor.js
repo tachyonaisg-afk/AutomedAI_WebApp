@@ -127,102 +127,102 @@ const EmpanelButton = styled(Button)`
 `;
 
 function EmpanelDoctor() {
-    const [search, setSearch] = useState("");
-    const [openModal, setOpenModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [openModal, setOpenModal] = useState(false);
 
-    const doctors = [
-        {
-            name: "Dr. Amit Sharma (M)",
-            mobile: "9876543210",
-            reg: "WB12345",
-            qualification: "MBBS, MD",
-        },
-        {
-            name: "Dr. Priya Sen (F)",
-            mobile: "9123456780",
-            reg: "WB67890",
-            qualification: "MBBS, DNB",
-        },
-        {
-            name: "Dr. Rahul Verma (M)",
-            mobile: "9988776655",
-            reg: "DL54321",
-            qualification: "MBBS, MS",
-        },
-    ];
+  const doctors = [
+    {
+      name: "Dr. Amit Sharma (M)",
+      mobile: "9876543210",
+      reg: "WB12345",
+      qualification: "MBBS, MD",
+    },
+    {
+      name: "Dr. Priya Sen (F)",
+      mobile: "9123456780",
+      reg: "WB67890",
+      qualification: "MBBS, DNB",
+    },
+    {
+      name: "Dr. Rahul Verma (M)",
+      mobile: "9988776655",
+      reg: "DL54321",
+      qualification: "MBBS, MS",
+    },
+  ];
 
-    const filteredDoctors = doctors.filter((doc) =>
-        doc.name.toLowerCase().includes(search.toLowerCase())
-    );
+  const filteredDoctors = doctors.filter((doc) =>
+    doc.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-    return (
-        <Layout>
-            <SearchButton onClick={() => window.history.back()}>
-                <ArrowLeft size={16} />
-                Back
-            </SearchButton>
-            <PageWrapper>
-                <SearchWrapper>
-                    <SearchBox>
-                        <SearchInput
-                            placeholder="Search doctor..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
+  return (
+    <Layout>
+      <SearchButton onClick={() => window.history.back()}>
+        <ArrowLeft size={16} />
+        Back
+      </SearchButton>
+      <PageWrapper>
+        <SearchWrapper>
+          <SearchBox>
+            <SearchInput
+              placeholder="Search doctor..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
 
-                        {/* <SearchButton>
+            {/* <SearchButton>
               <Search size={16} />
               Search Doctor
             </SearchButton> */}
-                    </SearchBox>
-                </SearchWrapper>
+          </SearchBox>
+        </SearchWrapper>
 
-                <TableHeader>
-                    <NewDoctorButton onClick={() => setOpenModal(true)}>
-                        Empanel New Doctor
-                    </NewDoctorButton>
-                </TableHeader>
+        <TableHeader>
+          <NewDoctorButton onClick={() => setOpenModal(true)}>
+            Empanel New Doctor
+          </NewDoctorButton>
+        </TableHeader>
 
-                <TableWrapper>
-                    <Table>
-                        <Thead>
-                            <tr>
-                                <Th>Sl No.</Th>
-                                <Th>Doctor Name</Th>
-                                <Th>Mobile</Th>
-                                <Th>Reg No</Th>
-                                <Th>Qualification</Th>
-                                <Th>Action</Th>
-                            </tr>
-                        </Thead>
+        <TableWrapper>
+          <Table>
+            <Thead>
+              <tr>
+                <Th>Sl No.</Th>
+                <Th>Doctor Name</Th>
+                <Th>Mobile</Th>
+                <Th>Reg No</Th>
+                <Th>Qualification</Th>
+                <Th>Action</Th>
+              </tr>
+            </Thead>
 
-                        <tbody>
-                            {filteredDoctors.map((doc, index) => (
-                                <tr key={index}>
-                                    <Td>{index + 1}</Td>
-                                    <Td>{doc.name}</Td>
-                                    <Td>{doc.mobile}</Td>
-                                    <Td>{doc.reg}</Td>
-                                    <Td>{doc.qualification}</Td>
-                                    <Td>
-                                        <ActionButtons>
-                                            <EditButton>
-                                                <Edit size={14} />
-                                            </EditButton>
-                                            <EmpanelButton>Empanel</EmpanelButton>
-                                        </ActionButtons>
-                                    </Td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                </TableWrapper>
-                {openModal && (
-                    <EmpanelDoctorModal onClose={() => setOpenModal(false)} />
-                )}
-            </PageWrapper>
-        </Layout>
-    );
+            <tbody>
+              {filteredDoctors.map((doc, index) => (
+                <tr key={index}>
+                  <Td>{index + 1}</Td>
+                  <Td>{doc.name}</Td>
+                  <Td>{doc.mobile}</Td>
+                  <Td>{doc.reg}</Td>
+                  <Td>{doc.qualification}</Td>
+                  <Td>
+                    <ActionButtons>
+                      <EditButton>
+                        <Edit size={14} />
+                      </EditButton>
+                      <EmpanelButton>Empanel</EmpanelButton>
+                    </ActionButtons>
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrapper>
+        {openModal && (
+          <EmpanelDoctorModal onClose={() => setOpenModal(false)} />
+        )}
+      </PageWrapper>
+    </Layout>
+  );
 }
 
 export default EmpanelDoctor;

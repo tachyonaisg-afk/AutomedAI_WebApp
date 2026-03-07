@@ -791,8 +791,8 @@ const AddBilling = () => {
       if (response.data?.data) {
         const itemData = response.data.data;
         const newItem = {
-          item_code: itemData.item_code || itemData.name,
-          item_name: itemData.item_name || itemData.item_code,
+          item: itemData.item_code || itemData.name,
+          itemName: itemData.item_name || itemData.item_code,
           qty: 1,
           rate: itemData.standard_rate || 0,
           amount: itemData.standard_rate || 0,
@@ -1245,7 +1245,7 @@ const AddBilling = () => {
       return;
     }
 
-    const hasEmptyItems = items.some((item) => !item.item_code);
+    const hasEmptyItems = items.some((item) => !item.item);
     if (hasEmptyItems) {
       setError("Please select an item for all rows");
       return;

@@ -381,7 +381,7 @@ function EmpanelDoctorModal({ onClose }) {
   const [classification, setClassification] = useState("allopathy");
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
-
+  const [currentUser, setCurrentUser] = useState("");
   const [formData, setFormData] = useState({
     first_name: "",
     middle_name: "",
@@ -394,6 +394,28 @@ function EmpanelDoctorModal({ onClose }) {
     consultation_fee: "",
     custom_specializedqualification: ""
   });
+
+  // ✅ Fetch Current User
+      useEffect(() => {
+  
+          try {
+  
+              const userData = localStorage.getItem("user");
+  
+              if (!userData) return;
+  
+              const parsedUser = JSON.parse(userData);
+  
+              if (parsedUser?.full_name) {
+  
+                  setCurrentUser(parsedUser.full_name);
+  
+              }
+  
+          } catch { }
+  
+      }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -471,7 +493,8 @@ function EmpanelDoctorModal({ onClose }) {
         company: selectedCompany,
         doctor_id: doctorId,
         doctor_name: practitionerName,
-        created_by: "ADMIN"
+        consultation_fee: formData.consultation_fee,
+        created_by: currentUser
       };
 
       const empanelRes = await api.post(
@@ -649,8 +672,11 @@ function EmpanelDoctorModal({ onClose }) {
                   <InputLabel>AYUSH Stream</InputLabel>
                   <FormSelect disabled={classification !== "ayush"}>
                     <option value="">Select Stream</option>
-                    <option value="homeopathy">Homeopathy</option>
-                    <option value="ayurveda">Ayurveda</option>
+                    <option value="Ayurveda">Ayurveda</option>
+                    <option value="Yoga & Naturopathy">Yoga & Naturopathy</option>
+                    <option value="Unani">Unani</option>
+                    <option value="Siddha">Siddha</option>
+                    <option value="Homeopathy">Homeopathy</option>
                   </FormSelect>
                 </InputGroup>
                 <InputGroup>
