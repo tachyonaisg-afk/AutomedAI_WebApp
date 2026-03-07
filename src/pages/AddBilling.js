@@ -745,7 +745,7 @@ const AddBilling = () => {
   const [itemResults, setItemResults] = useState([]);
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
-    const [showPHCOnly, setShowPHCOnly] = useState(false);
+  const [showPHCOnly, setShowPHCOnly] = useState(false);
   // Dropdown options
   const [practitioners, setPractitioners] = useState([]);
   const [serviceUnits, setServiceUnits] = useState([]);
@@ -779,12 +779,11 @@ const AddBilling = () => {
   useEffect(() => {
     const { defaultItemCode } = location.state || {};
 
-    // Fetch and add default item only if warehouses are loaded and items array is empty
-    if (defaultItemCode && warehouses.length > 0 && items.length === 0) {
+    if (defaultItemCode && items.length === 0) {
       fetchDefaultItem(defaultItemCode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.state, warehouses]);
+  }, [location.state]);
 
   const fetchDefaultItem = async (itemCode) => {
     try {
@@ -855,6 +854,35 @@ const AddBilling = () => {
       console.error("Error fetching dropdown options:", err);
     }
   };
+  //   useEffect(() => {
+  //   const loadDefaultItem = async () => {
+  //     try {
+  //       const response = await apiService.get(
+  //         API_ENDPOINTS.ITEMS.GET_BY_ID("STO-ITEM-2025-00539")
+  //       );
+
+  //       if (response.data?.data) {
+  //         const itemData = response.data.data;
+
+  //         const defaultItem = {
+  //           item: itemData.name,
+  //           itemName: itemData.item_name,
+  //           qty: 1,
+  //           rate: 20,
+  //           amount: 20,
+  //         };
+
+  //         setItems([defaultItem]);
+  //       }
+  //     } catch (err) {
+  //       console.error("Default item load failed:", err);
+  //     }
+  //   };
+
+  //   if (items.length === 0) {
+  //     loadDefaultItem();
+  //   }
+  // }, []);
 
   // Debounced patient search
   const searchPatients = useCallback(async (query) => {
@@ -882,23 +910,23 @@ const AddBilling = () => {
     }
   }, []);
 
-    const getLockedCategory = useCallback(() => {
-      const validItems = items.filter(
-        (item) =>
-          item.item &&
-          item.item !== "STO-ITEM-2025-00539"
-      );
-  
-      if (validItems.length === 0) return null;
-  
-      const firstItemName = validItems[0].itemName?.toUpperCase() || "";
-  
-      if (firstItemName.startsWith("LAB")) return "LAB";
-      if (firstItemName.startsWith("PLB")) return "PLB";
-      if (firstItemName.startsWith("PHC")) return "PHC";
-  
-      return null;
-    }, [items]);
+  const getLockedCategory = useCallback(() => {
+    const validItems = items.filter(
+      (item) =>
+        item.item &&
+        item.item !== "STO-ITEM-2025-00539"
+    );
+
+    if (validItems.length === 0) return null;
+
+    const firstItemName = validItems[0].itemName?.toUpperCase() || "";
+
+    if (firstItemName.startsWith("LAB")) return "LAB";
+    if (firstItemName.startsWith("PLB")) return "PLB";
+    if (firstItemName.startsWith("PHC")) return "PHC";
+
+    return null;
+  }, [items]);
   // Debounced item search
   const searchItems = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -995,8 +1023,6 @@ const AddBilling = () => {
           );
         }
       }
-
-
 
       setItemResults(results);
       setShowItemResults(true);
@@ -1607,18 +1633,18 @@ const AddBilling = () => {
               <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
                 {(
-                      billingData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
-                      billingData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
-                    ) && (
-                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
-                    <input
-                      type="checkbox"
-                      checked={showPHCOnly}
-                      onChange={(e) => setShowPHCOnly(e.target.checked)}
-                    />
-                    Show Government Rate Only
-                  </label>
-                )}
+                  billingData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
+                  billingData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
+                ) && (
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
+                      <input
+                        type="checkbox"
+                        checked={showPHCOnly}
+                        onChange={(e) => setShowPHCOnly(e.target.checked)}
+                      />
+                      Show Government Rate Only
+                    </label>
+                  )}
 
                 <IconButton type="button" onClick={addItem}>
                   <Plus />

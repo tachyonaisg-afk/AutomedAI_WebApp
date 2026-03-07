@@ -967,7 +967,8 @@ const Prescription = () => {
                 name="selectedDate"
                 value={formData.selectedDate}
                 onChange={handleFormChange}
-                isDisabled={true}
+                min={new Date().toISOString().split("T")[0]}
+                isDisabled
               />
             </FormGroup>
           </SidebarSection>

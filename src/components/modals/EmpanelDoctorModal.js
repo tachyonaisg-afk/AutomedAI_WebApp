@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { X, User, Camera, Stethoscope, UserCheck } from "lucide-react";
+import api from "../../services/api";
 
 // --- Styled Components ---
 
@@ -378,6 +379,121 @@ const SubmitButton = styled.button`
 
 function EmpanelDoctorModal({ onClose }) {
   const [classification, setClassification] = useState("allopathy");
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState("");
+
+  const [formData, setFormData] = useState({
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    gender: "",
+    mobile_phone: "",
+    email: "",
+    department: "",
+    custom_registration_number: "",
+    consultation_fee: "",
+    custom_specializedqualification: ""
+  });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get(
+          "https://hms.automedai.in/api/resource/Company"
+        );
+
+        const companyList = res.data?.data || [];
+
+        setCompanies(companyList);
+
+        if (companyList.length > 0) {
+          setSelectedCompany(companyList[0].name); // first company
+        }
+      } catch (err) {
+        console.error("Error fetching companies", err);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const practitionerName = `${formData.first_name} ${formData.last_name}`;
+
+      const payload = {
+        doctype: "Healthcare Practitioner",
+        naming_series: "HLC-PRAC-.YYYY.-",
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        practitioner_name: practitionerName,
+        gender: formData.gender,
+        status: "Active",
+        practitioner_type: "Internal",
+        department: formData.department,
+        designation: "Consultant",
+        mobile_phone: formData.mobile_phone,
+        email: formData.email,
+        company: selectedCompany,
+        default_currency: "INR",
+        op_consulting_charge: Number(formData.consultation_fee) || 0,
+        inpatient_visit_charge: 0,
+        allow_appointment: 1,
+        custom_specializedqualification: formData.custom_specializedqualification,
+        custom_registration_number: formData.custom_registration_number,
+        practitioner_schedules: [],
+        accounts: []
+      };
+
+      // 🔹 Create Practitioner
+      const res = await api.post(
+        "https://hms.automedai.in/api/resource/Healthcare Practitioner",
+        payload
+      );
+
+      console.log("Doctor Created:", res.data);
+
+      // 🔹 Extract Doctor ID
+      const doctorId = res.data?.data?.name;
+
+      // 🔹 Call second API for empanelment
+      const empanelPayload = {
+        company: selectedCompany,
+        doctor_id: doctorId,
+        doctor_name: practitionerName,
+        created_by: "ADMIN"
+      };
+
+      const empanelRes = await api.post(
+        "https://midl.automedai.in/doctor_company/empanel",
+        empanelPayload
+      );
+
+      console.log("Empanel Response:", empanelRes.data);
+
+      if (empanelRes.data.success) {
+        alert("Doctor empanelled successfully");
+      } else {
+        alert(empanelRes.data.message);
+      }
+
+      onClose();
+
+    } catch (error) {
+      console.error("Error creating doctor:", error);
+      alert("Error creating doctor");
+    }
+  };
 
   return (
     <ModalOverlay>
@@ -395,7 +511,7 @@ function EmpanelDoctorModal({ onClose }) {
         </ModalHeader>
 
         <ModalBody>
-          <FormContent>
+          <FormContent onSubmit={handleSubmit}>
             {/* Personal Info Section */}
             <Section>
               <SectionHeader>
@@ -410,7 +526,13 @@ function EmpanelDoctorModal({ onClose }) {
                       <InputLabel>
                         First Name<span>*</span>
                       </InputLabel>
-                      <FormControl placeholder="Sarah" type="text" />
+                      <FormControl
+                        name="first_name"
+                        value={formData.first_name}
+                        onChange={handleChange}
+                        placeholder="Include Dr. if applicable"
+                        required
+                      />
                     </InputGroup>
                     <InputGroup>
                       <InputLabel>Middle Name</InputLabel>
@@ -420,7 +542,12 @@ function EmpanelDoctorModal({ onClose }) {
                       <InputLabel>
                         Last Name<span>*</span>
                       </InputLabel>
-                      <FormControl placeholder="Jenkins" type="text" />
+                      <FormControl
+                        name="last_name"
+                        value={formData.last_name}
+                        onChange={handleChange}
+                        required
+                      />
                     </InputGroup>
                   </GridLayoutInner>
                   <GridLayoutInner>
@@ -428,24 +555,38 @@ function EmpanelDoctorModal({ onClose }) {
                       <InputLabel>
                         Gender<span>*</span>
                       </InputLabel>
-                      <FormSelect>
+                      <FormSelect
+                        name="gender"
+                        value={formData.gender}
+                        onChange={handleChange}
+                        required
+                      >
                         <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="transgender">Transgender</option>
-                        <option value="prefer_not_to_say">Prefer Not to Say</option>
-                        <option value="non_confirming">Non-Confirming</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Transgender">Transgender</option>
+                        <option value="Prefer Not To Say">Prefer Not to Say</option>
+                        <option value="Non Confirming">Non-Confirming</option>
                       </FormSelect>
                     </InputGroup>
                     <InputGroup>
                       <InputLabel>
                         Mobile Number<span>*</span>
                       </InputLabel>
-                      <FormControl placeholder="+1 (555) 123-4567" type="tel" />
+                      <FormControl
+                        name="mobile_phone"
+                        value={formData.mobile_phone}
+                        onChange={handleChange}
+                        required
+                      />
                     </InputGroup>
                     <InputGroup>
                       <InputLabel>Email-ID</InputLabel>
-                      <FormControl placeholder="sarah.jenkins@example.com" type="email" />
+                      <FormControl
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
                     </InputGroup>
                   </GridLayoutInner>
                 </ColSpan9>
@@ -514,7 +655,11 @@ function EmpanelDoctorModal({ onClose }) {
                 </InputGroup>
                 <InputGroup>
                   <InputLabel>Medical Department</InputLabel>
-                  <FormSelect>
+                  <FormSelect
+                    name="department"
+                    value={formData.department}
+                    onChange={handleChange}
+                  >
                     <option value="">Select Department</option>
                     <option value="cardiology">Cardiology</option>
                     <option value="neurology">Neurology</option>
@@ -529,17 +674,32 @@ function EmpanelDoctorModal({ onClose }) {
                   <InputLabel>
                     Registration Number / License ID<span>*</span>
                   </InputLabel>
-                  <FormControl placeholder="MD-992034-X" type="text" />
+                  <FormControl
+                    name="custom_registration_number"
+                    value={formData.custom_registration_number}
+                    onChange={handleChange}
+                    required
+                  />
                 </InputGroup>
                 <InputGroup>
                   <InputLabel>
                     Consultation Fee<span>*</span>
                   </InputLabel>
-                  <FormControl placeholder="0" type="number" />
+                  <FormControl
+                    name="consultation_fee"
+                    value={formData.consultation_fee}
+                    onChange={handleChange}
+                    type="number"
+                    required
+                  />
                 </InputGroup>
                 <InputGroup className="col-span-2">
                   <InputLabel>Specialized Qualification</InputLabel>
-                  <FormControl placeholder="MD Cardiology - Stanford University" type="text" />
+                  <FormControl
+                    name="custom_specializedqualification"
+                    value={formData.custom_specializedqualification}
+                    onChange={handleChange}
+                  />
                 </InputGroup>
               </GridLayout2Col>
             </Section>
@@ -548,7 +708,7 @@ function EmpanelDoctorModal({ onClose }) {
 
         <ModalFooter>
           <CancelButton onClick={onClose}>Cancel</CancelButton>
-          <SubmitButton>
+          <SubmitButton type="submit">
             <UserCheck size={18} />
             Empanel Doctor
           </SubmitButton>
