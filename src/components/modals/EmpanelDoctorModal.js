@@ -451,14 +451,14 @@ function EmpanelDoctorModal({ onClose }) {
     e.preventDefault();
 
     try {
-      const practitionerName = `${formData.first_name} ${formData.last_name}`;
+      // const practitionerName = `${formData.first_name} ${formData.last_name}`;
 
       const payload = {
         doctype: "Healthcare Practitioner",
         naming_series: "HLC-PRAC-.YYYY.-",
         first_name: formData.first_name,
         last_name: formData.last_name,
-        practitioner_name: practitionerName,
+        // practitioner_name: practitionerName,
         gender: formData.gender,
         status: "Active",
         practitioner_type: "Internal",
