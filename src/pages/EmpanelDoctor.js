@@ -219,6 +219,8 @@ function EmpanelDoctor() {
       const fields = encodeURIComponent(
         JSON.stringify([
           "name",
+          "first_name",
+          "last_name",
           "practitioner_name",
           "mobile_phone",
           "department",

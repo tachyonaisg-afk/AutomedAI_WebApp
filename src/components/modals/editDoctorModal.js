@@ -400,9 +400,9 @@ function EditDoctorModal({ onClose, doctor }) {
             const names = doctor.practitioner_name?.split(" ") || [];
 
             setFormData({
-                first_name: names[0] || "",
-                middle_name: names.length > 2 ? names[1] : "",
-                last_name: names.length > 1 ? names[names.length - 1] : "",
+                first_name: doctor.first_name || "",
+                middle_name:"",
+                last_name: doctor.last_name || names.length > 1 ? names[1] : "",
                 gender: doctor.gender || "",
                 mobile_phone: doctor.mobile_phone || "",
                 email: doctor.email || "",
