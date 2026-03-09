@@ -125,6 +125,11 @@ const EditButton = styled(Button)`
 const EmpanelButton = styled(Button)`
   background: #10b981;
   color: white;
+
+  &:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+  }
 `;
 
 const EmptyMessage = styled.td`
@@ -265,7 +270,6 @@ function EmpanelDoctor() {
   const empanelDoctor = async (doc) => {
     try {
 
-      // 1️⃣ Empanel doctor
       const empanelRes = await fetch(
         "https://midl.automedai.in/doctor_company/empanel",
         {
@@ -283,31 +287,35 @@ function EmpanelDoctor() {
         }
       );
 
+      const data = await empanelRes.json();
+
       if (!empanelRes.ok) {
-        throw new Error("Empanel API failed");
+        throw new Error(data?.message || "Empanel failed");
       }
 
       // 2️⃣ Update practitioner type
-      await api.put(
-        `/api/resource/Healthcare Practitioner/${doc.name}`,
-        {
-          practitioner_type: "Internal",
-        }
-      );
+      await api.put(`/resource/Healthcare Practitioner/${doc.name}`, {
+        practitioner_type: "Internal",
+      });
 
-      // 3️⃣ Refresh status
+      // 3️⃣ Update UI
       setEmpanelStatus((prev) => ({
         ...prev,
-        [doc.name]: true
+        [doc.name]: true,
       }));
+
+      // ✅ Alert message from API
+      alert(data.message);
 
     } catch (err) {
       console.error("Empanel error", err);
+      alert(err.message);
     }
   };
   const removeEmpanel = async (doc) => {
     try {
-      await fetch(
+
+      const res = await fetch(
         "https://midl.automedai.in/doctor_company/remove-empanel-doctor",
         {
           method: "POST",
@@ -321,7 +329,13 @@ function EmpanelDoctor() {
         }
       );
 
+      const data = await res.json();
+
       checkEmpanelStatus(doc.name);
+
+      // ✅ Alert message from API
+      alert(data.message);
+
     } catch (err) {
       console.error("Remove empanel error", err);
     }

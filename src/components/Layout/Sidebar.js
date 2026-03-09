@@ -257,8 +257,8 @@ const Sidebar = () => {
   const [dropdownHeight, setDropdownHeight] = useState(isPathLabActive ? "auto" : 0);
   const dropdownRef = useRef(null);
   const isInitialMount = useRef(true);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  // const [currentUser, setCurrentUser] = useState(null);
+  // const [isAdmin, setIsAdmin] = useState(false);
   const ADMIN_USERS = [
     "suraj68bmc@gmail.com",
     "admin.adcnp@automedai.in",
@@ -272,25 +272,41 @@ const Sidebar = () => {
   // const menuItems = [
   //   { path: "/patients", label: "Patients", icon: Users },
   // ];
-  useEffect(() => {
+  // useEffect(() => {
+  //   try {
+  //     const userData = localStorage.getItem("user");
+
+  //     if (!userData) return;
+
+  //     const parsedUser = JSON.parse(userData);
+
+  //     if (parsedUser?.username) {
+  //       setCurrentUser(parsedUser.username);
+
+  //       if (ADMIN_USERS.includes(parsedUser.username)) {
+  //         setIsAdmin(true);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error reading user from localStorage:", error);
+  //   }
+  // }, []);
+  const userData = localStorage.getItem("user");
+  let currentUser = null;
+  let isAdmin = false;
+
+  if (userData) {
     try {
-      const userData = localStorage.getItem("user");
-
-      if (!userData) return;
-
       const parsedUser = JSON.parse(userData);
+      currentUser = parsedUser?.username;
 
-      if (parsedUser?.username) {
-        setCurrentUser(parsedUser.username);
-
-        if (ADMIN_USERS.includes(parsedUser.username)) {
-          setIsAdmin(true);
-        }
+      if (ADMIN_USERS.includes(currentUser)) {
+        isAdmin = true;
       }
     } catch (error) {
-      console.error("Error reading user from localStorage:", error);
+      console.error("Error parsing user:", error);
     }
-  }, []);
+  }
 
   // OPD submenu items
   const opdSubItems = [
