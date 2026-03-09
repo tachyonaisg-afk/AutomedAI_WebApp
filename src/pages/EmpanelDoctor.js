@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Search, Edit, ArrowLeft } from "lucide-react";
 import EmpanelDoctorModal from "../components/modals/EmpanelDoctorModal";
 import api from "../services/api";
+import EditDoctorModal from "../components/modals/EditDoctorModal";
 
 const PageWrapper = styled.div`
   padding: 24px;
@@ -142,10 +143,12 @@ const EmptyMessage = styled.td`
 function EmpanelDoctor() {
   const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
+  const [openEditModal, setOpenEditModal] = useState(false);
   const [doctors, setDoctors] = useState([]);
   const [currentUser, setCurrentUser] = useState("");
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [empanelStatus, setEmpanelStatus] = useState({});
   // ✅ Fetch Current User
   useEffect(() => {
@@ -413,7 +416,12 @@ function EmpanelDoctor() {
                       <Td>{doc.custom_specializedqualification}</Td>
                       <Td>
                         <ActionButtons>
-                          <EditButton>
+                          <EditButton
+                            onClick={() => {
+                              setSelectedDoctor(doc);
+                              setOpenEditModal(true);
+                            }}
+                          >
                             <Edit size={14} />
                           </EditButton>
 
@@ -454,6 +462,15 @@ function EmpanelDoctor() {
         </TableWrapper>
         {openModal && (
           <EmpanelDoctorModal onClose={() => setOpenModal(false)} />
+        )}
+        {openEditModal && selectedDoctor && (
+          <EditDoctorModal
+            doctor={selectedDoctor}
+            onClose={() => {
+              setOpenEditModal(false);
+              setSelectedDoctor(null);
+            }}
+          />
         )}
       </PageWrapper>
     </Layout>

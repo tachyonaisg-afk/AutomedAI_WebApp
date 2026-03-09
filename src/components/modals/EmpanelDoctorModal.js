@@ -559,7 +559,7 @@ function EmpanelDoctorModal({ onClose }) {
                     </InputGroup>
                     <InputGroup>
                       <InputLabel>Middle Name</InputLabel>
-                      <FormControl placeholder="Jane" type="text" />
+                      <FormControl type="text" />
                     </InputGroup>
                     <InputGroup>
                       <InputLabel>
