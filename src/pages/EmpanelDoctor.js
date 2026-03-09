@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { Search, Edit, ArrowLeft } from "lucide-react";
 import EmpanelDoctorModal from "../components/modals/EmpanelDoctorModal";
 import api from "../services/api";
-import EditDoctorModal from "../components/modals/EditDoctorModal";
+import EditDoctorModal from "../components/modals/editDoctorModal";
 
 const PageWrapper = styled.div`
   padding: 24px;
