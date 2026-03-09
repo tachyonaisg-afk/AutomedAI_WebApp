@@ -7,6 +7,7 @@ import usePageTitle from "../hooks/usePageTitle";
 import { createGlobalStyle } from "styled-components";
 import rkmsHeader from "../assets/rkma_ltrhd_hdr.jpg";
 import rkmsFooter from "../assets/rkma_ltrhd_ftr.jpg";
+import alfaHeader from "../assets/alfa_hdr.jpg.jpeg";
 
 const Container = styled.div`
   display: flex;
@@ -493,7 +494,7 @@ const ResultPrint = () => {
   const [selectedTestDetails, setSelectedTestDetails] = useState([]);
   const [sampleDetails, setSampleDetails] = useState([]);
   const [employees, setEmployees] = useState([]);
-
+  const [company, setCompany] = useState("");
   // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
     if (!testName) return testName;
@@ -711,6 +712,10 @@ const ResultPrint = () => {
         const sampleDetails = sampleResponse.data?.data;
         setSampleDetails(sampleDetails);
 
+        if (sampleDetails?.company) {
+          setCompany(sampleDetails.company.toLowerCase());
+        }
+
         const collectedByUserId = sampleDetails?.collected_by;
         if (!collectedByUserId) return;
 
@@ -865,6 +870,20 @@ const ResultPrint = () => {
     return acc;
   }, {});
 
+  const getLetterhead = () => {
+    if (!company) return null;
+
+    if (company.includes("ramakrishna mission sargachi")) {
+      return rkmsHeader;
+    }
+
+    if (company.includes("alfa diagnostic centre")) {
+      return alfaHeader;
+    }
+
+    return null;
+  };
+
   return (
     <Container>
       <Sidebar>
@@ -992,7 +1011,7 @@ const ResultPrint = () => {
             >
               {includeLetterhead && (
                 <img
-                  src={rkmsHeader}
+                  src={getLetterhead()}
                   alt="Letterhead"
                   style={{
                     width: "100%",
