@@ -3,6 +3,7 @@ import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Search, Edit, ArrowLeft } from "lucide-react";
 import EmpanelDoctorModal from "../components/modals/EmpanelDoctorModal";
+import api from "../services/api";
 
 const PageWrapper = styled.div`
   padding: 24px;
@@ -164,12 +165,11 @@ function EmpanelDoctor() {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await fetch(
+        const res = await api.get(
           "https://hms.automedai.in/api/resource/Company"
         );
 
-        const data = await res.json();
-        const companyList = data?.data || [];
+        const companyList = res.data?.data || [];
 
         setCompanies(companyList);
 
@@ -237,19 +237,15 @@ function EmpanelDoctor() {
         "https://hms.automedai.in/api/resource/Healthcare Practitioner";
 
       const [nameRes, regRes, mobileRes] = await Promise.all([
-        fetch(`${base}?fields=${fields}&filters=${nameFilter}`),
-        fetch(`${base}?fields=${fields}&filters=${regFilter}`),
-        fetch(`${base}?fields=${fields}&filters=${mobileFilter}`),
+        api.get(`${base}?fields=${fields}&filters=${nameFilter}`),
+        api.get(`${base}?fields=${fields}&filters=${regFilter}`),
+        api.get(`${base}?fields=${fields}&filters=${mobileFilter}`),
       ]);
 
-      const nameData = await nameRes.json();
-      const regData = await regRes.json();
-      const mobileData = await mobileRes.json();
-
       const merged = [
-        ...(nameData.data || []),
-        ...(regData.data || []),
-        ...(mobileData.data || []),
+        ...(nameRes.data.data || []),
+        ...(regRes.data.data || []),
+        ...(mobileRes.data.data || []),
       ];
 
       // remove duplicates using unique "name"
@@ -292,18 +288,10 @@ function EmpanelDoctor() {
       }
 
       // 2️⃣ Update practitioner type
-      await fetch(
-        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doc.name}`,
+      await api.put(
+        `/api/resource/Healthcare Practitioner/${doc.name}`,
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            // add Authorization if required
-            // "Authorization": "token API_KEY:API_SECRET"
-          },
-          body: JSON.stringify({
-            practitioner_type: "Internal",
-          }),
+          practitioner_type: "Internal",
         }
       );
 
