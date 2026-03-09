@@ -687,13 +687,13 @@ function EmpanelDoctorModal({ onClose }) {
                     onChange={handleChange}
                   >
                     <option value="">Select Department</option>
-                    <option value="cardiology">Cardiology</option>
-                    <option value="neurology">Neurology</option>
-                    <option value="dermatology">Dermatology</option>
-                    <option value="paediatrics">Paediatrics</option>
-                    <option value="dental">Dental</option>
-                    <option value="general_medicine">General Medicine</option>
-                    <option value="orthopaedics">Orthopaedics</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="Neurology">Neurology</option>
+                    <option value="Dermatology">Dermatology</option>
+                    <option value="Paediatrics">Paediatrics</option>
+                    <option value="Dental">Dental</option>
+                    <option value="General Medicine">General Medicine</option>
+                    <option value="Orthopaedics">Orthopaedics</option>
                   </FormSelect>
                 </InputGroup>
                 <InputGroup>

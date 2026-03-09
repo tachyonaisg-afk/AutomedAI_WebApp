@@ -397,12 +397,11 @@ function EditDoctorModal({ onClose, doctor }) {
 
     useEffect(() => {
         if (doctor) {
-            const names = doctor.practitioner_name?.split(" ") || [];
 
             setFormData({
                 first_name: doctor.first_name || "",
                 middle_name:"",
-                last_name: doctor.last_name || names.length > 1 ? names[1] : "",
+                last_name: doctor.last_name || "",
                 gender: doctor.gender || "",
                 mobile_phone: doctor.mobile_phone || "",
                 email: doctor.email || "",
@@ -694,13 +693,13 @@ function EditDoctorModal({ onClose, doctor }) {
                                         onChange={handleChange}
                                     >
                                         <option value="">Select Department</option>
-                                        <option value="cardiology">Cardiology</option>
-                                        <option value="neurology">Neurology</option>
-                                        <option value="dermatology">Dermatology</option>
-                                        <option value="paediatrics">Paediatrics</option>
-                                        <option value="dental">Dental</option>
-                                        <option value="general_medicine">General Medicine</option>
-                                        <option value="orthopaedics">Orthopaedics</option>
+                                        <option value="Cardiology">Cardiology</option>
+                                        <option value="Neurology">Neurology</option>
+                                        <option value="Dermatology">Dermatology</option>
+                                        <option value="Paediatrics">Paediatrics</option>
+                                        <option value="Dental">Dental</option>
+                                        <option value="General Medicine">General Medicine</option>
+                                        <option value="Orthopaedics">Orthopaedics</option>
                                     </FormSelect>
                                 </InputGroup>
                                 <InputGroup>
