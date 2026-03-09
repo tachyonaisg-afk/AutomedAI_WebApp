@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Search, Edit, ArrowLeft } from "lucide-react";
@@ -126,34 +126,227 @@ const EmpanelButton = styled(Button)`
   color: white;
 `;
 
+const EmptyMessage = styled.td`
+  text-align: center;
+  padding: 30px;
+  font-size: 14px;
+  color: #64748b;
+`;
+
 function EmpanelDoctor() {
   const [search, setSearch] = useState("");
   const [openModal, setOpenModal] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [currentUser, setCurrentUser] = useState("");
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [empanelStatus, setEmpanelStatus] = useState({});
+  // ✅ Fetch Current User
+  useEffect(() => {
 
-  const doctors = [
-    {
-      name: "Dr. Amit Sharma (M)",
-      mobile: "9876543210",
-      reg: "WB12345",
-      qualification: "MBBS, MD",
-    },
-    {
-      name: "Dr. Priya Sen (F)",
-      mobile: "9123456780",
-      reg: "WB67890",
-      qualification: "MBBS, DNB",
-    },
-    {
-      name: "Dr. Rahul Verma (M)",
-      mobile: "9988776655",
-      reg: "DL54321",
-      qualification: "MBBS, MS",
-    },
-  ];
+    try {
 
-  const filteredDoctors = doctors.filter((doc) =>
-    doc.name.toLowerCase().includes(search.toLowerCase())
-  );
+      const userData = localStorage.getItem("user");
+
+      if (!userData) return;
+
+      const parsedUser = JSON.parse(userData);
+
+      if (parsedUser?.full_name) {
+
+        setCurrentUser(parsedUser.full_name);
+
+      }
+
+    } catch { }
+
+  }, []);
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await fetch(
+          "https://hms.automedai.in/api/resource/Company"
+        );
+
+        const data = await res.json();
+        const companyList = data?.data || [];
+
+        setCompanies(companyList);
+
+        if (companyList.length > 0) {
+          setSelectedCompany(companyList[0].name);
+        }
+      } catch (err) {
+        console.error("Error fetching companies", err);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
+  const checkEmpanelStatus = async (doctorId) => {
+    if (!selectedCompany) return; // prevent empty company
+
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/doctor_company/empanel/company/${selectedCompany}/doctor/${doctorId}`
+      );
+
+      const data = await res.json();
+
+      setEmpanelStatus((prev) => ({
+        ...prev,
+        [doctorId]: data?.data?.isEmpanel || false,
+      }));
+    } catch (err) {
+      console.error("Empanel check error", err);
+    }
+  };
+  const searchDoctors = async (value) => {
+    if (!value) {
+      setDoctors([]);
+      return;
+    }
+
+    try {
+      const fields = encodeURIComponent(
+        JSON.stringify([
+          "name",
+          "practitioner_name",
+          "mobile_phone",
+          "department",
+          "gender",
+          "custom_specializedqualification",
+          "custom_registration_number",
+          "op_consulting_charge",
+        ])
+      );
+
+      const nameFilter = encodeURIComponent(
+        JSON.stringify([["practitioner_name", "like", `%${value}%`]])
+      );
+
+      const regFilter = encodeURIComponent(
+        JSON.stringify([["custom_registration_number", "like", `%${value}%`]])
+      );
+
+      const mobileFilter = encodeURIComponent(
+        JSON.stringify([["mobile_phone", "like", `%${value}%`]])
+      );
+
+      const base =
+        "https://hms.automedai.in/api/resource/Healthcare Practitioner";
+
+      const [nameRes, regRes, mobileRes] = await Promise.all([
+        fetch(`${base}?fields=${fields}&filters=${nameFilter}`),
+        fetch(`${base}?fields=${fields}&filters=${regFilter}`),
+        fetch(`${base}?fields=${fields}&filters=${mobileFilter}`),
+      ]);
+
+      const nameData = await nameRes.json();
+      const regData = await regRes.json();
+      const mobileData = await mobileRes.json();
+
+      const merged = [
+        ...(nameData.data || []),
+        ...(regData.data || []),
+        ...(mobileData.data || []),
+      ];
+
+      // remove duplicates using unique "name"
+      const uniqueDoctors = Array.from(
+        new Map(merged.map((doc) => [doc.name, doc])).values()
+      );
+
+      setDoctors(uniqueDoctors);
+
+      uniqueDoctors.forEach((doc) => {
+        checkEmpanelStatus(doc.name);
+      });
+    } catch (error) {
+      console.error("Search error:", error);
+    }
+  };
+  const empanelDoctor = async (doc) => {
+    try {
+
+      // 1️⃣ Empanel doctor
+      const empanelRes = await fetch(
+        "https://midl.automedai.in/doctor_company/empanel",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            company: selectedCompany,
+            doctor_id: doc.name,
+            doctor_name: doc.practitioner_name,
+            consultation_fee: doc.op_consulting_charge || "0",
+            created_by: currentUser || "ADMIN",
+          }),
+        }
+      );
+
+      if (!empanelRes.ok) {
+        throw new Error("Empanel API failed");
+      }
+
+      // 2️⃣ Update practitioner type
+      await fetch(
+        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doc.name}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            // add Authorization if required
+            // "Authorization": "token API_KEY:API_SECRET"
+          },
+          body: JSON.stringify({
+            practitioner_type: "Internal",
+          }),
+        }
+      );
+
+      // 3️⃣ Refresh status
+      setEmpanelStatus((prev) => ({
+        ...prev,
+        [doc.name]: true
+      }));
+
+    } catch (err) {
+      console.error("Empanel error", err);
+    }
+  };
+  const removeEmpanel = async (doc) => {
+    try {
+      await fetch(
+        "https://midl.automedai.in/doctor_company/remove-empanel-doctor",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            company: selectedCompany,
+            doctor_id: doc.name,
+          }),
+        }
+      );
+
+      checkEmpanelStatus(doc.name);
+    } catch (err) {
+      console.error("Remove empanel error", err);
+    }
+  };
+  const hasMissingDetails = (doc) => {
+    return (
+      !doc.practitioner_name ||
+      !doc.mobile_phone ||
+      !doc.custom_registration_number ||
+      !doc.custom_specializedqualification ||
+      !doc.gender
+    );
+  };
 
   return (
     <Layout>
@@ -165,9 +358,13 @@ function EmpanelDoctor() {
         <SearchWrapper>
           <SearchBox>
             <SearchInput
-              placeholder="Search doctor..."
+              placeholder="Search doctor by name, registration number or mobile number"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearch(value);
+                searchDoctors(value);
+              }}
             />
 
             {/* <SearchButton>
@@ -197,23 +394,59 @@ function EmpanelDoctor() {
             </Thead>
 
             <tbody>
-              {filteredDoctors.map((doc, index) => (
-                <tr key={index}>
-                  <Td>{index + 1}</Td>
-                  <Td>{doc.name}</Td>
-                  <Td>{doc.mobile}</Td>
-                  <Td>{doc.reg}</Td>
-                  <Td>{doc.qualification}</Td>
-                  <Td>
-                    <ActionButtons>
-                      <EditButton>
-                        <Edit size={14} />
-                      </EditButton>
-                      <EmpanelButton>Empanel</EmpanelButton>
-                    </ActionButtons>
-                  </Td>
+              {doctors.length > 0 ? (
+                doctors.map((doc, index) => {
+
+                  const missing = hasMissingDetails(doc);
+                  const isEmpanel = empanelStatus[doc.name];
+
+                  return (
+                    <tr key={doc.name}>
+                      <Td>{index + 1}</Td>
+                      <Td>
+                        {doc.practitioner_name} ({doc.gender?.charAt(0)})
+                      </Td>
+                      <Td>{doc.mobile_phone}</Td>
+                      <Td>{doc.custom_registration_number}</Td>
+                      <Td>{doc.custom_specializedqualification}</Td>
+                      <Td>
+                        <ActionButtons>
+                          <EditButton>
+                            <Edit size={14} />
+                          </EditButton>
+
+                          {isEmpanel ? (
+                            <EmpanelButton
+                              style={{ background: "#ef4444" }}
+                              onClick={() => removeEmpanel(doc)}
+                            >
+                              Remove
+                            </EmpanelButton>
+                          ) : (
+                            <EmpanelButton
+                              disabled={missing}
+                              title={
+                                missing
+                                  ? "Update missing details and empanel doctor"
+                                  : ""
+                              }
+                              onClick={() => empanelDoctor(doc)}
+                            >
+                              Empanel
+                            </EmpanelButton>
+                          )}
+                        </ActionButtons>
+                      </Td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <EmptyMessage colSpan="6">
+                    No doctors found. Try searching by name, mobile, or registration number.
+                  </EmptyMessage>
                 </tr>
-              ))}
+              )}
             </tbody>
           </Table>
         </TableWrapper>
