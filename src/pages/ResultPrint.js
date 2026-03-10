@@ -884,6 +884,22 @@ const ResultPrint = () => {
     return null;
   };
 
+  const getFooterhead = () => {
+    if (!company) return null;
+
+    if (company.includes("ramakrishna mission sargachi")) {
+      return rkmsFooter;
+    }
+
+    if (company.includes("alfa diagnostic centre")) {
+      return null;
+    }
+
+    return null;
+  };
+
+  const footerImage = getFooterhead();
+
   return (
     <Container>
       <Sidebar>
@@ -1142,9 +1158,9 @@ const ResultPrint = () => {
                     height: "100px", // adjust to your footer height
                   }}
                 >
-                  {includeLetterhead && (
+                  {includeLetterhead && footerImage && (
                     <img
-                      src={rkmsFooter}
+                      src={footerImage}
                       alt="Footer Letterhead"
                       style={{
                         width: "100%",
@@ -1156,7 +1172,6 @@ const ResultPrint = () => {
                   )}
                 </div>
               </ReportFooter>
-
 
             </div>
           </ReportPreview>
