@@ -269,6 +269,7 @@ const Sidebar = () => {
     "tech@automedai.in",
     "accounts@automedai.in"
   ];
+  
   // const menuItems = [
   //   { path: "/patients", label: "Patients", icon: Users },
   // ];

@@ -448,24 +448,144 @@ const Billing = () => {
   const [toDate, setToDate] = useState("");
   const invoiceRef = useRef();
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState("");
+  const [companies, setCompanies] = useState([]);
+  useEffect(() => {
+      const fetchCompanies = async () => {
+        try {
+          const res = await api.get("https://hms.automedai.in/api/resource/Company");
+          const companyList = res.data?.data || [];
+  
+          setCompanies(companyList);
+  
+          if (companyList.length > 0) {
+            setSelectedCompany(companyList[0].name); // ✅ default first company
+          }
+        } catch (err) {
+          console.error("Error fetching companies", err);
+        }
+      };
+  
+      fetchCompanies();
+    }, []);
+
+  const [summary, setSummary] = useState({
+    revenueToday: 0,
+    pendingToday: 0,
+    paidThisMonth: 0,
+    overdueToday: 0,
+  });
+  const sumNetTotal = (data = []) => {
+    return data.reduce((sum, item) => sum + Number(item.net_total || 0), 0);
+  };
+
+  const fetchSummaryData = useCallback(async () => {
+    if (!selectedCompany) return;
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      const firstDayOfMonth = new Date(
+        new Date().getFullYear(),
+        new Date().getMonth(),
+        1
+      )
+        .toISOString()
+        .split("T")[0];
+
+      const fields = JSON.stringify([
+        "name",
+        "patient",
+        "patient_name",
+        "posting_date",
+        "company",
+        "status",
+        "total_qty",
+        "net_total",
+      ]);
+
+      const baseParams = {
+        fields,
+        order_by: "posting_date desc",
+        limit_page_length: 1000,
+      };
+
+      const [overdueRes, revenueRes, pendingRes, monthRes] = await Promise.all([
+        api.get("/resource/Sales Invoice", {
+          ...baseParams,
+          filters: JSON.stringify([
+            ["status", "=", "Overdue"],
+            ["posting_date", "=", today],
+            ["company", "=", selectedCompany],
+          ]),
+        }),
+
+        api.get("/resource/Sales Invoice", {
+          ...baseParams,
+          filters: JSON.stringify([
+            ["status", "=", "Paid"],
+            ["posting_date", "=", today],
+            ["company", "=", selectedCompany],
+          ]),
+        }),
+
+        api.get("/resource/Sales Invoice", {
+          ...baseParams,
+          filters: JSON.stringify([
+            ["status", "=", "Pending"],
+            ["posting_date", "=", today],
+            ["company", "=", selectedCompany],
+          ]),
+        }),
+
+        api.get("/resource/Sales Invoice", {
+          ...baseParams,
+          limit_page_length: 10000,
+          filters: JSON.stringify([
+            ["posting_date", "between", [firstDayOfMonth, today]],
+            ["status", "=", "Paid"],
+            ["company", "=", selectedCompany],
+          ]),
+        }),
+      ]);
+
+      const overdueTotal = sumNetTotal(overdueRes.data?.data);
+      const revenueTotal = sumNetTotal(revenueRes.data?.data);
+      const pendingTotal = sumNetTotal(pendingRes.data?.data);
+      const monthTotal = sumNetTotal(monthRes.data?.data);
+
+      setSummary({
+        revenueToday: revenueTotal,
+        pendingToday: pendingTotal,
+        paidThisMonth: monthTotal,
+        overdueToday: overdueTotal,
+      });
+    } catch (err) {
+      console.error("Summary Fetch Error:", err);
+    }
+  }, [selectedCompany]);
+
+  useEffect(() => {
+  fetchSummaryData();
+}, [fetchSummaryData]);
 
   // Determine base path for navigation (handles both /billing and /opd/billing)
   const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 
   const summaryData = [
     {
-      label: "Total Revenue",
-      value: "₹45,250",
-      change: "+12.5%",
+      label: "Total Revenue Today",
+      value: `₹${summary.revenueToday.toLocaleString()}`,
+      // change: "+12.5%",
       positive: true,
       icon: IndianRupee,
       bgColor: "#e8f5e9",
       color: "#2e7d32",
     },
     {
-      label: "Pending Payments",
-      value: "₹8,500",
-      change: "+5.2%",
+      label: "Pending Payments Today",
+      value: `₹${summary.pendingToday.toLocaleString()}`,
+      // change: "+5.2%",
       positive: false,
       icon: Clock,
       bgColor: "#fff3e0",
@@ -473,17 +593,17 @@ const Billing = () => {
     },
     {
       label: "Paid This Month",
-      value: "₹36,750",
-      change: "+18.3%",
+      value: `₹${summary.paidThisMonth.toLocaleString()}`,
+      // change: "+18.3%",
       positive: true,
       icon: CheckCircle,
       bgColor: "#e3f2fd",
       color: "#1976d2",
     },
     {
-      label: "Overdue",
-      value: "₹2,100",
-      change: "-8.1%",
+      label: "Total Overdue Today",
+      value: `₹${summary.overdueToday.toLocaleString()}`,
+      // change: "-8.1%",
       positive: true,
       icon: XCircle,
       bgColor: "#ffebee",
@@ -551,6 +671,7 @@ const Billing = () => {
     { key: "status", label: "STATUS" },
     { key: "actions", label: "ACTION" },
   ];
+
   const renderStatus = (status) => (
     <InvoiceStatus variant={status.toLowerCase()}>
       {status}
