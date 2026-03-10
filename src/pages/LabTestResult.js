@@ -456,6 +456,19 @@ const LabTestResult = () => {
     return testName.replace(/^(PHC-|LAB-|PLB-)\s*/i, '');
   };
 
+  const isSemanticRow = (text) => {
+    if (!text) return false;
+
+    const trimmed = text.trim().toLowerCase();
+
+    return (
+      trimmed.includes("<center") ||
+      trimmed.includes("<hr") ||
+      trimmed.includes("<b>") ||
+      trimmed.includes("---")
+    );
+  };
+
   // Populate test results from lab test data
   useEffect(() => {
     if (!labTestData) return;
@@ -480,11 +493,9 @@ const LabTestResult = () => {
     if (labTestData.descriptive_test_items) {
       const descriptiveItems = labTestData.descriptive_test_items.map((item) => ({
         type: "descriptive",
-        parameter: removeTestPrefix(item.template) || item.lab_test_name || "",
+        parameter: item.lab_test_particulars || "",
         value: item.result_value || "",
-        unit: "",
-        normalRange: "",
-        flag: "none",
+        isSemantic: isSemanticRow(item.lab_test_particulars),
       }));
 
       results = [...results, ...descriptiveItems];
@@ -756,7 +767,8 @@ const LabTestResult = () => {
     }
     return calculatedAge;
   };
-
+  const isDescriptiveTest = labTestData?.descriptive_toggle === 1;
+  const columnCount = isDescriptiveTest ? 2 : 5;
   return (
     <Layout>
       <ResultContainer>
@@ -805,31 +817,70 @@ const LabTestResult = () => {
               <TableHeaderRow>
                 <TableHeaderCell>Parameter Name</TableHeaderCell>
                 <TableHeaderCell>Result Value</TableHeaderCell>
-                <TableHeaderCell>Unit</TableHeaderCell>
-                <TableHeaderCell>Normal Range</TableHeaderCell>
-                <TableHeaderCell>Flag</TableHeaderCell>
+
+                {!isDescriptiveTest && (
+                  <>
+                    <TableHeaderCell>Unit</TableHeaderCell>
+                    <TableHeaderCell>Normal Range</TableHeaderCell>
+                    <TableHeaderCell>Flag</TableHeaderCell>
+                  </>
+                )}
               </TableHeaderRow>
             </TableHeader>
             <TableBody>
-              {testResults.map((result, index) => (
-                <TableRow key={index}>
-                  <TableCell>{result.parameter}</TableCell>
-                  <TableCell>
-                    <ResultInput
-                      type="text"
-                      value={result.value}
-                      onChange={(e) => handleResultChange(index, e.target.value)}
-                      placeholder="Enter value"
-                      isAbnormal={isAbnormal(result.flag)}
-                    />
-                  </TableCell>
-                  <TableCell>{result.unit}</TableCell>
-                  <TableCell>{result.normalRange}</TableCell>
-                  <TableCell>
-                    <FlagIndicator flag={result.flag} />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {testResults.map((result, index) => {
+
+                if (result.type === "descriptive" && result.isSemantic) {
+                  return (
+                    <TableRow key={index}>
+                      <TableCell colSpan={columnCount}>
+                        <div
+                          dangerouslySetInnerHTML={{ __html: result.parameter }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+
+                if (result.type === "descriptive") {
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>{result.parameter}</TableCell>
+
+                      <TableCell>
+                        <ResultInput
+                          type="text"
+                          value={result.value}
+                          onChange={(e) => handleResultChange(index, e.target.value)}
+                          placeholder="Enter value"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                }
+
+                return (
+                  <TableRow key={index}>
+                    <TableCell>{result.parameter}</TableCell>
+
+                    <TableCell>
+                      <ResultInput
+                        type="text"
+                        value={result.value}
+                        onChange={(e) => handleResultChange(index, e.target.value)}
+                        placeholder="Enter value"
+                        isAbnormal={isAbnormal(result.flag)}
+                      />
+                    </TableCell>
+
+                    <TableCell>{result.unit}</TableCell>
+                    <TableCell>{result.normalRange}</TableCell>
+                    <TableCell>
+                      <FlagIndicator flag={result.flag} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </ResultsTable>
