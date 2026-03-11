@@ -1071,7 +1071,10 @@ const Prescription = () => {
                   <StaticInfoContent paperSize={paperSize}>
                     Temperature<br />
                     Blood Pressure<br />
-                    Weight Height
+                    <div style={{display:"flex",gap:"55px"}}>
+                      <div>Weight</div>
+                      <div>Height</div>
+                    </div>
                   </StaticInfoContent>
                 </StaticInfoBox>
                 <StaticInfoBox style={{ borderBottom: 'none' }}>

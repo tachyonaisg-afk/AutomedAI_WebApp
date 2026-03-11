@@ -168,7 +168,7 @@ const Patients = () => {
   usePageTitle("Patients");
   const navigate = useNavigate();
   const location = useLocation();
-
+  const searchQuery = location.state?.searchQuery || "";
   const [patientsData, setPatientsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -282,6 +282,14 @@ const Patients = () => {
         params.filters = JSON.stringify([["Patient", "name", "=", patientId]]);
       }
 
+      if (searchQuery && !patientId) {
+        params.or_filters = JSON.stringify([
+          ["Patient", "name", "like", `%${searchQuery}%`],
+          ["Patient", "patient_name", "like", `%${searchQuery}%`],
+          ["Patient", "mobile", "like", `%${searchQuery}%`],
+        ]);
+      }
+
       console.log("📊 Fetching patients with params:", params);
 
       // Fetch count separately
@@ -313,7 +321,7 @@ const Patients = () => {
   useEffect(() => {
     fetchPatients(currentPage, rowsPerPage, selectedPatientId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, rowsPerPage, selectedPatientId]);
+  }, [currentPage, rowsPerPage, selectedPatientId, searchQuery]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -349,11 +357,15 @@ const Patients = () => {
           </AddButton>
         </HeaderSection>
 
-        {selectedPatientId && (
+        {(selectedPatientId || searchQuery) && (
           <FilterNotification>
             <FilterText>
-              Showing filtered results for patient: {location.state?.selectedPatientDescription || selectedPatientId}
+              {selectedPatientId
+                ? `Showing filtered results for patient: ${location.state?.selectedPatientDescription || selectedPatientId
+                }`
+                : `Search results for: "${searchQuery}"`}
             </FilterText>
+
             <ClearFilterButton onClick={handleClearFilter}>
               Clear Filter
             </ClearFilterButton>

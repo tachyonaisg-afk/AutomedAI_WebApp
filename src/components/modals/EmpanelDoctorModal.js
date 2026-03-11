@@ -525,7 +525,7 @@ function EmpanelDoctorModal({ onClose }) {
           <TitleBlock>
             <ModalTitle>Doctor Empanelment</ModalTitle>
             <ModalSubtitle>
-              Add a new medical professional to the AutoMed AI healthcare network.
+              Add a New Doctor to your Clinic.
             </ModalSubtitle>
           </TitleBlock>
           <CloseButton onClick={onClose}>
@@ -694,6 +694,14 @@ function EmpanelDoctorModal({ onClose }) {
                     <option value="Dental">Dental</option>
                     <option value="General Medicine">General Medicine</option>
                     <option value="Orthopaedics">Orthopaedics</option>
+                    <option value="ENT">ENT</option>
+                    <option value="Ophthalmology">Ophthalmology</option>
+                    <option value="Gynaecology">Gynaecology</option>
+                    <option value="Urology">Urology</option>
+                    <option value="Psychiatry">Psychiatry</option>
+                    <option value="Gastroenterology">Gastroenterology</option>
+                    <option value="Nephrology">Nephrology</option>
+
                   </FormSelect>
                 </InputGroup>
                 <InputGroup>

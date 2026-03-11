@@ -336,7 +336,7 @@ const OpdAdmin = () => {
                             <IconWrapper variant="orange">
                                 <Clock size={26} />
                             </IconWrapper>
-                            <ActionTitle>Manage OPD</ActionTitle>
+                            <ActionTitle>Doctor Scheduling</ActionTitle>
                         </ActionCard>
 
                         <ActionCard>

@@ -808,7 +808,7 @@ const DoctorAssignmentTab = () => {
 
                 {/* End */}
 
-                <TimeField>
+                {/* <TimeField>
                     <label>End Time</label>
                     <input
                         type="time"
@@ -816,7 +816,7 @@ const DoctorAssignmentTab = () => {
                         onChange={handleChange}
                         value={formData.end_time}
                     />
-                </TimeField>
+                </TimeField> */}
 
                 {/* Doctor */}
                 <DropField>
