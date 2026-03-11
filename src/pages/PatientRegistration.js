@@ -2223,21 +2223,6 @@ const PatientRegistration = () => {
                 <SectionTitle>Personal & Social History</SectionTitle>
                 <FormGrid>
                   <FormGroup>
-                    <FormLabel>Occupation</FormLabel>
-                    <FormInput ref={occupationInputRef} type="text" name="occupation" value={medicalHistory.occupation} onChange={handleMedicalHistoryChange} placeholder="Software Engineer" />
-                  </FormGroup>
-
-                  <FormGroup>
-                    <FormLabel>Marital Status</FormLabel>
-                    <FormSelect name="maritalStatus" value={medicalHistory.maritalStatus} onChange={handleMedicalHistoryChange}>
-                      <option value="">Select status</option>
-                      <option value="Single">Single</option>
-                      <option value="Married">Married</option>
-                      <option value="Divorced">Divorced</option>
-                      <option value="Widowed">Widowed</option>
-                    </FormSelect>
-                  </FormGroup>
-                  <FormGroup>
                     <FormLabel>Religion</FormLabel>
                     <FormSelect name="custom_religion" value={medicalHistory.custom_religion} onChange={handleMedicalHistoryChange}>
                       <option value="">Select Religion</option>
@@ -2279,6 +2264,22 @@ const PatientRegistration = () => {
                     </FormGroup>
 
                   ) : null}
+                  <FormGroup>
+                    <FormLabel>Occupation</FormLabel>
+                    <FormInput ref={occupationInputRef} type="text" name="occupation" value={medicalHistory.occupation} onChange={handleMedicalHistoryChange} placeholder="Software Engineer" />
+                  </FormGroup>
+
+                  <FormGroup>
+                    <FormLabel>Marital Status</FormLabel>
+                    <FormSelect name="maritalStatus" value={medicalHistory.maritalStatus} onChange={handleMedicalHistoryChange}>
+                      <option value="">Select status</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Divorced">Divorced</option>
+                      <option value="Widowed">Widowed</option>
+                    </FormSelect>
+                  </FormGroup>
+
                 </FormGrid>
               </FormSection>
 

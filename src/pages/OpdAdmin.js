@@ -101,6 +101,7 @@ const ActionTitle = styled.span`
   font-weight: 600;
   color: #64748b;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
 `;
 
 const ActionCard = styled.div`

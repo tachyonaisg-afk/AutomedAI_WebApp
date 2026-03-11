@@ -908,6 +908,15 @@ const Dashboard = () => {
     return parts.join(" ");
   };
 
+  const handleTotalPatientsClick = () => {
+    navigate("/opd/recent-opd-patients", {
+      state: {
+        date: selectedDate,
+        company: selectedCompany
+      }
+    });
+  };
+
   return (
     <Layout>
       <PageWrapper>
@@ -997,7 +1006,12 @@ const Dashboard = () => {
                 {insights.map((insight, index) => {
                   const IconComponent = insight.icon;
                   return (
-                    <InsightCard key={index} style={{ animationDelay: `${index * 0.05}s` }} accentColor={insight.accentColor}>
+                    <InsightCard
+                      key={index}
+                      style={{ animationDelay: `${index * 0.05}s`, cursor: insight.title === "Total Patients Today" ? "pointer" : "default" }}
+                      accentColor={insight.accentColor}
+                      onClick={insight.title === "Total Patients Today" ? handleTotalPatientsClick : undefined}
+                    >
                       <InsightTitle>
                         <InsightIconWrapper iconBg={insight.iconBg} iconColor={insight.iconColor}>
                           <IconComponent />
@@ -1017,7 +1031,7 @@ const Dashboard = () => {
 
         <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
           <Section>
-            <SectionTitle>Assigned Doctors</SectionTitle>
+            <SectionTitle>Assigned Doctors Today</SectionTitle>
 
             {/* 🔥 Controls */}
             <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
@@ -1043,6 +1057,7 @@ const Dashboard = () => {
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
+                disabled
               />
             </div>
 

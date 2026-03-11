@@ -165,178 +165,200 @@ const ClearFilterButton = styled.button`
 /* ================= COMPONENT ================= */
 
 const RecentOPDPatients = () => {
-    usePageTitle("Patients");
-    const navigate = useNavigate();
-    const location = useLocation();
+  usePageTitle("Patients");
+  const navigate = useNavigate();
+  const location = useLocation();
+  const selectedDate = location.state?.date;
+  const selectedCompany = location.state?.company;
+  const [patientsData, setPatientsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // const [currentPage, setCurrentPage] = useState(1);
+  // const [rowsPerPage, setRowsPerPage] = useState(10);
+  // const [totalCount, setTotalCount] = useState(0);
 
-    const [patientsData, setPatientsData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    // const [currentPage, setCurrentPage] = useState(1);
-    // const [rowsPerPage, setRowsPerPage] = useState(10);
-    // const [totalCount, setTotalCount] = useState(0);
+  // const [filterDoctor, setFilterDoctor] = useState("");
+  // const [filterDate, setFilterDate] = useState("");
+  // const [filterVisitType, setFilterVisitType] = useState("");
 
-    // const [filterDoctor, setFilterDoctor] = useState("");
-    // const [filterDate, setFilterDate] = useState("");
-    // const [filterVisitType, setFilterVisitType] = useState("");
+  // Get selected patient from navigation state
+  const selectedPatientId = location.state?.selectedPatientId;
 
-    // Get selected patient from navigation state
-    const selectedPatientId = location.state?.selectedPatientId;
+  // const renderActions = (row) => (
+  //     <ViewButton onClick={() => navigate(`/patients/${row.name}`)}>
+  //         <Eye />
+  //         View
+  //     </ViewButton>
+  // );
 
-    // const renderActions = (row) => (
-    //     <ViewButton onClick={() => navigate(`/patients/${row.name}`)}>
-    //         <Eye />
-    //         View
-    //     </ViewButton>
-    // );
+  /* ========= DATA FETCH ========= */
 
-    /* ========= DATA FETCH ========= */
+  // const fetchPatientCount = async () => {
+  //     try {
+  //         console.log("📊 Fetching company list...");
 
-    // const fetchPatientCount = async () => {
-    //     try {
-    //         console.log("📊 Fetching company list...");
+  //         // 1️⃣ Fetch company list
+  //         const companyResponse = await api.get(
+  //             "https://hms.automedai.in/api/resource/Company"
+  //         );
 
-    //         // 1️⃣ Fetch company list
-    //         const companyResponse = await api.get(
-    //             "https://hms.automedai.in/api/resource/Company"
-    //         );
+  //         const companies =
+  //             companyResponse.data?.data?.map((c) => c.name) || [];
 
-    //         const companies =
-    //             companyResponse.data?.data?.map((c) => c.name) || [];
+  //         console.log("🏢 Companies:", companies);
 
-    //         console.log("🏢 Companies:", companies);
+  //         if (!companies.length) {
+  //             setTotalCount(0);
+  //             return;
+  //         }
 
-    //         if (!companies.length) {
-    //             setTotalCount(0);
-    //             return;
-    //         }
+  //         let filters;
 
-    //         let filters;
+  //         // 2️⃣ If only one company → "=" operator
+  //         if (companies.length === 1) {
+  //             filters = {
+  //                 custom_company: companies[0],
+  //             };
+  //         }
+  //         // 3️⃣ If multiple companies → "in" operator
+  //         else {
+  //             filters = [
+  //                 ["custom_company", "in", companies],
+  //             ];
+  //         }
 
-    //         // 2️⃣ If only one company → "=" operator
-    //         if (companies.length === 1) {
-    //             filters = {
-    //                 custom_company: companies[0],
-    //             };
-    //         }
-    //         // 3️⃣ If multiple companies → "in" operator
-    //         else {
-    //             filters = [
-    //                 ["custom_company", "in", companies],
-    //             ];
-    //         }
+  //         console.log("📊 Final Filters:", filters);
 
-    //         console.log("📊 Final Filters:", filters);
+  //         // 4️⃣ Call get_count API
+  //         const countResponse = await api.get(
+  //             "/method/frappe.client.get_count",
+  //             {
+  //                 doctype: "Patient",
+  //                 filters: JSON.stringify(filters),
+  //             }
+  //         );
 
-    //         // 4️⃣ Call get_count API
-    //         const countResponse = await api.get(
-    //             "/method/frappe.client.get_count",
-    //             {
-    //                 doctype: "Patient",
-    //                 filters: JSON.stringify(filters),
-    //             }
-    //         );
+  //         console.log("📊 Count API Response:", countResponse);
 
-    //         console.log("📊 Count API Response:", countResponse);
+  //         const count =
+  //             countResponse.data?.message || 0;
 
-    //         const count =
-    //             countResponse.data?.message || 0;
+  //         console.log("📊 Total Patient Count:", count);
 
-    //         console.log("📊 Total Patient Count:", count);
+  //         setTotalCount(count);
+  //     } catch (err) {
+  //         console.error("❌ Error fetching patient count:", err);
+  //         setTotalCount(0);
+  //     }
+  // };
 
-    //         setTotalCount(count);
-    //     } catch (err) {
-    //         console.error("❌ Error fetching patient count:", err);
-    //         setTotalCount(0);
-    //     }
-    // };
+  const fetchPatients = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const filters = [
+        ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
+      ];
 
-    const fetchPatients = async () => {
-        try {
-            setLoading(true);
-            setError(null);
+      if (selectedDate) {
+        filters.push(["posting_date", "=", selectedDate]);
+      }
 
-            const response = await api.get(
-                `/resource/Sales Invoice`,
-                {
-                    limit_page_length: 20,
-                    fields: JSON.stringify([
-                        "name",
-                        "patient",
-                        "patient_name",
-                        "posting_date",
-                        "company",
-                        "status",
-                        "total_qty",
-                        "net_total",
-                    ]),
-                    order_by: "posting_date desc",
-                    filters: JSON.stringify([
-                        ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
-                    ]),
-                }
-            );
+      if (selectedCompany) {
+        filters.push(["company", "=", selectedCompany]);
+      }
 
-            const rawData = response.data?.data || [];
-            setPatientsData(rawData);
-        } catch (err) {
-            console.error("Error fetching patients:", err);
-            setError("Failed to load patients");
-        } finally {
-            setLoading(false);
+      const response = await api.get(
+        `/resource/Sales Invoice`,
+        {
+          limit_page_length: 20,
+          fields: JSON.stringify([
+            "name",
+            "patient",
+            "patient_name",
+            "posting_date",
+            "company",
+            "status",
+            "total_qty",
+            "net_total",
+          ]),
+          order_by: "posting_date desc",
+          filters: JSON.stringify(filters),
         }
-    };
+      );
 
-    useEffect(() => {
-        fetchPatients();
-    }, []);
+      const rawData = response.data?.data || [];
+      setPatientsData(rawData);
+    } catch (err) {
+      console.error("Error fetching patients:", err);
+      setError("Failed to load patients");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // const handlePageChange = (newPage) => {
-    //     setCurrentPage(newPage);
-    // };
+  useEffect(() => {
+    fetchPatients();
+  }, [selectedDate, selectedCompany]);
 
-    // const handleRowsPerPageChange = (newRowsPerPage) => {
-    //     setRowsPerPage(newRowsPerPage);
-    //     setCurrentPage(1); // Reset to first page when changing rows per page
-    // };
+  // const handlePageChange = (newPage) => {
+  //     setCurrentPage(newPage);
+  // };
 
-    const handleClearFilter = () => {
-        // Clear the filter by navigating without state
-        navigate('/patients', { replace: true });
-    };
+  // const handleRowsPerPageChange = (newRowsPerPage) => {
+  //     setRowsPerPage(newRowsPerPage);
+  //     setCurrentPage(1); // Reset to first page when changing rows per page
+  // };
 
-    /* ================= UI ================= */
+  const handleClearFilter = () => {
+    // Clear the filter by navigating without state
+    navigate('/patients', { replace: true });
+  };
 
-    return (
-        <Layout>
-            <PatientsContainer>
-                {loading && <div>Loading patients...</div>}
-                {error && <div style={{ color: "red" }}>Error: {error}</div>}
+  /* ================= UI ================= */
+  const isDashboardFilter = selectedDate && selectedCompany;
 
-                <HeaderSection>
-                    <TitleSection>
-                        <Title>Recent OPD Patient Records</Title>
-                        <Subtitle>Manage all patient information in one place.</Subtitle>
-                    </TitleSection>
+  const pageTitle = isDashboardFilter
+    ? "Today's Patient List"
+    : "Recent OPD Patient Records";
 
-                    <AddButton onClick={() => navigate("/patient-registration")}>
-                        <Plus />
-                        Add New Patient
-                    </AddButton>
-                </HeaderSection>
+  const pageSubtitle = isDashboardFilter
+    ? `Showing all OPD patients for ${new Date(selectedDate).toLocaleDateString(
+      "en-IN",
+      { day: "numeric", month: "long", year: "numeric" }
+    )}`
+    : "Manage all patient information in one place.";
 
-                {selectedPatientId && (
-                    <FilterNotification>
-                        <FilterText>
-                            Showing filtered results for patient: {location.state?.selectedPatientDescription || selectedPatientId}
-                        </FilterText>
-                        <ClearFilterButton onClick={handleClearFilter}>
-                            Clear Filter
-                        </ClearFilterButton>
-                    </FilterNotification>
-                )}
+  return (
+    <Layout>
+      <PatientsContainer>
+        {loading && <div>Loading patients...</div>}
+        {error && <div style={{ color: "red" }}>Error: {error}</div>}
 
-                {/* <FiltersCard>
+        <HeaderSection>
+          <TitleSection>
+            <Title>{pageTitle}</Title>
+            <Subtitle>{pageSubtitle}</Subtitle>
+          </TitleSection>
+
+          <AddButton onClick={() => navigate("/opd/patient-registration")}>
+            <Plus />
+            Add New Patient
+          </AddButton>
+        </HeaderSection>
+
+        {selectedPatientId && (
+          <FilterNotification>
+            <FilterText>
+              Showing filtered results for patient: {location.state?.selectedPatientDescription || selectedPatientId}
+            </FilterText>
+            <ClearFilterButton onClick={handleClearFilter}>
+              Clear Filter
+            </ClearFilterButton>
+          </FilterNotification>
+        )}
+
+        {/* <FiltersCard>
           <FilterGroup>
             <FilterLabel>Doctor</FilterLabel>
             <FilterSelect value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}>
@@ -360,10 +382,10 @@ const RecentOPDPatients = () => {
           </FilterGroup>
         </FiltersCard> */}
 
-                <OpdPatientDataTable data={patientsData} />
-            </PatientsContainer>
-        </Layout>
-    );
+        <OpdPatientDataTable data={patientsData} />
+      </PatientsContainer>
+    </Layout>
+  );
 };
 
 export default RecentOPDPatients;
