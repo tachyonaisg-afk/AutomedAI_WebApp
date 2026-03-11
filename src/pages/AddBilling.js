@@ -1273,7 +1273,7 @@ const AddBilling = () => {
         patient: billingData.patient,
         patient_name: billingData.patient_name,
         items: items.map((item) => ({
-          item_code: item.item_code,
+          item_code: item.item,
           // item_name: item.item_name,
           // description: item.description || item.item_name,
           // warehouse: item.warehouse,
