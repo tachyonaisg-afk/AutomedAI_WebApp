@@ -466,6 +466,7 @@ const InsightSkeletonCard = styled.div`
   flex-direction: column;
   gap: 10px;
 `;
+
 const thStyle = {
   border: "1px solid #ddd",
   padding: "8px",
@@ -477,7 +478,6 @@ const tdStyle = {
   border: "1px solid #ddd",
   padding: "8px",
 };
-
 
 const AnimatedNumber = ({ value }) => {
   const [displayValue, setDisplayValue] = useState(value);

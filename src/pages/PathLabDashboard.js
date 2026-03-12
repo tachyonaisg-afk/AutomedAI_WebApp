@@ -510,7 +510,7 @@ const AnimatedNumber = ({ value }) => {
 };
 
 
-const Dashboard = () => {
+const PathLabDashboard = () => {
   usePageTitle("Dashboard");
   const navigate = useNavigate();
   const getTodayDate = () => {
@@ -531,20 +531,22 @@ const Dashboard = () => {
   const [doctorNameMap, setDoctorNameMap] = useState({});
   const [availableSlots, setAvailableSlots] = useState([]);
   const [doctorRoomMap, setDoctorRoomMap] = useState({});
+  const [totalTestsToday, setTotalTestsToday] = useState("-");
+  const [pendingSamples, setPendingSamples] = useState("-");
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
     { icon: Users, label: "Recent Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", route: "/opd/recent-opd-patients" },
     { icon: CreditCard, label: "PathLab Billing", bgColor: "#f5f3ff", iconColor: "#8b5cf6", borderColor: "#8b5cf6", route: "/billing" },
     { icon: ClipboardCheck, label: "Lab Stocks", bgColor: "#f0fdf4", iconColor: "#10b981", borderColor: "#10b981", route: null },
-    // { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
+    { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
     { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444", route: null },
   ];
 
   const insights = [
     {
-      title: "Total Patients Today",
-      value: "-",
+      title: "Total Tests Today",
+      value: totalTestsToday,
       color: "default",
       icon: UsersIcon,
       accentColor: "#3b82f6",
@@ -553,7 +555,7 @@ const Dashboard = () => {
     },
     {
       title: "Fees Collected",
-      value: "-",
+      value: `₹${Number(feesCollected).toFixed(2)}`,
       // value: feesCollected,
       color: "default",
       icon: IndianRupee,
@@ -563,7 +565,7 @@ const Dashboard = () => {
     },
     {
       title: "Pending Sample Collections",
-      value: "-",
+      value: pendingSamples,
       color: "orange",
       icon: Clock,
       accentColor: "#f59e0b",
@@ -601,6 +603,58 @@ const Dashboard = () => {
 
     fetchCompanies();
   }, []);
+
+  const fetchTotalTestsToday = async (company) => {
+    if (!company) return;
+
+    try {
+      const today = getTodayDate();
+
+      const start = `${today} 00:00:00`;
+      const end = `${today} 23:59:59`;
+
+      const filters = {
+        company: company,
+        status: ["!=", "Completed"],
+        creation: ["between", [start, end]],
+      };
+
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+
+      const url = `https://hms.automedai.in/api/method/frappe.client.get_count?doctype=Lab%20Test&filters=${encodedFilters}`;
+
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+
+      setTotalTestsToday(data?.message || 0);
+    } catch (error) {
+      console.error("Total Tests Today fetch error:", error);
+      setTotalTestsToday(0);
+    }
+  };
+
+  const fetchPendingSamples = async (company) => {
+    if (!company) return;
+
+    try {
+      const filters = {
+        company: company,
+        docstatus: ["=", 0],
+      };
+
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+
+      const url = `https://hms.automedai.in/api/method/frappe.client.get_count?doctype=Sample%20Collection&filters=${encodedFilters}`;
+
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+
+      setPendingSamples(data?.message || 0);
+    } catch (error) {
+      console.error("Pending Samples fetch error:", error);
+      setPendingSamples(0);
+    }
+  };
 
   const fetchFeesCollected = async (company) => {
     if (!company) return;
@@ -641,14 +695,15 @@ const Dashboard = () => {
 
       const result = data?.message?.result || [];
 
-      // Find the Total row
-      const totalRow = result.find(
-        (row) => row.account === "'Total'"
-      );
+      // Same logic as your report page
+      const filteredRows = result.filter((row) => row.gl_entry);
 
-      const totalAmount = totalRow?.credit || 0;
+      const totalFees = filteredRows.reduce((sum, row) => {
+        const credit = parseFloat(row.credit);
+        return sum + (isNaN(credit) ? 0 : credit);
+      }, 0);
 
-      setFeesCollected(`₹${totalAmount}`);
+      setFeesCollected(totalFees);
     } catch (error) {
       console.error("Fees fetch error:", error);
       setFeesCollected("₹0");
@@ -656,10 +711,12 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (selectedCompany) {
+    if (selectedCompany && selectedDate) {
       fetchFeesCollected(selectedCompany);
+      fetchTotalTestsToday(selectedCompany);
+      fetchPendingSamples(selectedCompany);
     }
-  }, [selectedCompany]);
+  }, [selectedCompany, selectedDate]);
 
   const fetchDoctorName = async (doctorId) => {
     try {
@@ -976,11 +1033,10 @@ const Dashboard = () => {
           </Section>
         </FadeInWrapper>
 
-        <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
+        {/* <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
           <Section>
             <SectionTitle>Assigned Doctors</SectionTitle>
 
-            {/* 🔥 Controls */}
             <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
               <select
                 value={selectedCompany}
@@ -1053,10 +1109,10 @@ const Dashboard = () => {
             )}
           </Section>
 
-        </FadeInWrapper>
+        </FadeInWrapper> */}
       </PageWrapper>
     </Layout>
   );
 };
 
-export default Dashboard;
+export default PathLabDashboard;

@@ -322,7 +322,7 @@ const Sidebar = () => {
   ];
 
   const pathLabSubItems = [
-    // { path: "/pathlab", label: "Dashboard", icon: LayoutDashboard },
+    { path: "/pathlab", label: "Dashboard", icon: LayoutDashboard },
     { path: "/pathlab/patient-registration", label: "Patient Registration", icon: UserPlus },
     // { path: "/patients", label: "Patients", icon: Users },
     { path: "/pathlab/billing", label: "Billing", icon: FileText },

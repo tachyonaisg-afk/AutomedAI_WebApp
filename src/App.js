@@ -30,6 +30,7 @@ import OpdAdmin from './pages/OpdAdmin';
 import RecentOPDPatients from './pages/RecentOPDPatients';
 import OPDPatientRegistration from './pages/OPDPatientRegistration';
 import EmpanelDoctor from './pages/EmpanelDoctor';
+import PathLabDashboard from './pages/PathLabDashboard';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -182,7 +183,7 @@ function App() {
             path="/pathlab"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <PathLabDashboard />
               </ProtectedRoute>
             }
           />
