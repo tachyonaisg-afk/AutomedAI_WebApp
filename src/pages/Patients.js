@@ -296,14 +296,50 @@ const Patients = () => {
 
         const rawData = response.data?.data || [];
 
-        const mappedPatients = rawData.map((row) => ({
-          name: row.patient || "-",
-          patient_name: row.patient_name || "-",
-          sex: "-",
-          mobile: "-",
-          email: "-",
-          uid: row.name
-        }));
+        const mappedPatients = await Promise.all(
+          rawData.map(async (row) => {
+            try {
+              const patientId = row.patient;
+
+              if (!patientId) {
+                return {
+                  name: "-",
+                  patient_name: row.patient_name || "-",
+                  sex: "-",
+                  mobile: "-",
+                  email: "-",
+                  uid: row.name,
+                };
+              }
+
+              const res = await api.get(
+                `https://hms.automedai.in/api/resource/Patient/${patientId}`
+              );
+
+              const patientData = res.data?.data || {};
+
+              return {
+                name: patientData.name || patientId,
+                patient_name: patientData.patient_name || row.patient_name || "-",
+                sex: patientData.sex || "-",
+                mobile: patientData.mobile || "-",
+                email: patientData.email || "-",
+                uid: row.name,
+              };
+            } catch (err) {
+              console.error("Patient fetch error:", err);
+
+              return {
+                name: row.patient || "-",
+                patient_name: row.patient_name || "-",
+                sex: "-",
+                mobile: "-",
+                email: "-",
+                uid: row.name,
+              };
+            }
+          })
+        );
 
         setPatientsData(mappedPatients);
         setTotalCount(mappedPatients.length);
