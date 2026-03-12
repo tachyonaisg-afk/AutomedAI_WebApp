@@ -182,6 +182,9 @@ const Patients = () => {
 
   // Get selected patient from navigation state
   const selectedPatientId = location.state?.selectedPatientId;
+  const dashboardDate = location.state?.date;
+  const dashboardCompany = location.state?.company;
+  const isDashboardFilter = location.state?.dashboardFilter;
 
   const columns = [
     { key: "name", label: "PATIENT ID" },
@@ -277,6 +280,14 @@ const Patients = () => {
         order_by: "modified desc",
       };
 
+      // Dashboard filter (Today's patients)
+      if (isDashboardFilter && dashboardDate && dashboardCompany) {
+        params.filters = JSON.stringify([
+          ["Patient", "custom_company", "=", dashboardCompany],
+          ["Patient", "creation", "like", `${dashboardDate}%`]
+        ]);
+      }
+
       // If a specific patient is selected, add filter
       if (patientId) {
         params.filters = JSON.stringify([["Patient", "name", "=", patientId]]);
@@ -321,7 +332,14 @@ const Patients = () => {
   useEffect(() => {
     fetchPatients(currentPage, rowsPerPage, selectedPatientId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, rowsPerPage, selectedPatientId, searchQuery]);
+  }, [
+    currentPage,
+    rowsPerPage,
+    selectedPatientId,
+    searchQuery,
+    dashboardDate,
+    dashboardCompany
+  ]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -357,13 +375,15 @@ const Patients = () => {
           </AddButton>
         </HeaderSection>
 
-        {(selectedPatientId || searchQuery) && (
+        {(selectedPatientId || searchQuery || isDashboardFilter) && (
           <FilterNotification>
             <FilterText>
               {selectedPatientId
                 ? `Showing filtered results for patient: ${location.state?.selectedPatientDescription || selectedPatientId
                 }`
-                : `Search results for: "${searchQuery}"`}
+                : searchQuery
+                  ? `Search results for: "${searchQuery}"`
+                  : `Showing today's patients for ${dashboardCompany}`}
             </FilterText>
 
             <ClearFilterButton onClick={handleClearFilter}>

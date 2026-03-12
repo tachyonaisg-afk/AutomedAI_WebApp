@@ -909,8 +909,9 @@ const Dashboard = () => {
   };
 
   const handleTotalPatientsClick = () => {
-    navigate("/opd/recent-opd-patients", {
+    navigate("/patients", {
       state: {
+        dashboardFilter: true,
         date: selectedDate,
         company: selectedCompany
       }
