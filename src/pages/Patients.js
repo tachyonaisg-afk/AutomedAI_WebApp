@@ -269,10 +269,51 @@ const Patients = () => {
       setLoading(true);
       setError(null);
 
+      // 🔵 DASHBOARD MODE (Total Patients Today)
+      if (isDashboardFilter && dashboardDate && dashboardCompany) {
+
+        const filters = [
+          ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
+          ["posting_date", "=", dashboardDate],
+          ["company", "=", dashboardCompany]
+        ];
+
+        const response = await api.get("/resource/Sales Invoice", {
+          limit_page_length: 50,
+          fields: JSON.stringify([
+            "name",
+            "patient",
+            "patient_name",
+            "posting_date",
+            "company",
+            "status",
+            "total_qty",
+            "net_total"
+          ]),
+          order_by: "posting_date desc",
+          filters: JSON.stringify(filters)
+        });
+
+        const rawData = response.data?.data || [];
+
+        const mappedPatients = rawData.map((row) => ({
+          name: row.patient || "-",
+          patient_name: row.patient_name || "-",
+          sex: "-",
+          mobile: "-",
+          email: "-",
+          uid: row.name
+        }));
+
+        setPatientsData(mappedPatients);
+        setTotalCount(mappedPatients.length);
+        return;
+      }
+
+      // 🟢 NORMAL PATIENT API
       const fields = '["name","patient_name","sex","mobile","email","uid","modified"]';
       const limitStart = (page - 1) * limit;
 
-      // Build filters for specific patient if provided
       const params = {
         fields,
         limit_start: limitStart,
@@ -280,17 +321,10 @@ const Patients = () => {
         order_by: "modified desc",
       };
 
-      // Dashboard filter (Today's patients)
-      if (isDashboardFilter && dashboardDate && dashboardCompany) {
-        params.filters = JSON.stringify([
-          ["Patient", "custom_company", "=", dashboardCompany],
-          ["Patient", "creation", "like", `${dashboardDate}%`]
-        ]);
-      }
-
-      // If a specific patient is selected, add filter
       if (patientId) {
-        params.filters = JSON.stringify([["Patient", "name", "=", patientId]]);
+        params.filters = JSON.stringify([
+          ["Patient", "name", "=", patientId]
+        ]);
       }
 
       if (searchQuery && !patientId) {
@@ -301,26 +335,21 @@ const Patients = () => {
         ]);
       }
 
-      console.log("📊 Fetching patients with params:", params);
-
-      // Fetch count separately
-      await fetchPatientCount(patientId);
+      await fetchPatientCount();
 
       const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, params);
 
-      console.log("📊 API Response:", response);
-
       const rawData = Array.isArray(response.data?.data) ? response.data.data : [];
 
-      // 🔹 NORMALIZE NULL VALUES
       const normalizedData = rawData.map((patient) => ({
         ...patient,
         mobile: patient.mobile || "-",
         email: patient.email || "-",
-        uid: patient.uid || "-",
+        uid: patient.uid || "-"
       }));
 
       setPatientsData(normalizedData);
+
     } catch (err) {
       console.error("❌ Error fetching patients:", err);
       setError(err.message || "Failed to load patients");
