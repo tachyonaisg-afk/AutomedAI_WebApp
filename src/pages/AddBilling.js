@@ -1536,7 +1536,7 @@ const AddBilling = () => {
                 )}
               </FormGroup>
 
-              <FormGroup>
+              {/* <FormGroup>
                 <FormLabel>Company</FormLabel>
                 <FormSelect
                   name="company"
@@ -1550,6 +1550,30 @@ const AddBilling = () => {
                     </option>
                   ))}
                 </FormSelect>
+              </FormGroup> */}
+
+              <FormGroup>
+                <FormLabel>Referring Practitioner</FormLabel>
+
+                <ReactSelect
+                  classNamePrefix="react-select"
+                  options={practitionerOptions}
+                  placeholder="Select practitioner"
+                  isClearable
+                  isSearchable
+                  required
+                  value={practitionerOptions.find(
+                    (opt) => opt.value === billingData.ref_practitioner
+                  )}
+                  onChange={(selectedOption) =>
+                    handleBillingChange({
+                      target: {
+                        name: "ref_practitioner",
+                        value: selectedOption ? selectedOption.value : "",
+                      },
+                    })
+                  }
+                />
               </FormGroup>
 
               <FormGroup>
@@ -1564,7 +1588,7 @@ const AddBilling = () => {
 
             </FormGrid>
 
-            <CheckboxGroup>
+            {/* <CheckboxGroup>
               <CheckboxLabel>
                 <Checkbox
                   type="checkbox"
@@ -1574,11 +1598,11 @@ const AddBilling = () => {
                 />
                 Edit Posting Date and Time
               </CheckboxLabel>
-            </CheckboxGroup>
+            </CheckboxGroup> */}
           </FormSection>
 
           {/* Practitioner & Service Information */}
-          <FormSection style={{ marginTop: "24px" }}>
+          {/* <FormSection style={{ marginTop: "24px" }}>
             <SectionTitle>Practitioner & Service Information</SectionTitle>
             <FormGrid>
               <FormGroup>
@@ -1606,7 +1630,7 @@ const AddBilling = () => {
               </FormGroup>
 
 
-              {/* <FormGroup>
+              <FormGroup>
                 <FormLabel>Service Unit</FormLabel>
                 <FormSelect
                   name="service_unit"
@@ -1620,10 +1644,10 @@ const AddBilling = () => {
                     </option>
                   ))}
                 </FormSelect>
-              </FormGroup> */}
+              </FormGroup>
 
             </FormGrid>
-          </FormSection>
+          </FormSection> */}
 
           {/* Items Section */}
           <ItemsSection>

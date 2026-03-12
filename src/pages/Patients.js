@@ -324,7 +324,7 @@ const Patients = () => {
                 sex: patientData.sex || "-",
                 mobile: patientData.mobile || "-",
                 email: patientData.email || "-",
-                uid: row.name,
+                uid: row?.uid || "-",
               };
             } catch (err) {
               console.error("Patient fetch error:", err);

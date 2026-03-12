@@ -267,7 +267,13 @@ const Sidebar = () => {
     "subhomoychatterjee155@gmail.com",
     "falguni@automedai.in",
     "tech@automedai.in",
-    "accounts@automedai.in"
+    "accounts@automedai.in",
+    //Opd Admin List
+    "somnathbiswas629579@gmail.com",
+    "prosen9609@gmail.com",
+    "jayantamamoni06@gmail.com",
+    //PathLab Admin List
+    "buddhadebsujapur@gmail.com",
   ];
   
   // const menuItems = [
