@@ -274,7 +274,7 @@ const Patients = () => {
 
         const filters = [
           ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
-          ["posting_date", "=", dashboardDate],
+          ["posting_date", "=", filterDate || dashboardDate],
           ["company", "=", dashboardCompany]
         ];
 
@@ -326,6 +326,11 @@ const Patients = () => {
           ["Patient", "name", "=", patientId]
         ]);
       }
+      if (filterDate && !patientId) {
+        params.filters = JSON.stringify([
+          ["Patient", "creation", "like", `${filterDate}%`]
+        ]);
+      }
 
       if (searchQuery && !patientId) {
         params.or_filters = JSON.stringify([
@@ -367,7 +372,8 @@ const Patients = () => {
     selectedPatientId,
     searchQuery,
     dashboardDate,
-    dashboardCompany
+    dashboardCompany,
+    filterDate
   ]);
 
   const handlePageChange = (newPage) => {
@@ -412,7 +418,10 @@ const Patients = () => {
                 }`
                 : searchQuery
                   ? `Search results for: "${searchQuery}"`
-                  : `Showing today's patients for ${dashboardCompany}`}
+                  : `Showing patients for ${filterDate
+                    ? new Date(filterDate).toLocaleDateString("en-IN")
+                    : "today"
+                  } (${dashboardCompany})`}
             </FilterText>
 
             <ClearFilterButton onClick={handleClearFilter}>
@@ -432,7 +441,14 @@ const Patients = () => {
           <FilterGroup>
             <FilterLabel>Date</FilterLabel>
             <DateInputWrapper>
-              <FilterInput placeholder="mm/dd/yyyy" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+              <FilterInput
+                type="date"
+                value={filterDate}
+                onChange={(e) => {
+                  setFilterDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
               <Calendar />
             </DateInputWrapper>
           </FilterGroup>

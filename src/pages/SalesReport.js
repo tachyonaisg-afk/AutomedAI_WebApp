@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { RotateCw, ChevronLeft, ChevronRight, Loader2, FileDown, FileText } from "lucide-react";
@@ -359,17 +359,34 @@ const BreadcrumbLink = styled.span`
 const BreadcrumbSeparator = styled.span`
   color: #999999;
 `;
+const FilterNotification = styled.div`
+  background-color: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const FilterText = styled.span`
+  font-size: 14px;
+  color: #1976d2;
+  font-weight: 500;
+`;
 
 const SalesReport = () => {
   usePageTitle("Sales Report");
   const navigate = useNavigate();
+  const location = useLocation();
+  const dashboardFilters = location.state;
   const [appliedFilters, setAppliedFilters] = useState(null);
 
   const [filters, setFilters] = useState({
-    // company: "Ramakrishna Mission Sargachi",
-    company: "",
-    fromDate: new Date().toISOString().split("T")[0],
-    toDate: new Date().toISOString().split("T")[0],
+    company: dashboardFilters?.company || "",
+    fromDate: dashboardFilters?.from_date || new Date().toISOString().split("T")[0],
+    toDate: dashboardFilters?.to_date || new Date().toISOString().split("T")[0],
     accountType: "Sales",
   });
   const [customerMap, setCustomerMap] = useState({});
@@ -406,7 +423,20 @@ const SalesReport = () => {
       console.error("Error fetching companies:", err);
     }
   };
+  useEffect(() => {
+    if (dashboardFilters?.dashboardFilter) {
+      const autoFilters = {
+        company: dashboardFilters.company,
+        fromDate: dashboardFilters.from_date,
+        toDate: dashboardFilters.to_date,
+        accountType: "Sales",
+      };
 
+      setFilters(autoFilters);
+      setAppliedFilters(autoFilters);
+      fetchReport(autoFilters);
+    }
+  }, [dashboardFilters]);
   // Determine the amount column based on account type
   const appliedAccountType = appliedFilters?.accountType;
 
@@ -563,7 +593,6 @@ const SalesReport = () => {
     fetchReport(appliedFilters);
   };
 
-
   const handleExportPDF = () => {
     if (reportData.length === 0) return;
 
@@ -707,6 +736,13 @@ const SalesReport = () => {
           </Breadcrumb>
           <Title>Sales Report</Title>
           <Subtitle>Generate and analyze clinic financial data.</Subtitle>
+          {dashboardFilters?.dashboardFilter && (
+            <FilterNotification>
+              <FilterText>
+                Showing today's sales report for {filters.company}
+              </FilterText>
+            </FilterNotification>
+          )}
         </div>
 
         <FiltersCard>

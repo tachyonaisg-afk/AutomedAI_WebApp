@@ -334,7 +334,7 @@ const Sidebar = () => {
 
   const menuItemsAfterPathLab = [
     // { path: "/consultations", label: "Consultations", icon: MessageSquare },
-    { path: "/appointments", label: "Appointments", icon: Calendar },
+    // { path: "/appointments", label: "Appointments", icon: Calendar },
     { path: "/reports", label: "Reports", icon: BarChart3 },
     // { path: "/clinic-details", label: "Clinic Details", icon: Building2 },
   ];

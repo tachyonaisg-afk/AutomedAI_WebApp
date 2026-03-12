@@ -917,6 +917,16 @@ const Dashboard = () => {
       }
     });
   };
+  const handleFeesCollectedClick = () => {
+    navigate("/reports", {
+      state: {
+        dashboardFilter: true,
+        from_date: selectedDate,
+        to_date: selectedDate,
+        company: selectedCompany
+      }
+    });
+  };
 
   return (
     <Layout>
@@ -1009,9 +1019,22 @@ const Dashboard = () => {
                   return (
                     <InsightCard
                       key={index}
-                      style={{ animationDelay: `${index * 0.05}s`, cursor: insight.title === "Total Patients Today" ? "pointer" : "default" }}
+                      style={{
+                        animationDelay: `${index * 0.05}s`,
+                        cursor:
+                          insight.title === "Total Patients Today" ||
+                            insight.title === "Fees Collected"
+                            ? "pointer"
+                            : "default"
+                      }}
                       accentColor={insight.accentColor}
-                      onClick={insight.title === "Total Patients Today" ? handleTotalPatientsClick : undefined}
+                      onClick={
+                        insight.title === "Total Patients Today"
+                          ? handleTotalPatientsClick
+                          : insight.title === "Fees Collected"
+                            ? handleFeesCollectedClick
+                            : undefined
+                      }
                     >
                       <InsightTitle>
                         <InsightIconWrapper iconBg={insight.iconBg} iconColor={insight.iconColor}>
