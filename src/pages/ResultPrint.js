@@ -1151,7 +1151,7 @@ const ResultPrint = () => {
                   <InfoRow>
                     <InfoLabel>Collection Location</InfoLabel>
                     <Colon>:</Colon>
-                    <InfoValue>Lab</InfoValue>
+                    <InfoValue>-</InfoValue>
                   </InfoRow>
 
                   <InfoRow>
