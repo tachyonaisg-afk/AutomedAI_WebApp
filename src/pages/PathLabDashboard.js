@@ -532,6 +532,7 @@ const PathLabDashboard = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [doctorRoomMap, setDoctorRoomMap] = useState({});
   const [totalTestsToday, setTotalTestsToday] = useState("-");
+  const [totalPendingTestsToday, setTotalPendingTestsToday] = useState("-");
   const [pendingSamples, setPendingSamples] = useState("-");
 
   const navItems = [
@@ -574,7 +575,7 @@ const PathLabDashboard = () => {
     },
     {
       title: "Pending Test Results",
-      value: "-",
+      value: totalPendingTestsToday,
       color: "green",
       icon: Pill,
       accentColor: "#10b981",
@@ -615,7 +616,6 @@ const PathLabDashboard = () => {
 
       const filters = {
         company: company,
-        status: ["!=", "Completed"],
         creation: ["between", [start, end]],
       };
 
@@ -627,6 +627,35 @@ const PathLabDashboard = () => {
       const data = await res.json();
 
       setTotalTestsToday(data?.message || 0);
+    } catch (error) {
+      console.error("Total Tests Today fetch error:", error);
+      setTotalTestsToday(0);
+    }
+  };
+
+  const fetchTotalPendingTestsToday = async (company) => {
+    if (!company) return;
+
+    try {
+      const today = getTodayDate();
+
+      const start = `${today} 00:00:00`;
+      const end = `${today} 23:59:59`;
+
+      const filters = {
+        company: company,
+        status: ["!=", "Completed"],
+        creation: ["between", [start, end]],
+      };
+
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+
+      const url = `https://hms.automedai.in/api/method/frappe.client.get_count?doctype=Lab%20Test&filters=${encodedFilters}`;
+
+      const res = await fetch(url, { credentials: "include" });
+      const data = await res.json();
+
+      setTotalPendingTestsToday(data?.message || 0);
     } catch (error) {
       console.error("Total Tests Today fetch error:", error);
       setTotalTestsToday(0);
@@ -714,6 +743,7 @@ const PathLabDashboard = () => {
     if (selectedCompany && selectedDate) {
       fetchFeesCollected(selectedCompany);
       fetchTotalTestsToday(selectedCompany);
+      fetchTotalPendingTestsToday(selectedCompany);
       fetchPendingSamples(selectedCompany);
     }
   }, [selectedCompany, selectedDate]);
@@ -927,6 +957,17 @@ const PathLabDashboard = () => {
     return parts.join(" ");
   };
 
+  const handleFeesCollectedClick = () => {
+    navigate("/reports", {
+      state: {
+        dashboardFilter: true,
+        from_date: selectedDate,
+        to_date: selectedDate,
+        company: selectedCompany
+      }
+    });
+  };
+
   return (
     <Layout>
       <PageWrapper>
@@ -1014,14 +1055,31 @@ const PathLabDashboard = () => {
               <DailyInsightsGrid>
                 {insights.map((insight, index) => {
                   const IconComponent = insight.icon;
+
+                  const isClickable =
+                    insight.title === "Fees Collected";
+
                   return (
-                    <InsightCard key={index} style={{ animationDelay: `${index * 0.05}s` }} accentColor={insight.accentColor}>
+                    <InsightCard
+                      key={index}
+                      style={{
+                        animationDelay: `${index * 0.05}s`,
+                        cursor: isClickable ? "pointer" : "default"
+                      }}
+                      accentColor={insight.accentColor}
+                      onClick={
+                        insight.title === "Fees Collected"
+                          ? handleFeesCollectedClick
+                          : undefined
+                      }
+                    >
                       <InsightTitle>
                         <InsightIconWrapper iconBg={insight.iconBg} iconColor={insight.iconColor}>
                           <IconComponent />
                         </InsightIconWrapper>
                         <span>{insight.title}</span>
                       </InsightTitle>
+
                       <InsightValue color={insight.color}>
                         <AnimatedNumber value={insight.value} />
                       </InsightValue>
