@@ -150,6 +150,7 @@ function EmpanelDoctor() {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [empanelStatus, setEmpanelStatus] = useState({});
+  const [autoEmpanel, setAutoEmpanel] = useState(false);
   // ✅ Fetch Current User
   useEffect(() => {
 
@@ -308,7 +309,7 @@ function EmpanelDoctor() {
         ...prev,
         [doc.name]: true,
       }));
-
+      checkEmpanelStatus(doc.name);
       // ✅ Alert message from API
       alert(data.message);
 
@@ -436,13 +437,20 @@ function EmpanelDoctor() {
                             </EmpanelButton>
                           ) : (
                             <EmpanelButton
-                              disabled={missing}
                               title={
                                 missing
                                   ? "Update missing details and empanel doctor"
                                   : ""
                               }
-                              onClick={() => empanelDoctor(doc)}
+                              onClick={() => {
+                                if (missing) {
+                                  setSelectedDoctor(doc);
+                                  setAutoEmpanel(true);
+                                  setOpenEditModal(true);
+                                } else {
+                                  empanelDoctor(doc);
+                                }
+                              }}
                             >
                               Empanel
                             </EmpanelButton>
@@ -468,9 +476,12 @@ function EmpanelDoctor() {
         {openEditModal && selectedDoctor && (
           <EditDoctorModal
             doctor={selectedDoctor}
+            autoEmpanel={autoEmpanel}
+            empanelDoctor={empanelDoctor}
             onClose={() => {
               setOpenEditModal(false);
               setSelectedDoctor(null);
+              setAutoEmpanel(false);
             }}
           />
         )}

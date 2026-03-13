@@ -377,7 +377,7 @@ const SubmitButton = styled.button`
   }
 `;
 
-function EditDoctorModal({ onClose, doctor }) {
+function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
     const [classification, setClassification] = useState("allopathy");
     const [companies, setCompanies] = useState([]);
     const [selectedCompany, setSelectedCompany] = useState("");
@@ -400,7 +400,7 @@ function EditDoctorModal({ onClose, doctor }) {
 
             setFormData({
                 first_name: doctor.first_name || "",
-                middle_name:"",
+                middle_name: "",
                 last_name: doctor.last_name || "",
                 gender: doctor.gender || "",
                 mobile_phone: doctor.mobile_phone || "",
@@ -516,6 +516,16 @@ function EditDoctorModal({ onClose, doctor }) {
             //     alert(empanelRes.data.message);
             // }
             alert("Doctor updated successfully");
+
+            // Auto empanel if coming from empanel button
+            if (autoEmpanel && empanelDoctor) {
+                await empanelDoctor({
+                    name: doctor.name,
+                    practitioner_name: `${formData.first_name} ${formData.last_name}`,
+                    op_consulting_charge: formData.consultation_fee
+                });
+            }
+
             onClose();
 
         } catch (error) {
