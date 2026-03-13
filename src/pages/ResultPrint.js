@@ -1217,17 +1217,25 @@ const ResultPrint = () => {
 
                         {/* Parameters */}
                         {testDetail.normal_test_items.map((item, i) => {
-                          const name = item.lab_test_name || "";
+                          const name = (item.lab_test_name || "").trim();
 
-                          const isHtmlOnly =
-                            name.includes("<hr") ||
-                            name.includes("<center") ||
-                            name.includes("<b") ||
-                            name.includes("---") ||
-                            name.includes("<br") ||
-                            name.includes("<p") ||
-                            name.includes("<u") ||
-                            name.includes("</");
+                          // const isHtmlOnly =
+                          //   name.includes("<hr") ||
+                          //   name.includes("<center") ||
+                          //   name.includes("<b") ||
+                          //   name.includes("---") ||
+                          //   name.includes("<br") ||
+                          //   name.includes("<p") ||
+                          //   name.includes("<u") ||
+                          //   name.includes("</") ||
+                          //   name.includes("<h6") ||
+                          //   name.includes("<h5") ||
+                          //   name.includes("<h4") ||
+                          //   name.includes("<h3") ||
+                          //   name.includes("<h2") ||
+                          //   name.includes("<h1") ||
+                          //   name.includes("<i");
+                          const isHtmlOnly = /<\/?[a-z][\s\S]*>/i.test(name);
 
                           if (isHtmlOnly && !item.result_value) {
                             return (
