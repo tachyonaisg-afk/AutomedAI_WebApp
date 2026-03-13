@@ -752,7 +752,7 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
                     <CancelButton onClick={onClose}>Cancel</CancelButton>
                     <SubmitButton type="submit" form="empanelDoctorForm">
                         <UserCheck size={18} />
-                        Update Doctor Details
+                        {autoEmpanel ? "Update & Empanel Doctor" : "Update Doctor Details"}
                     </SubmitButton>
                 </ModalFooter>
             </ModalContainer>
