@@ -1216,25 +1216,55 @@ const ResultPrint = () => {
                         </TableRow>
 
                         {/* Parameters */}
-                        {testDetail.normal_test_items.map((item, i) => (
-                          <TableRow key={i}>
-                            <TableCell>
-                              {removeTestPrefix(item.lab_test_name)}
-                            </TableCell>
+                        {testDetail.normal_test_items.map((item, i) => {
+                          const name = item.lab_test_name || "";
 
-                            <TableCell style={{ textAlign: "right" }}>
-                              {item.result_value}
-                            </TableCell>
+                          const isHtmlOnly =
+                            name.includes("<hr") ||
+                            name.includes("<center") ||
+                            name.includes("<b") ||
+                            name.includes("---") ||
+                            name.includes("<br") ||
+                            name.includes("<p") ||
+                            name.includes("<u") ||
+                            name.includes("</");
 
-                            <TableCell style={{ textAlign: "right" }}>
-                              {item.lab_test_uom}
-                            </TableCell>
+                          if (isHtmlOnly && !item.result_value) {
+                            return (
+                              <TableRow key={i}>
+                                <TableCell colSpan="4">
+                                  <div
+                                    dangerouslySetInnerHTML={{
+                                      __html: removeTestPrefix(name),
+                                    }}
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
 
-                            <TableCell style={{ textAlign: "right" }}>
-                              {item.normal_range}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                          return (
+                            <TableRow key={i}>
+                              <TableCell
+                                dangerouslySetInnerHTML={{
+                                  __html: removeTestPrefix(name),
+                                }}
+                              />
+
+                              <TableCell style={{ textAlign: "right" }}>
+                                {item.result_value}
+                              </TableCell>
+
+                              <TableCell style={{ textAlign: "right" }}>
+                                {item.lab_test_uom}
+                              </TableCell>
+
+                              <TableCell style={{ textAlign: "right" }}>
+                                {item.normal_range}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
 
                       </React.Fragment>
                     );
