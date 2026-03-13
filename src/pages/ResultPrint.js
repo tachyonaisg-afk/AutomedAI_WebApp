@@ -335,7 +335,7 @@ const PatientInfoSection = styled.div`
   margin-bottom: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 80px;
+  column-gap: 20px;
 `;
 
 const InfoRow = styled.div`
