@@ -303,30 +303,58 @@ const ReportHeader = styled.div`
   border-bottom: 1px solid #e0e0e0;
 `;
 
+// const PatientInfoSection = styled.div`
+//   display: grid;
+//   grid-template-columns: repeat(4, 1fr);
+//   // gap: 20px;
+//   margin-bottom: 5px;
+//   padding: 5px;
+//   background-color: #ffffff;
+//   border-radius: 4px;
+// `;
+
+// const InfoField = styled.div``;
+
+// const InfoLabel = styled.div`
+//   font-size: 14px;
+//   color: #000000;
+//   text-transform: uppercase;
+//   letter-spacing: 0.5px;
+//   margin-bottom: 4px;
+// `;
+
+// const InfoValue = styled.div`
+//   font-size: 13px;
+//   color: #000000;
+//   font-weight: 500;
+// `;
+
 const PatientInfoSection = styled.div`
+  border: 2px solid #000;
+  padding: 20px 25px;
+  margin-bottom: 10px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 15px;
-  padding: 5px;
-  background-color: #ffffff;
-  border-radius: 4px;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 80px;
 `;
 
-const InfoField = styled.div``;
+const InfoRow = styled.div`
+  display: grid;
+  grid-template-columns: 170px 10px 1fr;
+  margin-bottom: 8px;
+  font-size: 14px;
+`;
 
 const InfoLabel = styled.div`
-  font-size: 10px;
-  color: #000000;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  font-weight: 500;
+`;
+
+const Colon = styled.div`
+  text-align: center;
 `;
 
 const InfoValue = styled.div`
-  font-size: 13px;
-  color: #000000;
-  font-weight: 500;
+  font-weight: 600;
 `;
 
 const TestSection = styled.div`
@@ -1041,47 +1069,111 @@ const ResultPrint = () => {
 
             <div className="pdf-body">
 
-              <PatientInfoSection>
+              {/* <PatientInfoSection>
                 <InfoField>
                   <InfoLabel>Patient Name</InfoLabel>
-                  <InfoValue>{selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
+                  <InfoValue>: {selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Ref By</InfoLabel>
-                  <InfoValue>{selectedTestDetails[0]?.practitioner_name || "N/A"}</InfoValue>
+                  <InfoValue>: {selectedTestDetails[0]?.practitioner_name || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Patient ID</InfoLabel>
-                  <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
+                  <InfoValue>: {selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Collection Location</InfoLabel>
-                  <InfoValue>-</InfoValue>
+                  <InfoValue>: -</InfoValue>
                 </InfoField>
                 <InfoField>
-                  <InfoLabel>Sample Collection Date and Time</InfoLabel>
-                  <InfoValue>{formatDateTime(sampleDetails?.collected_time)}</InfoValue>
+                  <InfoLabel>Sample Collection on</InfoLabel>
+                  <InfoValue>: {formatDateTime(sampleDetails?.collected_time)}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Age / Gender</InfoLabel>
                   <InfoValue>
-                    {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
+                    : {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
                   </InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Report Generated on</InfoLabel>
-                  <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
+                  <InfoValue>: {formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Collected By</InfoLabel>
-                  <InfoValue>{employees[0]?.employee_name || "N/A"}</InfoValue>
+                  <InfoValue>: {employees[0]?.employee_name || "N/A"}</InfoValue>
                 </InfoField>
                 <InfoField>
                   <InfoLabel>Report Status</InfoLabel>
-                  <InfoValue>Final</InfoValue>
+                  <InfoValue>: Final</InfoValue>
                 </InfoField>
-              </PatientInfoSection>
+              </PatientInfoSection> */}
+              <PatientInfoSection>
 
+                {/* LEFT COLUMN */}
+                <div>
+                  <InfoRow>
+                    <InfoLabel>Patient ID</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>{selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Patient Name</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>{selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Age / Gender</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>
+                      {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
+                    </InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Ref By</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>{selectedTestDetails[0]?.practitioner_name || "N/A"}</InfoValue>
+                  </InfoRow>
+                </div>
+
+                {/* RIGHT COLUMN */}
+                <div>
+                  <InfoRow>
+                    <InfoLabel>Sample Collection on</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>{formatDateTime(sampleDetails?.collected_time)}</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Collection Location</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>Lab</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Report Generated on</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>{formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Collected By</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>{employees[0]?.employee_name || "N/A"}</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabel>Report Status</InfoLabel>
+                    <Colon>:</Colon>
+                    <InfoValue>Final</InfoValue>
+                  </InfoRow>
+                </div>
+
+              </PatientInfoSection>
               <ResultsTable>
                 <tbody>
                   {selectedTestDetails.map((testDetail, index) => {
