@@ -459,23 +459,22 @@ const LabTest = () => {
     try {
       const uniqueSamples = [...new Set(sampleIds.filter(Boolean))];
 
-      if (uniqueSamples.length === 0) return;
+      if (!uniqueSamples.length) return;
 
       const statusMap = {};
 
-      // If your backend DOES NOT support bulk fetch
       await Promise.all(
         uniqueSamples.map(async (sampleId) => {
-          const res = await api.get(
-            `/resource/Sample Collection/${sampleId}`
-          );
+          const res = await api.get(`/resource/Sample Collection/${sampleId}`);
 
-          const docstatus = res.data?.data?.docstatus ?? 0;
-          statusMap[sampleId] = docstatus;
+          const status = res.data?.data?.status || "Not Collected";
+
+          statusMap[sampleId] = status;
         })
       );
 
       setSampleStatusMap(statusMap);
+
     } catch (err) {
       console.error("❌ Error fetching sample status:", err);
     }
@@ -506,25 +505,25 @@ const LabTest = () => {
   ];
 
   const renderStatus = (_, row) => {
-    const docstatus = sampleStatusMap[row.sample];
-
-    const label = docstatus === 1 ? "Collected" : "Not Collected";
+    const status = sampleStatusMap[row.sample] || "Not Collected";
 
     return (
-      <StatusBadge status={label}>
-        {label}
+      <StatusBadge status={status}>
+        {status}
       </StatusBadge>
     );
   };
 
-
   const renderActions = (row) => {
-    const docstatus = sampleStatusMap[row.sample];
+    const status = sampleStatusMap[row.sample];
+
     return (
       <ActionsContainer>
-        <ActionLink onClick={() => handleAddResult(row)}>
-          {docstatus === 1 ? "Add Result" : ""}
-        </ActionLink>
+        {status === "Collected" && (
+          <ActionLink onClick={() => handleAddResult(row)}>
+            Add Result
+          </ActionLink>
+        )}
       </ActionsContainer>
     );
   };

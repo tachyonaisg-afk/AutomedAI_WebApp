@@ -9,6 +9,7 @@ import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import Select from "react-select";
 import paymentQR from "../assets/paymentupi.jpeg";
+import AadhaarOCRScanner from "../components/shared/AadhaarOCRScanner";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -792,7 +793,7 @@ const OPDPatientRegistration = () => {
     const [showItemResults, setShowItemResults] = useState(false);
     const [searchingItem, setSearchingItem] = useState(false);
     const [showPHCOnly, setShowPHCOnly] = useState(false);
-
+    const [isAadhaarOCRScannerOpen, setIsAadhaarOCRScannerOpen] = useState(false);
     const casteOptions = [
         { label: "General", value: "General" },
         { label: "SC", value: "SC" },
@@ -1873,6 +1874,13 @@ const OPDPatientRegistration = () => {
                                     <Camera />
                                     Scan Aadhaar
                                 </AadhaarScanButton>
+                                <AadhaarScanButton
+                                    type="button"
+                                    onClick={() => setIsAadhaarOCRScannerOpen(true)}
+                                >
+                                    <Camera />
+                                    Quick OCR
+                                </AadhaarScanButton>
                             </AadhaarSection>
 
                             <FormSection>
@@ -2626,6 +2634,11 @@ const OPDPatientRegistration = () => {
                 <AadhaarScanner
                     isOpen={isAadhaarScannerOpen}
                     onClose={() => setIsAadhaarScannerOpen(false)}
+                    onDataExtracted={handleAadhaarDataExtracted}
+                />
+                <AadhaarOCRScanner
+                    isOpen={isAadhaarOCRScannerOpen}
+                    onClose={() => setIsAadhaarOCRScannerOpen(false)}
                     onDataExtracted={handleAadhaarDataExtracted}
                 />
 

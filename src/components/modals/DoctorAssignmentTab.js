@@ -322,13 +322,11 @@ const DoctorAssignmentTab = () => {
 
     const [availabilityList, setAvailabilityList] = useState([]);
     const [doctorNameMap, setDoctorNameMap] = useState({});
+    const [empanelledDoctors, setEmpanelledDoctors] = useState([]);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editData, setEditData] = useState(null);
     const [rooms, setRooms] = useState([]);
-    const getTodayDate = () => {
-        const today = new Date();
-        return today.toISOString().split("T")[0];
-    };
+    const getTodayDate = () => new Date().toLocaleDateString("en-CA");
 
     const [selectedDate, setSelectedDate] = useState(getTodayDate());
     const [selectedCompany, setSelectedCompany] = useState("");
@@ -442,6 +440,45 @@ const DoctorAssignmentTab = () => {
         }
     };
 
+    const fetchEmpanelledDoctors = async (company) => {
+        if (!company) {
+            setEmpanelledDoctors([]);
+            return;
+        }
+
+        try {
+
+            const encodedCompany = encodeURIComponent(company);
+
+            const res = await fetch(
+                `https://midl.automedai.in/doctor_company/company/${encodedCompany}`
+            );
+
+            const data = await res.json();
+
+            if (data.success && Array.isArray(data.data)) {
+
+                const activeDoctors = data.data.filter(
+                    (doc) => doc.status === "ACTIVE" && doc.isEmpanel
+                );
+
+                setEmpanelledDoctors(activeDoctors);
+
+                // fetch doctor names
+                activeDoctors.forEach((doc) => {
+                    fetchDoctorName(doc.doctor_id);
+                });
+
+            } else {
+                setEmpanelledDoctors([]);
+            }
+
+        } catch (error) {
+            console.error("Error fetching empanelled doctors:", error);
+            setEmpanelledDoctors([]);
+        }
+    };
+
     const fetchRooms = async (company) => {
         if (!company) {
             setRooms([]);
@@ -477,11 +514,13 @@ const DoctorAssignmentTab = () => {
     useEffect(() => {
         if (formData.company) {
             fetchRooms(formData.company);
+            fetchEmpanelledDoctors(formData.company);
 
-            // Clear previous room selection
             setFormData((prev) => ({
                 ...prev,
                 room_id: "",
+                doctor_id: "",
+                doctor_name: ""
             }));
         }
     }, [formData.company]);
@@ -823,7 +862,7 @@ const DoctorAssignmentTab = () => {
                         Doctor<RequiredAsterisk>*</RequiredAsterisk>
                     </label>
 
-                    <Select
+                    {/* <Select
                         menuPortalTarget={document.body}
                         menuPosition="fixed"
                         styles={{
@@ -851,6 +890,39 @@ const DoctorAssignmentTab = () => {
                                 ...prev,
                                 doctor_id: selected ? selected.value : "",
                                 doctor_name: selected ? selected.doctor_name : "",
+                            }))
+                        }
+
+                        placeholder="Search Doctor..."
+                        isSearchable
+                        isClearable
+                    /> */}
+                    <Select
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+
+                        options={empanelledDoctors.map((doc) => ({
+                            label: doctorNameMap[doc.doctor_id] || doc.doctor_name,
+                            value: doc.doctor_id,
+                        }))}
+
+                        value={
+                            empanelledDoctors
+                                .map((doc) => ({
+                                    label: doctorNameMap[doc.doctor_id] || doc.doctor_name,
+                                    value: doc.doctor_id,
+                                }))
+                                .find((option) => option.value === formData.doctor_id) || null
+                        }
+
+                        onChange={(selected) =>
+                            setFormData((prev) => ({
+                                ...prev,
+                                doctor_id: selected ? selected.value : "",
+                                doctor_name: selected ? selected.label : "",
                             }))
                         }
 
