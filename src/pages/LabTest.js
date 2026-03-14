@@ -470,7 +470,7 @@ const LabTest = () => {
             `/resource/Sample Collection/${sampleId}`
           );
 
-          const docstatus = res.data?.data?.docstatus ?? 0;
+          const docstatus = Number(res.data?.data?.docstatus ?? 0);
           statusMap[sampleId] = docstatus;
         })
       );
@@ -506,7 +506,7 @@ const LabTest = () => {
   ];
 
   const renderStatus = (_, row) => {
-    const docstatus = sampleStatusMap[row.sample];
+    const docstatus = Number(sampleStatusMap[row.sample]);
 
     const label = docstatus === 1 ? "Collected" : "Not Collected";
 
@@ -518,12 +518,15 @@ const LabTest = () => {
   };
 
   const renderActions = (row) => {
-    const docstatus = sampleStatusMap[row.sample];
+    const docstatus = Number(sampleStatusMap[row.sample]);
+
     return (
       <ActionsContainer>
-        <ActionLink onClick={() => handleAddResult(row)}>
-          {docstatus === 1 ? "Add Result" : ""}
-        </ActionLink>
+        {docstatus === 1 && (
+          <ActionLink onClick={() => handleAddResult(row)}>
+            Add Result
+          </ActionLink>
+        )}
       </ActionsContainer>
     );
   };
