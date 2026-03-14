@@ -506,11 +506,7 @@ const LabTest = () => {
   ];
 
   const renderStatus = (_, row) => {
-    const docstatus = sampleStatusMap[row.sample];
-
-    if (docstatus === undefined) {
-      return <StatusBadge status="">Loading...</StatusBadge>;
-    }
+    const docstatus = Number(sampleStatusMap[row.sample]);
 
     const label = docstatus === 1 ? "Collected" : "Not Collected";
 
@@ -522,18 +518,18 @@ const LabTest = () => {
   };
 
   const renderActions = (row) => {
-  const docstatus = sampleStatusMap[row.sample];
+    const docstatus = Number(sampleStatusMap[row.sample]);
 
-  if (docstatus !== 1) return <ActionsContainer />;
-
-  return (
-    <ActionsContainer>
-      <ActionLink onClick={() => handleAddResult(row)}>
-        Add Result
-      </ActionLink>
-    </ActionsContainer>
-  );
-};
+    return (
+      <ActionsContainer>
+        {docstatus === 1 && (
+          <ActionLink onClick={() => handleAddResult(row)}>
+            Add Result
+          </ActionLink>
+        )}
+      </ActionsContainer>
+    );
+  };
 
   const handleAddResult = (row) => {
     navigate(`/pathlab/labtest/${row.name}/result`, {
