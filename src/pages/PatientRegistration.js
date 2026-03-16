@@ -66,7 +66,7 @@ const ProgressBarFill = styled.div`
   width: ${(props) => {
     if (props.currentStep === 1) return "50%";
     // if (props.currentStep === 2) return "66.66%";
-    if (props.currentStep === 3) return "100%";
+    if (props.currentStep === 2) return "100%";
     // if (props.currentStep === 4) return "100%";
     return "0%";
   }};
@@ -1507,7 +1507,7 @@ const PatientRegistration = () => {
   };
 
   const handleNextStep = () => {
-    if (currentStep < 3) {
+    if (currentStep < 2) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -1890,7 +1890,7 @@ const PatientRegistration = () => {
               <StepLabel active={currentStep >= 2}>Step 2: Medical History</StepLabel>
             </ProgressStep> */}
             <ProgressStep>
-              <StepLabel active={currentStep >= 3}>Step 2: Billing</StepLabel>
+              <StepLabel active={currentStep >= 2}>Step 2: Billing</StepLabel>
             </ProgressStep>
             {/* <ProgressStep>
               <StepLabel active={currentStep >= 4}>Step 4: Pre-Screening</StepLabel>
@@ -2413,7 +2413,7 @@ const PatientRegistration = () => {
             </>
           )} */}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <>
               <FormSection>
                 <SectionTitle>Patient Information</SectionTitle>
@@ -2854,16 +2854,16 @@ const PatientRegistration = () => {
             </ActionButtons>
           )}
 
-          {currentStep === 2 && (
+          {/* {currentStep === 2 && (
             <ActionButtons>
               <BackButton type="button" onClick={handlePreviousStep}>
                 Back
               </BackButton>
               <NextButton type="submit">Next</NextButton>
             </ActionButtons>
-          )}
+          )} */}
 
-          {currentStep === 3 && (
+          {currentStep === 2 && (
             <ActionButtons>
               <BackButton type="button" onClick={handlePreviousStep}>
                 Back
