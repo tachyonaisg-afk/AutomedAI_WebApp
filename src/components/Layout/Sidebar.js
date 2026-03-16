@@ -20,6 +20,7 @@ import {
   Video,
   BarChart3
 } from "lucide-react";
+import api from "../../services/api";
 
 const SidebarContainer = styled.div`
   width: 250px;
@@ -250,7 +251,7 @@ const Sidebar = () => {
   const [opdDropdownHeight, setOPDDropdownHeight] = useState(isOPDActive ? "auto" : 0);
   const opdDropdownRef = useRef(null);
   const isOPDInitialMount = useRef(true);
-
+  const [role, setRole] = useState(null);
   // PathLab dropdown state
   const isPathLabActive = location.pathname.startsWith("/pathlab");
   const [isPathLabOpen, setIsPathLabOpen] = useState(isPathLabActive);
@@ -275,7 +276,7 @@ const Sidebar = () => {
     //PathLab Admin List
     "buddhadebsujapur@gmail.com",
   ];
-  
+
   // const menuItems = [
   //   { path: "/patients", label: "Patients", icon: Users },
   // ];
@@ -300,20 +301,65 @@ const Sidebar = () => {
   // }, []);
   const userData = localStorage.getItem("user");
   let currentUser = null;
-  let isAdmin = false;
 
   if (userData) {
     try {
       const parsedUser = JSON.parse(userData);
       currentUser = parsedUser?.username;
-
-      if (ADMIN_USERS.includes(currentUser)) {
-        isAdmin = true;
-      }
     } catch (error) {
       console.error("Error parsing user:", error);
     }
   }
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      if (!currentUser) return;
+
+      try {
+        const res = await api.get(
+          `/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${currentUser}"]]`
+        );
+
+        const data = await res.json();
+
+        if (data?.data?.length) {
+          setRole(data.data[0].role_profile_name);
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRole();
+  }, [currentUser]);
+
+  const canAccessOPD =
+    role === null ||
+    role === "Admin_OPD_LAB" ||
+    role === "Admin_OPD" ||
+    role === "Front_Desk_OPD";
+
+  const canAccessPathLab =
+    role === "Admin_OPD_LAB" ||
+    role === "Admin_LAB" ||
+    role === null ||
+    role === "Front_Desk_LAB";
+
+  const canAccessReports =
+    role === "Admin_OPD_LAB" ||
+    role === "Front_Desk_LAB" ||
+    role === null ||
+    role === "Front_Desk_OPD";
+
+  const canAccessOPDAdmin =
+    role === "Admin_OPD_LAB" ||
+    role === null ||
+    role === "Admin_OPD";
+
+  const canAccessPathLabAdmin =
+    role === "Admin_OPD_LAB" ||
+    role === null ||
+    role === "Admin_LAB";
 
   // OPD submenu items
   const opdSubItems = [
@@ -418,78 +464,83 @@ const Sidebar = () => {
         {/* {menuItems.map(renderNavItem)} */}
 
         {/* OPD Dropdown */}
-        <DropdownWrapper>
-          <DropdownHeader
-            className={isOPDActive ? "active" : ""}
-            onClick={() => setIsOPDOpen(!isOPDOpen)}
-          >
-            <Stethoscope />
-            <NavLabel>OPD</NavLabel>
-            <DropdownArrow $isOpen={isOPDOpen}>
-              <ChevronDown />
-            </DropdownArrow>
-          </DropdownHeader>
+        {canAccessOPD && (
+          <DropdownWrapper>
+            <DropdownHeader
+              className={isOPDActive ? "active" : ""}
+              onClick={() => setIsOPDOpen(!isOPDOpen)}
+            >
+              <Stethoscope />
+              <NavLabel>OPD</NavLabel>
+              <DropdownArrow $isOpen={isOPDOpen}>
+                <ChevronDown />
+              </DropdownArrow>
+            </DropdownHeader>
 
-          <DropdownContent $height={opdDropdownHeight}>
-            <DropdownInner ref={opdDropdownRef}>
-              {opdSubItems
-                .filter(item => item.path !== "/opd/admin" || isAdmin)
-                .map((item) => {
-                  const IconComponent = item.icon;
-                  const isActive = location.pathname === item.path;
+            <DropdownContent $height={opdDropdownHeight}>
+              <DropdownInner ref={opdDropdownRef}>
+                {opdSubItems
+                  .filter(item => item.path !== "/opd/admin" || canAccessOPDAdmin)
+                  .map((item) => {
+                    const IconComponent = item.icon;
+                    const isActive = location.pathname === item.path;
 
-                  return (
-                    <SubNavItem
-                      key={item.path}
-                      to={item.path}
-                      className={isActive ? "active" : ""}
-                    >
-                      <IconComponent />
-                      <SubNavLabel>{item.label}</SubNavLabel>
-                    </SubNavItem>
-                  );
-                })}
-            </DropdownInner>
-          </DropdownContent>
-        </DropdownWrapper>
+                    return (
+                      <SubNavItem
+                        key={item.path}
+                        to={item.path}
+                        className={isActive ? "active" : ""}
+                      >
+                        <IconComponent />
+                        <SubNavLabel>{item.label}</SubNavLabel>
+                      </SubNavItem>
+                    );
+                  })}
+              </DropdownInner>
+            </DropdownContent>
+          </DropdownWrapper>
+        )}
 
         {/* PathLab Dropdown */}
-        <DropdownWrapper>
-          <DropdownHeader
-            className={isPathLabActive ? "active" : ""}
-            onClick={() => setIsPathLabOpen(!isPathLabOpen)}
-          >
-            <FlaskConical />
-            <NavLabel>PathLab</NavLabel>
-            <DropdownArrow $isOpen={isPathLabOpen}>
-              <ChevronDown />
-            </DropdownArrow>
-          </DropdownHeader>
+        {canAccessPathLab && (
+          <DropdownWrapper>
+            <DropdownHeader
+              className={isPathLabActive ? "active" : ""}
+              onClick={() => setIsPathLabOpen(!isPathLabOpen)}
+            >
+              <FlaskConical />
+              <NavLabel>PathLab</NavLabel>
+              <DropdownArrow $isOpen={isPathLabOpen}>
+                <ChevronDown />
+              </DropdownArrow>
+            </DropdownHeader>
 
-          <DropdownContent $height={dropdownHeight}>
-            <DropdownInner ref={dropdownRef}>
-              {pathLabSubItems
-                .filter(item => item.path !== "/pathlab/admin" || isAdmin)
-                .map((item) => {
-                  const IconComponent = item.icon;
-                  const isActive = location.pathname === item.path;
+            <DropdownContent $height={dropdownHeight}>
+              <DropdownInner ref={dropdownRef}>
+                {pathLabSubItems
+                  .filter(item => item.path !== "/pathlab/admin" || canAccessPathLabAdmin)
+                  .map((item) => {
+                    const IconComponent = item.icon;
+                    const isActive = location.pathname === item.path;
 
-                  return (
-                    <SubNavItem
-                      key={item.path}
-                      to={item.path}
-                      className={isActive ? "active" : ""}
-                    >
-                      <IconComponent />
-                      <SubNavLabel>{item.label}</SubNavLabel>
-                    </SubNavItem>
-                  );
-                })}
-            </DropdownInner>
-          </DropdownContent>
-        </DropdownWrapper>
+                    return (
+                      <SubNavItem
+                        key={item.path}
+                        to={item.path}
+                        className={isActive ? "active" : ""}
+                      >
+                        <IconComponent />
+                        <SubNavLabel>{item.label}</SubNavLabel>
+                      </SubNavItem>
+                    );
+                  })}
+              </DropdownInner>
+            </DropdownContent>
+          </DropdownWrapper>
+        )}
 
-        {menuItemsAfterPathLab.map(renderNavItem)}
+        {canAccessReports &&
+          menuItemsAfterPathLab.map(renderNavItem)}
       </SidebarNav>
 
       <SidebarBottom>

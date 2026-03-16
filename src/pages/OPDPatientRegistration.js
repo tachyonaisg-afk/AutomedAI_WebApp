@@ -64,8 +64,8 @@ const ProgressBarFill = styled.div`
   border-radius: 4px;
   transition: width 0.3s ease;
   width: ${(props) => {
-        if (props.currentStep === 1) return "33.33%";
-        if (props.currentStep === 2) return "66.66%";
+        if (props.currentStep === 1) return "50%";
+        // if (props.currentStep === 2) return "66.66%";
         if (props.currentStep === 3) return "100%";
         // if (props.currentStep === 4) return "100%";
         return "0%";
@@ -1831,6 +1831,12 @@ const OPDPatientRegistration = () => {
         (item) => item.item === "STO-ITEM-2025-00539"
     );
 
+    const maskAadhaar = (uid) => {
+        if (!uid) return "";
+        const last4 = uid.slice(-4);
+        return `********${last4}`;
+    };
+
     return (
         <Layout>
             {isSubmitting && (
@@ -1844,11 +1850,11 @@ const OPDPatientRegistration = () => {
                         <ProgressStep>
                             <StepLabel active={currentStep >= 1}>Step 1: Registration</StepLabel>
                         </ProgressStep>
-                        <ProgressStep>
+                        {/* <ProgressStep>
                             <StepLabel active={currentStep >= 2}>Step 2: Medical History</StepLabel>
-                        </ProgressStep>
+                        </ProgressStep> */}
                         <ProgressStep>
-                            <StepLabel active={currentStep >= 3}>Step 3: Billing</StepLabel>
+                            <StepLabel active={currentStep >= 3}>Step 2: Billing</StepLabel>
                         </ProgressStep>
                         {/* <ProgressStep>
               <StepLabel active={currentStep >= 4}>Step 4: Pre-Screening</StepLabel>
@@ -1870,16 +1876,16 @@ const OPDPatientRegistration = () => {
                                         Scan Aadhaar QR code or upload Aadhaar card image to auto-fill patient details
                                     </AadhaarDescription>
                                 </AadhaarInfo>
-                                <AadhaarScanButton type="button" onClick={() => setIsAadhaarScannerOpen(true)}>
+                                {/* <AadhaarScanButton type="button" onClick={() => setIsAadhaarScannerOpen(true)}>
                                     <Camera />
                                     Scan Aadhaar
-                                </AadhaarScanButton>
+                                </AadhaarScanButton> */}
                                 <AadhaarScanButton
                                     type="button"
                                     onClick={() => setIsAadhaarOCRScannerOpen(true)}
                                 >
                                     <Camera />
-                                    Quick OCR
+                                    Scan Aadhaar
                                 </AadhaarScanButton>
                             </AadhaarSection>
 
@@ -1942,7 +1948,7 @@ const OPDPatientRegistration = () => {
 
                                     <FormGroup>
                                         <FormLabel>Identification Number (UID)</FormLabel>
-                                        <FormInput type="text" name="uid" value={formData.uid} onChange={handleInputChange} disabled={disabledFields.uid} />
+                                        <FormInput type="text" name="uid" value={maskAadhaar(formData.uid)} onChange={handleInputChange} disabled />
                                     </FormGroup>
 
                                     <FormGroup>
@@ -2023,7 +2029,7 @@ const OPDPatientRegistration = () => {
                                         <HelperText>Existing patient data will be fetched automatically.</HelperText>
                                     </FormGroup>
 
-                                    <FormGroup>
+                                    <FormGroup style={{ display: "none" }}>
                                         <FormLabel>
                                             Clinic<RequiredAsterisk>*</RequiredAsterisk>
                                         </FormLabel>
@@ -2053,11 +2059,10 @@ const OPDPatientRegistration = () => {
                                             placeholder="Search clinic..."
                                             isSearchable
                                             isClearable
-                                            required
                                         />
                                     </FormGroup>
 
-                                    <FormGroup>
+                                    <FormGroup style={{ display: "none" }}>
                                         <FormLabel>Blood Group</FormLabel>
                                         <FormSelect name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
                                             <option value="">Select blood group</option>
@@ -2184,12 +2189,54 @@ const OPDPatientRegistration = () => {
                                             disabled={disabledFields.country}
                                         />
                                     </FormGroup>
+
+                                    <FormGroup>
+                                        <FormLabel>Religion</FormLabel>
+                                        <FormSelect
+                                            name="custom_religion"
+                                            value={medicalHistory.custom_religion}
+                                            onChange={handleMedicalHistoryChange}
+                                        >
+                                            <option value="">Select Religion</option>
+                                            <option value="Hindu">Hindu</option>
+                                            <option value="Muslim">Muslim</option>
+                                            <option value="Christian">Christian</option>
+                                            <option value="Sikh">Sikh</option>
+                                            <option value="Buddhist">Buddhist</option>
+                                            <option value="Jain">Jain</option>
+                                            <option value="Parsi">Parsi</option>
+                                            <option value="Jewish">Jewish</option>
+                                            <option value="Atheist / No Religion">Atheist / No Religion</option>
+                                            <option value="Other">Other</option>
+                                        </FormSelect>
+                                    </FormGroup>
+
+                                    <FormGroup>
+                                        <FormLabel>Caste</FormLabel>
+                                        <FormSelect
+                                            name="custom_cast"
+                                            value={medicalHistory.custom_cast}
+                                            onChange={handleMedicalHistoryChange}
+                                            disabled={
+                                                medicalHistory.custom_religion !== "Hindu" &&
+                                                medicalHistory.custom_religion !== "Muslim"
+                                            }
+                                        >
+                                            <option value="">Select Caste</option>
+
+                                            {getFilteredCastes().map((caste) => (
+                                                <option key={caste.value} value={caste.value}>
+                                                    {caste.label}
+                                                </option>
+                                            ))}
+                                        </FormSelect>
+                                    </FormGroup>
                                 </FormGrid>
                             </FormSection>
                         </>
                     )}
 
-                    {currentStep === 2 && (
+                    {/* {currentStep === 2 && (
                         <>
                             <FormSection>
                                 <SectionTitle>Personal & Social History</SectionTitle>
@@ -2330,7 +2377,7 @@ const OPDPatientRegistration = () => {
                                 </FormGroup>
                             </FormSection>
                         </>
-                    )}
+                    )} */}
 
                     {currentStep === 3 && (
                         <>
