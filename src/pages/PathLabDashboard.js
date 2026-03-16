@@ -691,51 +691,71 @@ const PathLabDashboard = () => {
     try {
       const today = getTodayDate();
 
-      let accountName = "";
+      const body = new URLSearchParams();
+      body.append("doctype", "Sales Invoice");
+      body.append(
+        "fields",
+        JSON.stringify([
+          "name",
+          "patient",
+          "patient_name",
+          "posting_date",
+          "company",
+          "status",
+          "total_qty",
+          "net_total",
+          "`tabSales Invoice Item`.item_group",
+        ])
+      );
 
-      if (company === "Ramakrishna Mission Sargachi") {
-        accountName = "Sales - RKMS";
-      } else if (company === "ALFA DIAGNOSTIC CENTRE & POLYCLINIC") {
-        accountName = "Sales - ADC&P";
-      } else {
-        setFeesCollected("₹0");
-        return;
-      }
+      body.append(
+        "filters",
+        JSON.stringify([
+          ["status", "!=", "Cancelled"],
+          ["company", "=", company],
+          ["posting_date", "=", today],
+          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
+        ])
+      );
 
-      const filters = {
-        company: company,
-        from_date: today,
-        to_date: today,
-        account: [accountName],
-        party: [],
-        categorize_by: "Categorize by Voucher (Consolidated)",
-        cost_center: [],
-        project: [],
-        include_dimensions: 1,
-        include_default_book_entries: 1,
-      };
+      body.append("limit_page_length", "100000000");
+      body.append("limit_start", "1");
 
-      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+      const res = await fetch(
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: body.toString(),
+        }
+      );
 
-      const url = `https://hms.automedai.in/api/method/frappe.desk.query_report.run?report_name=General+Ledger&filters=${encodedFilters}&ignore_prepared_report=false&are_default_filters=true`;
-
-      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
+      const rows = data?.message || [];
 
-      const result = data?.message?.result || [];
+      // Remove duplicate invoices
+      const uniqueInvoices = {};
+      rows.forEach((row) => {
+        if (!uniqueInvoices[row.name]) {
+          uniqueInvoices[row.name] = row;
+        }
+      });
 
-      // Same logic as your report page
-      const filteredRows = result.filter((row) => row.gl_entry);
+      const uniqueList = Object.values(uniqueInvoices);
 
-      const totalFees = filteredRows.reduce((sum, row) => {
-        const credit = parseFloat(row.credit);
-        return sum + (isNaN(credit) ? 0 : credit);
+      // Calculate total
+      const total = uniqueList.reduce((sum, row) => {
+        const value = parseFloat(row.net_total);
+        return sum + (isNaN(value) ? 0 : value);
       }, 0);
 
-      setFeesCollected(totalFees);
+      setFeesCollected(total);
     } catch (error) {
-      console.error("Fees fetch error:", error);
-      setFeesCollected("₹0");
+      console.error("PathLab sales fetch error:", error);
+      setFeesCollected(0);
     }
   };
 

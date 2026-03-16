@@ -197,7 +197,12 @@ const Patients = () => {
   ];
 
   const renderActions = (row) => (
-    <ViewButton onClick={() => navigate(`/patients/${row.name}`)}>
+    <ViewButton
+      onClick={(e) => {
+        e.stopPropagation(); // prevents row click
+        navigate(`/patients/${row.name}`);
+      }}
+    >
       <Eye />
       View
     </ViewButton>
@@ -507,6 +512,7 @@ const Patients = () => {
           rowsPerPageProp={rowsPerPage}
           onPageChange={handlePageChange}
           onRowsPerPageChange={handleRowsPerPageChange}
+          onRowClick={(row) => navigate(`/patients/${row.name}`)}
         />
       </PatientsContainer>
     </Layout>

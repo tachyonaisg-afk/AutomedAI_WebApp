@@ -188,6 +188,7 @@ const DataTable = ({
   rowsPerPageProp,
   onPageChange,
   onRowsPerPageChange,
+  onRowClick,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
@@ -295,7 +296,11 @@ const DataTable = ({
         </TableHeader>
         <TableBody>
           {currentData.map((row, rowIndex) => (
-            <TableRow key={rowIndex}>
+            <TableRow
+              key={rowIndex}
+              onClick={() => onRowClick && onRowClick(row)}
+              style={{ cursor: onRowClick ? "pointer" : "default" }}
+            >
               {columns.map((column) => {
                 if (column.key === "status" && renderStatus) {
                   return (

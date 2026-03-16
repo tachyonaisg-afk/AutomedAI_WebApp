@@ -613,6 +613,9 @@ const SalesReport = () => {
     const rows = reportData.map((row) =>
       displayColumns.map((col) => {
         const val = row[col.fieldname] ?? "";
+        if(col.fieldname === "against" && val) {
+          return customerMap[val] || val;
+        }
         if (col.fieldname === "posting_date" && val) {
           const date = new Date(val);
           if (!isNaN(date.getTime())) {
