@@ -926,6 +926,7 @@ const PathLabDashboard = () => {
 
     return () => observer.disconnect();
   }, []);
+  
   const formatTimeToAMPM = (timeString) => {
     if (!timeString) return "";
 

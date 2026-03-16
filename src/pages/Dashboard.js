@@ -532,6 +532,7 @@ const Dashboard = () => {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [doctorRoomMap, setDoctorRoomMap] = useState({});
   const [totalPatientsToday, setTotalPatientsToday] = useState("-");
+  const [pathlabSalesToday, setPathlabSalesToday] = useState(0);
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/opd/patient-registration" },
@@ -602,6 +603,75 @@ const Dashboard = () => {
     fetchCompanies();
   }, []);
 
+  const fetchPathlabSalesToday = async (company) => {
+    if (!company) return;
+
+    try {
+      const today = getTodayDate();
+
+      const body = new URLSearchParams();
+      body.append("doctype", "Sales Invoice");
+
+      body.append(
+        "fields",
+        JSON.stringify([
+          "name",
+          "net_total",
+          "`tabSales Invoice Item`.item_group"
+        ])
+      );
+
+      body.append(
+        "filters",
+        JSON.stringify([
+          ["status", "!=", "Cancelled"],
+          ["company", "=", company],
+          ["posting_date", "=", today],
+          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]]
+        ])
+      );
+
+      body.append("limit_page_length", "100000");
+      body.append("limit_start", "1");
+
+      const res = await fetch(
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: body.toString(),
+        }
+      );
+
+      const data = await res.json();
+      const rows = data?.message || [];
+
+      // remove duplicate invoices
+      const uniqueInvoices = {};
+
+      rows.forEach((row) => {
+        if (!uniqueInvoices[row.name]) {
+          uniqueInvoices[row.name] = row;
+        }
+      });
+
+      const uniqueList = Object.values(uniqueInvoices);
+
+      const total = uniqueList.reduce((sum, row) => {
+        const val = parseFloat(row.net_total);
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+
+      setPathlabSalesToday(total);
+    } catch (error) {
+      console.error("PathLab sales error:", error);
+      setPathlabSalesToday(0);
+    }
+  };
+
   const fetchFeesCollected = async (company) => {
     if (!company) return;
 
@@ -652,7 +722,8 @@ const Dashboard = () => {
         return sum + (isNaN(credit) ? 0 : credit);
       }, 0);
 
-      setFeesCollected(totalFees);
+      const opdSales = totalFees - pathlabSalesToday;
+      setFeesCollected(opdSales);
     } catch (error) {
       console.error("Fees fetch error:", error);
       setFeesCollected(0);
@@ -682,10 +753,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (selectedCompany && selectedDate) {
+      fetchPathlabSalesToday(selectedCompany);
       fetchFeesCollected(selectedCompany);
       fetchTotalPatientsToday(selectedCompany, selectedDate);
     }
-  }, [selectedCompany, selectedDate]);
+  }, [selectedCompany, selectedDate, pathlabSalesToday]);
 
   const fetchDoctorName = async (doctorId) => {
     try {
@@ -1022,8 +1094,8 @@ const Dashboard = () => {
                       style={{
                         animationDelay: `${index * 0.05}s`,
                         cursor:
-                          insight.title === "Total Patients Today" ||
-                            insight.title === "Fees Collected"
+                          insight.title === "Total Patients Today" 
+                          // || insight.title === "Fees Collected"
                             ? "pointer"
                             : "default"
                       }}
@@ -1031,8 +1103,8 @@ const Dashboard = () => {
                       onClick={
                         insight.title === "Total Patients Today"
                           ? handleTotalPatientsClick
-                          : insight.title === "Fees Collected"
-                            ? handleFeesCollectedClick
+                          // : insight.title === "Fees Collected"
+                          //   ? handleFeesCollectedClick
                             : undefined
                       }
                     >

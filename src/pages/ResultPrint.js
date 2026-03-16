@@ -331,7 +331,7 @@ const ReportHeader = styled.div`
 
 const PatientInfoSection = styled.div`
   border: 2px solid #000;
-  padding: 20px 25px;
+  padding: 5px 15px;
   margin-bottom: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -340,8 +340,7 @@ const PatientInfoSection = styled.div`
 
 const InfoRow = styled.div`
   display: grid;
-  grid-template-columns: 170px 10px 1fr;
-  margin-bottom: 8px;
+  grid-template-columns: 145px 10px 1fr;
   font-size: 14px;
 `;
 
