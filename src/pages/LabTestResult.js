@@ -479,11 +479,12 @@ const LabTestResult = () => {
     if (labTestData.normal_test_items) {
       const normalItems = labTestData.normal_test_items.map((item) => ({
         type: "normal",
-        parameter: removeTestPrefix(item.template) || item.lab_test_name || "",
+        parameter: removeTestPrefix(item.lab_test_name) || removeTestPrefix(item.template) ||  "",
         value: item.result_value || "",
         unit: item.lab_test_uom || "",
         normalRange: item.normal_range || "",
         flag: "none",
+        isSemantic: isSemanticRow(item.lab_test_name),
       }));
 
       results = [...results, ...normalItems];
@@ -830,7 +831,7 @@ const LabTestResult = () => {
             <TableBody>
               {testResults.map((result, index) => {
 
-                if (result.type === "descriptive" && result.isSemantic) {
+                if ((result.type === "descriptive" || result.type === "normal" )&& result.isSemantic) {
                   return (
                     <TableRow key={index}>
                       <TableCell colSpan={columnCount}>

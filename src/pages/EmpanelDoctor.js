@@ -151,6 +151,11 @@ function EmpanelDoctor() {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [empanelStatus, setEmpanelStatus] = useState({});
   const [autoEmpanel, setAutoEmpanel] = useState(false);
+  const [empanelledDoctors, setEmpanelledDoctors] = useState([]);
+  const [doctorNameMap, setDoctorNameMap] = useState({});
+  const [tableMode, setTableMode] = useState("empanelled");
+  // "empanelled" | "search"
+
   // ✅ Fetch Current User
   useEffect(() => {
 
@@ -211,10 +216,15 @@ function EmpanelDoctor() {
     }
   };
   const searchDoctors = async (value) => {
+    setSearch(value);
+
     if (!value) {
+      setTableMode("empanelled");
       setDoctors([]);
       return;
     }
+
+    setTableMode("search");
 
     try {
       const fields = encodeURIComponent(
@@ -330,7 +340,7 @@ function EmpanelDoctor() {
           },
           body: JSON.stringify({
             company: selectedCompany,
-            doctor_id: doc.name,
+            doctor_id: doc.name || doc.doctor_id,
           }),
         }
       );
@@ -341,6 +351,7 @@ function EmpanelDoctor() {
 
       // ✅ Alert message from API
       alert(data.message);
+      fetchEmpanelledDoctors();
 
     } catch (err) {
       console.error("Remove empanel error", err);
@@ -355,6 +366,62 @@ function EmpanelDoctor() {
       !doc.gender
     );
   };
+  const fetchDoctorName = async (doctorId) => {
+    try {
+      const res = await fetch(
+        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
+        { credentials: "include" }
+      );
+
+      const data = await res.json();
+
+      if (data?.data) {
+
+        const doc = data.data;
+
+        setDoctorNameMap((prev) => ({
+          ...prev,
+          [doctorId]: doc,
+        }));
+      }
+
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const fetchEmpanelledDoctors = async () => {
+    if (!selectedCompany) return;
+
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/doctor_company/company/${encodeURIComponent(selectedCompany)}`
+      );
+
+      const data = await res.json();
+
+      const list = data?.data || [];
+
+      setEmpanelledDoctors(list);
+
+      list.forEach((doc) => {
+        fetchDoctorName(doc.doctor_id);
+        checkEmpanelStatus(doc.doctor_id);
+      });
+
+    } catch (err) {
+      console.error("Empanelled doctors fetch error", err);
+    }
+  };
+  useEffect(() => {
+    if (selectedCompany) {
+      fetchEmpanelledDoctors();
+    }
+  }, [selectedCompany]);
+
+  const tableDoctors =
+    tableMode === "empanelled"
+      ? empanelledDoctors.map((doc) => doctorNameMap[doc.doctor_id])
+      : doctors;
 
   return (
     <Layout>
@@ -388,6 +455,10 @@ function EmpanelDoctor() {
           </NewDoctorButton>
         </TableHeader>
 
+        <h3 style={{ marginBottom: "12px" }}>
+          {tableMode === "empanelled" ? "Empanelled Doctors" : "Search Results"}
+        </h3>
+
         <TableWrapper>
           <Table>
             <Thead>
@@ -402,14 +473,16 @@ function EmpanelDoctor() {
             </Thead>
 
             <tbody>
-              {doctors.length > 0 ? (
-                doctors.map((doc, index) => {
+              {tableDoctors?.length > 0 ? (
+                tableDoctors.map((doc, index) => {
 
+                  if (!doc) return null;
+
+                  const doctorId = doc.name || doc.doctor_id;
+                  const isEmpanel = empanelStatus[doctorId];
                   const missing = hasMissingDetails(doc);
-                  const isEmpanel = empanelStatus[doc.name];
-
                   return (
-                    <tr key={doc.name}>
+                    <tr key={doc.name || doc.doctor_id}>
                       <Td>{index + 1}</Td>
                       <Td>
                         {doc.practitioner_name} ({doc.gender?.charAt(0)})
@@ -419,6 +492,7 @@ function EmpanelDoctor() {
                       <Td>{doc.custom_specializedqualification}</Td>
                       <Td>
                         <ActionButtons>
+
                           <EditButton
                             onClick={() => {
                               setSelectedDoctor(doc);
@@ -437,11 +511,6 @@ function EmpanelDoctor() {
                             </EmpanelButton>
                           ) : (
                             <EmpanelButton
-                              title={
-                                missing
-                                  ? "Update missing details and empanel doctor"
-                                  : ""
-                              }
                               onClick={() => {
                                 if (missing) {
                                   setSelectedDoctor(doc);
@@ -455,6 +524,7 @@ function EmpanelDoctor() {
                               Empanel
                             </EmpanelButton>
                           )}
+
                         </ActionButtons>
                       </Td>
                     </tr>
@@ -463,7 +533,9 @@ function EmpanelDoctor() {
               ) : (
                 <tr>
                   <EmptyMessage colSpan="6">
-                    No doctors found. Try searching by name, mobile, or registration number.
+                    {tableMode === "empanelled"
+                      ? "No empanelled doctors found"
+                      : "No doctors found"}
                   </EmptyMessage>
                 </tr>
               )}
