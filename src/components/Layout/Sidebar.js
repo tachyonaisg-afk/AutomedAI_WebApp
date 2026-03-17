@@ -260,6 +260,7 @@ const Sidebar = () => {
   const isInitialMount = useRef(true);
   // const [currentUser, setCurrentUser] = useState(null);
   // const [isAdmin, setIsAdmin] = useState(false);
+
   const ADMIN_USERS = [
     "suraj68bmc@gmail.com",
     "admin.adcnp@automedai.in",
@@ -334,29 +335,34 @@ const Sidebar = () => {
   }, [currentUser]);
 
   const canAccessOPD =
+    role === "" ||
     role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD" ||
     role === "Front_Desk_OPD";
 
   const canAccessPathLab =
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
     role === null ||
     role === "Front_Desk_LAB";
 
   const canAccessReports =
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Front_Desk_LAB" ||
     role === null ||
     role === "Front_Desk_OPD";
 
   const canAccessOPDAdmin =
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === null ||
     role === "Admin_OPD";
 
   const canAccessPathLabAdmin =
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === null ||
     role === "Admin_LAB";

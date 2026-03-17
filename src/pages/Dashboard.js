@@ -555,7 +555,10 @@ const Dashboard = () => {
     },
     {
       title: "Fees Collected",
-      value: `₹${Number(feesCollected).toFixed(2)}`,
+      value:
+        feesCollected === "-"
+          ? "-"
+          : `₹${Number(feesCollected).toFixed(2)}`,
       color: "default",
       icon: IndianRupee,
       accentColor: "#10b981",
@@ -604,7 +607,7 @@ const Dashboard = () => {
   }, []);
 
   const fetchPathlabSalesToday = async (company) => {
-    if (!company) return;
+    if (!company) return 0;
 
     try {
       const today = getTodayDate();
@@ -627,59 +630,60 @@ const Dashboard = () => {
           ["status", "!=", "Cancelled"],
           ["company", "=", company],
           ["posting_date", "=", today],
-          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]]
+          ["`tabSales Invoice Item`.item_group", "in", ["LAB", "PHC", "PLB"]]
         ])
       );
 
-      body.append("limit_page_length", "100000");
-      body.append("limit_start", "1");
+      body.append("limit_page_length", "1000");
+      body.append("limit_start", "0");
 
-      const res = await fetch(
+      const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",
+        body,
         {
-          method: "POST",
-          credentials: "include",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: body.toString(),
+          withCredentials: true,
         }
       );
 
-      const data = await res.json();
-      const rows = data?.message || [];
+      const rows = res.data?.message || [];
 
-      // remove duplicate invoices
       const uniqueInvoices = {};
-
       rows.forEach((row) => {
         if (!uniqueInvoices[row.name]) {
           uniqueInvoices[row.name] = row;
         }
       });
 
-      const uniqueList = Object.values(uniqueInvoices);
-
-      const total = uniqueList.reduce((sum, row) => {
+      const total = Object.values(uniqueInvoices).reduce((sum, row) => {
         const val = parseFloat(row.net_total);
         return sum + (isNaN(val) ? 0 : val);
       }, 0);
 
       setPathlabSalesToday(total);
+
+      return total; // ✅ important
     } catch (error) {
       console.error("PathLab sales error:", error);
       setPathlabSalesToday(0);
+      return 0;
     }
   };
 
-  const fetchFeesCollected = async (company) => {
-    if (!company) return;
+  const fetchFeesCollected = async (company, pathlabSalesToday = 0) => {
+    if (!company) {
+      setFeesCollected(0);
+      return;
+    }
 
     try {
       const today = getTodayDate();
 
       let accountName = "";
 
+      // Map company → account
       if (company === "Ramakrishna Mission Sargachi") {
         accountName = "Sales - RKMS";
       } else if (company === "ALFA DIAGNOSTIC CENTRE & POLYCLINIC") {
@@ -709,20 +713,31 @@ const Dashboard = () => {
         `?report_name=General+Ledger&filters=${encodedFilters}` +
         `&ignore_prepared_report=false&are_default_filters=true`;
 
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch(url, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
+
       const data = await res.json();
 
       const result = data?.message?.result || [];
 
-      // Same logic as your report page
+      // Only rows having GL entries
       const filteredRows = result.filter((row) => row.gl_entry);
 
+      // Sum of credits
       const totalFees = filteredRows.reduce((sum, row) => {
         const credit = parseFloat(row.credit);
         return sum + (isNaN(credit) ? 0 : credit);
       }, 0);
 
+      // Final OPD calculation
       const opdSales = totalFees - pathlabSalesToday;
+
       setFeesCollected(opdSales);
     } catch (error) {
       console.error("Fees fetch error:", error);
@@ -752,12 +767,16 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (selectedCompany && selectedDate) {
-      fetchPathlabSalesToday(selectedCompany);
-      fetchFeesCollected(selectedCompany);
-      fetchTotalPatientsToday(selectedCompany, selectedDate);
-    }
-  }, [selectedCompany, selectedDate, pathlabSalesToday]);
+    const loadData = async () => {
+      if (!selectedCompany || !selectedDate) return;
+
+      const pathlabTotal = await fetchPathlabSalesToday(selectedCompany);
+      await fetchFeesCollected(selectedCompany, pathlabTotal);
+      await fetchTotalPatientsToday(selectedCompany, selectedDate);
+    };
+
+    loadData();
+  }, [selectedCompany, selectedDate]);
 
   const fetchDoctorName = async (doctorId) => {
     try {
@@ -1094,8 +1113,8 @@ const Dashboard = () => {
                       style={{
                         animationDelay: `${index * 0.05}s`,
                         cursor:
-                          insight.title === "Total Patients Today" 
-                          // || insight.title === "Fees Collected"
+                          insight.title === "Total Patients Today"
+                            // || insight.title === "Fees Collected"
                             ? "pointer"
                             : "default"
                       }}
@@ -1105,7 +1124,7 @@ const Dashboard = () => {
                           ? handleTotalPatientsClick
                           // : insight.title === "Fees Collected"
                           //   ? handleFeesCollectedClick
-                            : undefined
+                          : undefined
                       }
                     >
                       <InsightTitle>

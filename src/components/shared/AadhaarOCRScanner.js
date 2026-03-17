@@ -194,10 +194,23 @@ const AadhaarOCRScanner = ({ isOpen, onClose, onDataExtracted }) => {
 
     }, [step]);
 
-    const formatDOB = (dob) => {
-        if (!dob) return "";
-        const [dd, mm, yyyy] = dob.split("/");
-        return `${yyyy}-${mm}-${dd}`;
+    const formatDOB = (dob, year) => {
+        // ✅ Case 1: Full DOB exists (like 12/05/1998)
+        if (dob) {
+            const parts = dob.includes("/") ? dob.split("/") : dob.split("-");
+            if (parts.length === 3) {
+                const [dd, mm, yyyy] = parts;
+                return `${yyyy}-${mm}-${dd}`; // ISO format
+            }
+        }
+
+        // ✅ Case 2: Only year_of_birth exists
+        if (year) {
+            const cleanYear = year.toString().slice(0, 4);
+            return `${cleanYear}-01-01`; // fallback DOB
+        }
+
+        return "";
     };
 
     const sendToOCR = async (imageBlob) => {
@@ -236,13 +249,14 @@ const AadhaarOCRScanner = ({ isOpen, onClose, onDataExtracted }) => {
         };
 
         const nameParts = merged.name?.split(" ") || [];
-
+        const isDOBEstimated = !merged.dob && merged.year_of_birth;
         const mapped = {
             firstName: nameParts[0] || "",
             lastName: nameParts.slice(1).join(" ") || "",
             uid: merged.aadhar_number?.replace(/\s/g, ""),
             gender: merged.gender,
-            dateOfBirth: formatDOB(merged.dob),
+            dateOfBirth: formatDOB(merged.dob, merged.year_of_birth),
+            isDOBEstimated,
             address: merged.address,
             district: merged.district,
             state: merged.state,

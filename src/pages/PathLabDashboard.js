@@ -693,6 +693,7 @@ const PathLabDashboard = () => {
 
       const body = new URLSearchParams();
       body.append("doctype", "Sales Invoice");
+
       body.append(
         "fields",
         JSON.stringify([
@@ -714,29 +715,27 @@ const PathLabDashboard = () => {
           ["status", "!=", "Cancelled"],
           ["company", "=", company],
           ["posting_date", "=", today],
-          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
+          ["`tabSales Invoice Item`.item_group", "in", ["LAB", "PHC", "PLB"]],
         ])
       );
 
-      body.append("limit_page_length", "100000000");
-      body.append("limit_start", "1");
+      body.append("limit_page_length", "1000");
+      body.append("limit_start", "0");
 
-      const res = await fetch(
+      const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",
+        body,
         {
-          method: "POST",
-          credentials: "include",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
           },
-          body: body.toString(),
+          withCredentials: true,
         }
       );
 
-      const data = await res.json();
-      const rows = data?.message || [];
+      const rows = res.data?.message || [];
 
-      // Remove duplicate invoices
+      // Remove duplicates
       const uniqueInvoices = {};
       rows.forEach((row) => {
         if (!uniqueInvoices[row.name]) {
@@ -744,10 +743,7 @@ const PathLabDashboard = () => {
         }
       });
 
-      const uniqueList = Object.values(uniqueInvoices);
-
-      // Calculate total
-      const total = uniqueList.reduce((sum, row) => {
+      const total = Object.values(uniqueInvoices).reduce((sum, row) => {
         const value = parseFloat(row.net_total);
         return sum + (isNaN(value) ? 0 : value);
       }, 0);
@@ -926,7 +922,7 @@ const PathLabDashboard = () => {
 
     return () => observer.disconnect();
   }, []);
-  
+
   const formatTimeToAMPM = (timeString) => {
     if (!timeString) return "";
 

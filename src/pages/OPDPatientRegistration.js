@@ -685,6 +685,25 @@ const ModalActions = styled.div`
   gap: 10px;
   margin-top: 16px;
 `;
+const ErrorText = styled.span`
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #e53935; /* soft red */
+  font-weight: 500;
+
+  /* subtle animation */
+  opacity: 0;
+  transform: translateY(-2px);
+  animation: fadeIn 0.2s ease-in forwards;
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
 
 const OPDPatientRegistration = () => {
     usePageTitle("OPD Patient Registration");
@@ -696,6 +715,7 @@ const OPDPatientRegistration = () => {
     const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
     const [availableDoctors, setAvailableDoctors] = useState([]);
     const [loadingDoctors, setLoadingDoctors] = useState(false);
+    const [mobileError, setMobileError] = useState("");
     const [newDoctorData, setNewDoctorData] = useState({
         first_name: "",
         last_name: "",
@@ -1086,7 +1106,9 @@ const OPDPatientRegistration = () => {
         console.log("=== Aadhaar Scan Data ===");
         console.log("Extracted data:", data);
         console.log("Gender options available:", genderOptions.map(o => o.name));
-
+        if (data.isDOBEstimated) {
+            console.log("DOB estimated from year_of_birth");
+        }
         // Match gender value with available options from API
         let matchedGender = "";
         if (data.gender) {
@@ -2019,16 +2041,31 @@ const OPDPatientRegistration = () => {
                                             value={formData.mobile}
                                             onChange={handleInputChange}
                                             onInput={(e) => {
-                                                e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                                                const cleaned = e.target.value.replace(/[^0-9]/g, "").slice(0, 10);
+                                                e.target.value = cleaned;
+
+                                                // 🔥 Real-time validation
+                                                if (cleaned.length > 0) {
+                                                    if (!/^[6-9]/.test(cleaned)) {
+                                                        setMobileError("Mobile Number must start with 6, 7, 8, or 9");
+                                                    } else if (cleaned.length === 10 && !/^[6-9]\d{9}$/.test(cleaned)) {
+                                                        setMobileError("Invalid mobile number");
+                                                    } else {
+                                                        setMobileError("");
+                                                    }
+                                                } else {
+                                                    setMobileError("");
+                                                }
+
                                                 handleInputChange(e);
                                             }}
                                             maxLength={10}
-                                            pattern="[0-9]{10}"
+                                            pattern="[6-9]{1}[0-9]{9}"
                                             placeholder="Enter 10-digit mobile number"
                                         />
+                                        {mobileError && <ErrorText>{mobileError}</ErrorText>}
                                         <HelperText>Existing patient data will be fetched automatically.</HelperText>
                                     </FormGroup>
-
                                     <FormGroup style={{ display: "none" }}>
                                         <FormLabel>
                                             Clinic<RequiredAsterisk>*</RequiredAsterisk>
@@ -2646,8 +2683,6 @@ const OPDPatientRegistration = () => {
                             </BottomSection>
                         </>
                     )}
-
-
 
                     {currentStep === 1 && (
                         <ActionButtons>
