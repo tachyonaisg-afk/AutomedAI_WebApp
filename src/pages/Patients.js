@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Plus, Calendar, Eye, CreditCard } from "lucide-react";
+import { Plus, Calendar, Eye, CreditCard, FileText } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -189,7 +189,8 @@ const Patients = () => {
   const columns = [
     { key: "name", label: "PATIENT ID" },
     { key: "patient_name", label: "PATIENT NAME" },
-    { key: "sex", label: "SEX" },
+    { key: "age", label: "AGE" },
+    // { key: "sex", label: "SEX" },
     { key: "mobile", label: "MOBILE" },
     { key: "email", label: "EMAIL" },
     { key: "uid", label: "UID" },
@@ -249,9 +250,20 @@ const Patients = () => {
         <CreditCard />
         Add Billing
       </ViewButton>
+
+      {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && (
+        <ViewButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePrescription(row.name);
+          }}
+        >
+          <FileText />
+          Prescription
+        </ViewButton>
+      )}
     </>
   );
-
   /* ========= DATA FETCH ========= */
 
   const fetchPatientCount = async () => {
@@ -354,6 +366,7 @@ const Patients = () => {
                 return {
                   name: "-",
                   patient_name: row.patient_name || "-",
+                  age: "-",
                   sex: "-",
                   mobile: "-",
                   email: "-",
@@ -369,8 +382,12 @@ const Patients = () => {
 
               return {
                 name: patientData.name || patientId,
-                patient_name: patientData.patient_name || row.patient_name || "-",
-                sex: patientData.sex || "-",
+                custom_company: patientData.custom_company || "",
+                patient_name: patientData.patient_name
+                  ? `${patientData.patient_name} (${patientData.sex?.charAt(0) || "-"})`
+                  : row.patient_name || "-",
+                // sex: patientData.sex || "-",
+                age: calculateAge(patientData.dob),
                 mobile: patientData.mobile || "-",
                 email: patientData.email || "-",
                 uid: row?.uid || "-",
@@ -381,6 +398,7 @@ const Patients = () => {
               return {
                 name: row.patient || "-",
                 patient_name: row.patient_name || "-",
+                age: "-",
                 sex: "-",
                 mobile: "-",
                 email: "-",
@@ -396,7 +414,7 @@ const Patients = () => {
       }
 
       // 🟢 NORMAL PATIENT API
-      const fields = '["name","patient_name","sex","mobile","email","uid","modified"]';
+      const fields = '["name","patient_name","sex","mobile","email","uid","dob","custom_company","modified"]';
       const limitStart = (page - 1) * limit;
 
       const params = {
@@ -433,6 +451,11 @@ const Patients = () => {
 
       const normalizedData = rawData.map((patient) => ({
         ...patient,
+        custom_company: patient.custom_company || "",
+        patient_name: patient.patient_name
+          ? `${patient.patient_name} (${patient.sex?.charAt(0) || "-"})`
+          : "-",
+        age: calculateAge(patient.dob), // ✅ NEW
         mobile: patient.mobile || "-",
         email: patient.email || "-",
         uid: patient.uid || "-"
@@ -475,6 +498,25 @@ const Patients = () => {
     navigate('/patients', { replace: true });
   };
 
+  const calculateAge = (dob) => {
+    if (!dob) return "-";
+
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+
+    return age > 70 ? `${age} yrs (Sr)` : `${age} yrs`;
+  };
+
+  const handlePrescription = (id) => {
+    navigate(`/prescription/${id}`);
+  };
   /* ================= UI ================= */
 
   return (
