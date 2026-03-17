@@ -541,7 +541,7 @@ const PathLabDashboard = () => {
     { icon: CreditCard, label: "PathLab Billing", bgColor: "#f5f3ff", iconColor: "#8b5cf6", borderColor: "#8b5cf6", route: "/billing" },
     { icon: ClipboardCheck, label: "Lab Stocks", bgColor: "#f0fdf4", iconColor: "#10b981", borderColor: "#10b981", route: null },
     { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
-    { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444", route: null },
+    { icon: FileBarChart, label: "Reports", bgColor: "#fef2f2", iconColor: "#ef4444", borderColor: "#ef4444", route: "/reports" },
   ];
 
   const insights = [
@@ -691,12 +691,9 @@ const PathLabDashboard = () => {
     try {
       const today = getTodayDate();
 
-      const body = new URLSearchParams();
-      body.append("doctype", "Sales Invoice");
-
-      body.append(
-        "fields",
-        JSON.stringify([
+      const body = {
+        doctype: "Sales Invoice",
+        fields: [
           "name",
           "patient",
           "patient_name",
@@ -706,21 +703,16 @@ const PathLabDashboard = () => {
           "total_qty",
           "net_total",
           "`tabSales Invoice Item`.item_group",
-        ])
-      );
-
-      body.append(
-        "filters",
-        JSON.stringify([
+        ],
+        filters: [
           ["status", "!=", "Cancelled"],
           ["company", "=", company],
           ["posting_date", "=", today],
           ["`tabSales Invoice Item`.item_group", "in", ["LAB", "PHC", "PLB"]],
-        ])
-      );
-
-      body.append("limit_page_length", "1000");
-      body.append("limit_start", "0");
+        ],
+        limit_page_length: 1000,
+        limit_start: 0,
+      };
 
       const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",

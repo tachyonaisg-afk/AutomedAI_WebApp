@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Plus, Calendar, Eye } from "lucide-react";
+import { Plus, Calendar, Eye, CreditCard } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -196,16 +196,60 @@ const Patients = () => {
     { key: "actions", label: "ACTIONS" },
   ];
 
+  const handleAddBilling = async (patientId) => {
+    try {
+      const response = await api.get(
+        API_ENDPOINTS.PATIENTS.DETAIL(patientId)
+      );
+
+      const patientData = response.data?.data;
+
+      if (!patientData) {
+        console.error("Patient data not available");
+        return;
+      }
+
+      navigate("/opd/billing/add", {
+        state: {
+          preselectedPatient: {
+            name: patientData.name,
+            patient_name:
+              patientData.patient_name ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+            customer_name:
+              patientData.customer ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+          },
+          defaultItemCode: "STO-ITEM-2025-00539",
+        },
+      });
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+    }
+  };
+
   const renderActions = (row) => (
-    <ViewButton
-      onClick={(e) => {
-        e.stopPropagation(); // prevents row click
-        navigate(`/patients/${row.name}`);
-      }}
-    >
-      <Eye />
-      View
-    </ViewButton>
+    <>
+      <ViewButton
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/patients/${row.name}`);
+        }}
+      >
+        <Eye />
+        View
+      </ViewButton>
+
+      <ViewButton
+        onClick={(e) => {
+          e.stopPropagation();
+          handleAddBilling(row.name);
+        }}
+      >
+        <CreditCard />
+        Add Billing
+      </ViewButton>
+    </>
   );
 
   /* ========= DATA FETCH ========= */

@@ -318,7 +318,7 @@ const Sidebar = () => {
 
       try {
         const res = await api.get(
-          `/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${currentUser}"]]`
+          `/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${currentUser}"]]`
         );
 
         const data = await res.json();
