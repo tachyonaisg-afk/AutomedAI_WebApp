@@ -14,14 +14,14 @@ import AadhaarOCRScanner from "../components/shared/AadhaarOCRScanner";
 const RegistrationContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+//   gap: 24px;
 `;
 
 const ProgressIndicator = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 32px;
+//   gap: 12px;
+  margin-bottom: 10px;
 `;
 
 const ProgressStepsContainer = styled.div`
@@ -35,6 +35,7 @@ const ProgressStep = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   flex: 1;
   position: relative;
 `;
@@ -79,7 +80,7 @@ const FormSection = styled.div`
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
 `;
 
 const SectionTitle = styled.h2`
@@ -242,8 +243,8 @@ const ItemsSection = styled.div`
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-  margin-top: 20px;
+  padding: 20px;
+  margin-top: 8px;
 `;
 
 const ItemsHeader = styled.div`
@@ -401,8 +402,8 @@ const DiscountInput = styled.input`
 const BottomSection = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 20px;
+  gap: 8px;
+  margin-top: 8px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -413,14 +414,14 @@ const CalculationCard = styled.div`
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  padding: 20px;
 `;
 
 const CardTitle = styled.h3`
   font-size: 16px;
   font-weight: 600;
   color: #333333;
-  margin: 0 0 16px 0;
+  margin: 0 0 10px 0;
 `;
 
 const CalculationRow = styled.div`
@@ -524,7 +525,7 @@ const AadhaarSection = styled.div`
   background-color: #f0f7ff;
   border: 1px dashed #4a90e2;
   border-radius: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 `;
 
 const AadhaarInfo = styled.div`
@@ -711,6 +712,7 @@ const OPDPatientRegistration = () => {
     const location = useLocation();
     const [currentStep, setCurrentStep] = useState(1);
     const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
+    const [pincodeError, setPincodeError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
     const [availableDoctors, setAvailableDoctors] = useState([]);
@@ -1912,7 +1914,7 @@ const OPDPatientRegistration = () => {
                             </AadhaarSection>
 
                             <FormSection>
-                                <SectionTitle>Personal Information</SectionTitle>
+                                {/* <SectionTitle>Personal Information</SectionTitle> */}
                                 <FormGrid>
                                     <FormGroup>
                                         <FormLabel>First Name<RequiredAsterisk>*</RequiredAsterisk></FormLabel>
@@ -2203,15 +2205,31 @@ const OPDPatientRegistration = () => {
                                             value={formData.pincode}
                                             onChange={handleInputChange}
                                             onInput={(e) => {
-                                                e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+                                                const cleaned = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+                                                e.target.value = cleaned;
+
+                                                // 🔥 Real-time validation
+                                                if (cleaned.length > 0) {
+                                                    if (!/^[1-9]/.test(cleaned)) {
+                                                        setPincodeError("Pincode cannot start with 0");
+                                                    } else if (cleaned.length === 6 && !/^[1-9][0-9]{5}$/.test(cleaned)) {
+                                                        setPincodeError("Invalid pincode");
+                                                    } else {
+                                                        setPincodeError("");
+                                                    }
+                                                } else {
+                                                    setPincodeError("");
+                                                }
+
                                                 handleInputChange(e);
                                             }}
                                             maxLength={6}
-                                            pattern="[0-9]{6}"
+                                            pattern="[1-9][0-9]{5}"
                                             placeholder="Enter 6-digit pincode"
                                             required={hasAnyAddressValue}
                                             disabled={disabledFields.pincode}
                                         />
+                                        {pincodeError && <ErrorText>{pincodeError}</ErrorText>}
                                     </FormGroup>
 
                                     <FormGroup>

@@ -4,7 +4,7 @@ import Header from "./Header";
 import styled from "styled-components";
 
 const LayoutContainer = styled.div`
-  min-height: 100vh;
+  min-height: 90vh;
   background-color: #F6F7F8;
 `;
 
