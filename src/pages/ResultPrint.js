@@ -1068,46 +1068,6 @@ const ResultPrint = () => {
 
             <div className="pdf-body">
 
-              {/* <PatientInfoSection>
-                <InfoField>
-                  <InfoLabel>Patient Name</InfoLabel>
-                  <InfoValue>: {selectedTestDetails[0]?.patient_name || patientName || "N/A"}</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Ref By</InfoLabel>
-                  <InfoValue>: {selectedTestDetails[0]?.practitioner_name || "N/A"}</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Patient ID</InfoLabel>
-                  <InfoValue>: {selectedTestDetails[0]?.patient || patientId || "N/A"}</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Collection Location</InfoLabel>
-                  <InfoValue>: -</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Sample Collection on</InfoLabel>
-                  <InfoValue>: {formatDateTime(sampleDetails?.collected_time)}</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Age / Gender</InfoLabel>
-                  <InfoValue>
-                    : {formatAge(selectedTestDetails[0]?.patient_age)} / {formatGender(selectedTestDetails[0]?.patient_sex)}
-                  </InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Report Generated on</InfoLabel>
-                  <InfoValue>: {formatDateTime(selectedTestDetails[0]?.modified)}</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Collected By</InfoLabel>
-                  <InfoValue>: {employees[0]?.employee_name || "N/A"}</InfoValue>
-                </InfoField>
-                <InfoField>
-                  <InfoLabel>Report Status</InfoLabel>
-                  <InfoValue>: Final</InfoValue>
-                </InfoField>
-              </PatientInfoSection> */}
               <PatientInfoSection>
 
                 {/* LEFT COLUMN */}
@@ -1180,7 +1140,7 @@ const ResultPrint = () => {
                     const prevDept = selectedTestDetails[index - 1]?.department;
 
                     const showDepartment = index === 0 || currentDept !== prevDept;
-
+                    const isDescriptive = testDetail.descriptive_test_items?.length > 0;
                     return (
                       <React.Fragment key={testDetail.name}>
 
@@ -1199,8 +1159,13 @@ const ResultPrint = () => {
                             <tr>
                               <TableHeader>Test Parameter</TableHeader>
                               <TableHeader style={{ textAlign: "right" }}>Result</TableHeader>
-                              <TableHeader style={{ textAlign: "right" }}>Units</TableHeader>
-                              <TableHeader style={{ textAlign: "right" }}>Reference Interval</TableHeader>
+
+                              {!isDescriptive && (
+                                <>
+                                  <TableHeader style={{ textAlign: "right" }}>Units</TableHeader>
+                                  <TableHeader style={{ textAlign: "right" }}>Reference Interval</TableHeader>
+                                </>
+                              )}
                             </tr>
                           </>
                         )}
@@ -1215,63 +1180,58 @@ const ResultPrint = () => {
                         </TableRow>
 
                         {/* Parameters */}
-                        {testDetail.normal_test_items.map((item, i) => {
-                          const name = (item.lab_test_name || "").trim();
-
-                          // const isHtmlOnly =
-                          //   name.includes("<hr") ||
-                          //   name.includes("<center") ||
-                          //   name.includes("<b") ||
-                          //   name.includes("---") ||
-                          //   name.includes("<br") ||
-                          //   name.includes("<p") ||
-                          //   name.includes("<u") ||
-                          //   name.includes("</") ||
-                          //   name.includes("<h6") ||
-                          //   name.includes("<h5") ||
-                          //   name.includes("<h4") ||
-                          //   name.includes("<h3") ||
-                          //   name.includes("<h2") ||
-                          //   name.includes("<h1") ||
-                          //   name.includes("<i");
-                          const isHtmlOnly = /<\/?[a-z][\s\S]*>/i.test(name);
-
-                          if (isHtmlOnly && !item.result_value) {
-                            return (
-                              <TableRow key={i}>
-                                <TableCell colSpan="4">
-                                  <div
-                                    dangerouslySetInnerHTML={{
-                                      __html: removeTestPrefix(name),
-                                    }}
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            );
-                          }
-
-                          return (
+                        {isDescriptive
+                          ? testDetail.descriptive_test_items.map((item, i) => (
                             <TableRow key={i}>
-                              <TableCell
-                                dangerouslySetInnerHTML={{
-                                  __html: removeTestPrefix(name),
-                                }}
-                              />
+                              <TableCell>
+                                {removeTestPrefix(item.lab_test_particulars)}
+                              </TableCell>
 
                               <TableCell style={{ textAlign: "right" }}>
                                 {item.result_value}
                               </TableCell>
-
-                              <TableCell style={{ textAlign: "right" }}>
-                                {item.lab_test_uom}
-                              </TableCell>
-
-                              <TableCell style={{ textAlign: "right" }}>
-                                {item.normal_range}
-                              </TableCell>
                             </TableRow>
-                          );
-                        })}
+                          ))
+                          : testDetail.normal_test_items.map((item, i) => {
+                            const name = (item.lab_test_name || "").trim();
+                            const isHtmlOnly = /<\/?[a-z][\s\S]*>/i.test(name);
+
+                            if (isHtmlOnly && !item.result_value) {
+                              return (
+                                <TableRow key={i}>
+                                  <TableCell colSpan="4">
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: removeTestPrefix(name),
+                                      }}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }
+
+                            return (
+                              <TableRow key={i}>
+                                <TableCell
+                                  dangerouslySetInnerHTML={{
+                                    __html: removeTestPrefix(name),
+                                  }}
+                                />
+
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {item.result_value}
+                                </TableCell>
+
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {item.lab_test_uom}
+                                </TableCell>
+
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {item.normal_range}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
 
                       </React.Fragment>
                     );
