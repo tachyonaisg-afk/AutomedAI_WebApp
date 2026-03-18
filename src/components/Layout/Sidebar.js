@@ -351,6 +351,8 @@ const Sidebar = () => {
   const canAccessReports =
     role === "" ||
     role === "Admin_OPD_LAB" ||
+    role === "Admin_LAB" ||
+    role === "Admin_OPD" ||
     role === "Front_Desk_LAB" ||
     role === null ||
     role === "Front_Desk_OPD";

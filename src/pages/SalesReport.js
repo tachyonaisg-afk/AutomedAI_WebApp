@@ -751,14 +751,14 @@ const SalesReport = () => {
         <FiltersCard>
           <FiltersGrid>
             <FormGroup>
-              <FormLabel>Select Company</FormLabel>
+              <FormLabel>Select Clinic</FormLabel>
               <FormSelect
                 name="company"
                 value={filters.company}
                 onChange={handleFilterChange}
               >
                 {companies.length === 0 ? (
-                  <option value="">Loading companies...</option>
+                  <option value="">Loading clinic...</option>
                 ) : (
                   companies.map((company) => (
                     <option key={company.name} value={company.name}>

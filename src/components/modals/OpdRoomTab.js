@@ -494,7 +494,7 @@ const OpdRoomTab = () => {
             <FormGrid>
                 <DropField>
                     <label>
-                        Company<RequiredAsterisk>*</RequiredAsterisk>
+                        Clinic<RequiredAsterisk>*</RequiredAsterisk>
                     </label>
 
                     <Select
@@ -524,7 +524,7 @@ const OpdRoomTab = () => {
                             }))
                         }
 
-                        placeholder="Search Company..."
+                        placeholder="Search Clinic..."
                         isSearchable
                         isClearable
                         required
@@ -550,7 +550,7 @@ const OpdRoomTab = () => {
                 <thead>
                     <tr>
                         <th>Room</th>
-                        <th>Company</th>
+                        <th>Clinic</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>

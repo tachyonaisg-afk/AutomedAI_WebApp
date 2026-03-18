@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Plus, Minus, Search, X, Loader2 } from "lucide-react";
+import { Plus, Minus, Search, X, Loader2, ArrowLeft } from "lucide-react";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
 import usePageTitle from "../hooks/usePageTitle";
@@ -701,7 +701,23 @@ const ReactSelect = styled(Select)`
     background-color: #4a90e2;
   }
 `;
+const SearchButton = styled.button`
+  width: 80px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #4a90e2;
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 
+  &:hover {
+    background: #3c7edb;
+  }
+`;
 
 const AddBilling = () => {
   usePageTitle("Add Billing");
@@ -1483,7 +1499,13 @@ const AddBilling = () => {
   return (
     <Layout>
       <BillingContainer>
-        <Title>Add Billing</Title>
+        <div className="header" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <SearchButton onClick={() => window.history.back()}>
+            <ArrowLeft size={16} />
+            Back
+          </SearchButton>
+          <Title>Add Billing</Title>
+        </div>
 
         {error && <ErrorMessage>{error}</ErrorMessage>}
 

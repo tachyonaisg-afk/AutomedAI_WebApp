@@ -94,7 +94,7 @@ const OpdPatientDataTable = ({ data }) => {
                     <TableHeaderRow>
                         <TableHeaderCell>Patient ID</TableHeaderCell>
                         <TableHeaderCell>Patient Name</TableHeaderCell>
-                        <TableHeaderCell>Company</TableHeaderCell>
+                        <TableHeaderCell>Clinic</TableHeaderCell>
                         <TableHeaderCell>Actions</TableHeaderCell>
                     </TableHeaderRow>
                 </TableHeader>

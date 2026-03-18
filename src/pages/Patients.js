@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Plus, Calendar, Eye, CreditCard, FileText } from "lucide-react";
+import { Plus, Calendar, Eye, CreditCard, FileText, ArrowLeft } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -159,6 +159,23 @@ const ClearFilterButton = styled.button`
 
   &:hover {
     color: #1565c0;
+  }
+`;
+const SearchButton = styled.button`
+  width: 100px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #4a90e2;
+  color: white;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+
+  &:hover {
+    background: #3c7edb;
   }
 `;
 
@@ -524,7 +541,10 @@ const Patients = () => {
       <PatientsContainer>
         {loading && <div>Loading patients...</div>}
         {error && <div style={{ color: "red" }}>Error: {error}</div>}
-        
+        <SearchButton onClick={() => window.history.back()}>
+          <ArrowLeft size={16} />
+          Back
+        </SearchButton>
         <HeaderSection>
           <TitleSection>
             <Title>Patient Records</Title>

@@ -618,8 +618,7 @@ const Dashboard = () => {
         "fields",
         JSON.stringify([
           "name",
-          "net_total",
-          "`tabSales Invoice Item`.item_group"
+          "net_total"
         ])
       );
 
@@ -629,7 +628,7 @@ const Dashboard = () => {
           ["status", "!=", "Cancelled"],
           ["company", "=", company],
           ["posting_date", "=", today],
-          ["`tabSales Invoice Item`.item_group", "in", ["LAB", "PHC", "PLB"]]
+          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
         ])
       );
 
@@ -663,7 +662,7 @@ const Dashboard = () => {
 
       setPathlabSalesToday(total);
 
-      return total; // ✅ important
+      return total;
     } catch (error) {
       console.error("PathLab sales error:", error);
       setPathlabSalesToday(0);

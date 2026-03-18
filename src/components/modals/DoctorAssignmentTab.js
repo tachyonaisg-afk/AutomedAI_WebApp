@@ -773,7 +773,7 @@ const DoctorAssignmentTab = () => {
 
                 <DropField>
                     <label>
-                        Company<RequiredAsterisk>*</RequiredAsterisk>
+                        Clinic<RequiredAsterisk>*</RequiredAsterisk>
                     </label>
 
                     <Select
@@ -803,7 +803,7 @@ const DoctorAssignmentTab = () => {
                             }))
                         }
 
-                        placeholder="Search Company..."
+                        placeholder="Search Clinic..."
                         isSearchable
                         isClearable
                         required
@@ -968,7 +968,7 @@ const DoctorAssignmentTab = () => {
                         placeholder={
                             formData.company
                                 ? "Search Room..."
-                                : "Select Company First"
+                                : "Select Clinic First"
                         }
 
                         isSearchable
@@ -991,7 +991,7 @@ const DoctorAssignmentTab = () => {
 
                 {/* Select Company */}
                 <DropField>
-                    <label>Select Company</label>
+                    <label>Select Clinic</label>
 
                     <Select
                         menuPortalTarget={document.body}
@@ -1017,7 +1017,7 @@ const DoctorAssignmentTab = () => {
                             setSelectedCompany(selected ? selected.value : "")
                         }
 
-                        placeholder="Search Company..."
+                        placeholder="Search Clinic..."
                         isSearchable
                         isClearable
                     />
@@ -1051,7 +1051,7 @@ const DoctorAssignmentTab = () => {
 
                         <th>End</th>
 
-                        <th>Company</th>
+                        <th>Clinic</th>
 
                         <th>Actions</th>
 

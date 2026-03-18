@@ -583,6 +583,7 @@ const PathLabDashboard = () => {
       iconColor: "#10b981",
     },
   ];
+
   const [visibleSections, setVisibleSections] = useState({});
   const sectionRefs = useRef({});
 
@@ -691,9 +692,12 @@ const PathLabDashboard = () => {
     try {
       const today = getTodayDate();
 
-      const body = {
-        doctype: "Sales Invoice",
-        fields: [
+      const body = new URLSearchParams();
+
+      body.append("doctype", "Sales Invoice");
+      body.append(
+        "fields",
+        JSON.stringify([
           "name",
           "patient",
           "patient_name",
@@ -702,17 +706,21 @@ const PathLabDashboard = () => {
           "status",
           "total_qty",
           "net_total",
-          "`tabSales Invoice Item`.item_group",
-        ],
-        filters: [
+        ])
+      );
+
+      body.append(
+        "filters",
+        JSON.stringify([
           ["status", "!=", "Cancelled"],
           ["company", "=", company],
           ["posting_date", "=", today],
-          ["`tabSales Invoice Item`.item_group", "in", ["LAB", "PHC", "PLB"]],
-        ],
-        limit_page_length: 1000,
-        limit_start: 0,
-      };
+          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
+        ])
+      );
+
+      body.append("limit_page_length", "1000");
+      body.append("limit_start", "0");
 
       const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",
