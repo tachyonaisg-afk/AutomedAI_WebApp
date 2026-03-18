@@ -1238,7 +1238,33 @@ const AddBilling = () => {
       "Automed AI": "UPI-AAI - AMAI",
     }
   };
+  useEffect(() => {
+    setItems((prevItems) => {
+      let filteredItems;
 
+      if (showPHCOnly) {
+        filteredItems = prevItems.filter((item) =>
+          item.itemName?.toUpperCase().startsWith("PHC")
+        );
+      } else {
+        filteredItems = prevItems.filter(
+          (item) => !item.itemName?.toUpperCase().startsWith("PHC")
+        );
+      }
+
+      if (filteredItems.length === 0) {
+        return [{
+          item: "",
+          itemName: "",
+          qty: 1,
+          rate: 0,
+          amount: 0,
+        }];
+      }
+
+      return filteredItems;
+    });
+  }, [showPHCOnly]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

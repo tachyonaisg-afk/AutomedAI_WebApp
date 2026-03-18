@@ -393,8 +393,8 @@ const PatientDetail = () => {
               <SectionTitle>Personal Information</SectionTitle>
               <InfoGrid>
                 <InfoItem>
-                  <InfoLabel>First Name</InfoLabel>
-                  <InfoValue>{patientData.first_name || "N/A"}</InfoValue>
+                  <InfoLabel>First Name & Middle Name</InfoLabel>
+                  <InfoValue>{patientData.first_name || "N/A"} {patientData.middle_name || ""}</InfoValue>
                 </InfoItem>
                 <InfoItem>
                   <InfoLabel>Last Name</InfoLabel>

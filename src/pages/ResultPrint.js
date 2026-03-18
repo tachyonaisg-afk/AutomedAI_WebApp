@@ -293,7 +293,9 @@ const ReportPreview = styled.div`
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  min-height: 600px;
+  min-height: 1100px;
+  display: flex;
+  flex-direction: column;
 `;
 
 const ReportHeader = styled.div`
@@ -404,7 +406,7 @@ const TableHeader = styled.th`
 `;
 
 const TableRow = styled.tr`
-  border-bottom: 1px solid #f0f0f0;
+  // border-bottom: 1px solid #f0f0f0;
 
   &:last-child {
     border-bottom: none;
@@ -420,6 +422,7 @@ const TableCell = styled.td`
 const ReportFooter = styled.div`
   // margin-top: 60px;
   // margin-bottom: 100px;
+  margin-top: auto;
   padding-top: 10px;
   border-top: 1px solid #e0e0e0;
 `;
@@ -927,6 +930,24 @@ const ResultPrint = () => {
 
   const footerImage = getFooterhead();
 
+  const isAllSelected =
+    activeTests.length > 0 &&
+    activeTests.every((test) => test.selected);
+
+  const isSomeSelected =
+    activeTests.some((test) => test.selected) && !isAllSelected;
+
+  const toggleSelectAll = () => {
+    const shouldSelectAll = !isAllSelected;
+
+    setTests(
+      tests.map((test) =>
+        !test.disabled
+          ? { ...test, selected: shouldSelectAll }
+          : test
+      )
+    );
+  };
   return (
     <Container>
       <Sidebar>
@@ -947,6 +968,21 @@ const ResultPrint = () => {
         {!loading && !error && activeTests.length > 0 && (
           <>
             <GroupLabel>Active Group</GroupLabel>
+            <TestItem>
+              <TestItemHeader>
+                <Checkbox
+                  type="checkbox"
+                  checked={isAllSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = isSomeSelected;
+                  }}
+                  onChange={toggleSelectAll}
+                />
+                <TestItemContent>
+                  <PatientName>Select All</PatientName>
+                </TestItemContent>
+              </TestItemHeader>
+            </TestItem>
             {activeTests.map((test) => (
               <TestItem
                 key={test.id}
@@ -1066,7 +1102,7 @@ const ResultPrint = () => {
               )}
             </div>
 
-            <div className="pdf-body">
+            <div className="pdf-body" style={{ display: "flex", flexDirection: "column", flex: 1 }}>
 
               <PatientInfoSection>
 
@@ -1102,13 +1138,13 @@ const ResultPrint = () => {
                 {/* RIGHT COLUMN */}
                 <div>
                   <InfoRow>
-                    <InfoLabel>Sample Collection on</InfoLabel>
+                    <InfoLabel>Sample Collected on</InfoLabel>
                     <Colon>:</Colon>
                     <InfoValue>{formatDateTime(sampleDetails?.collected_time)}</InfoValue>
                   </InfoRow>
 
                   <InfoRow>
-                    <InfoLabel>Collection Location</InfoLabel>
+                    <InfoLabel>Sample Collected at</InfoLabel>
                     <Colon>:</Colon>
                     <InfoValue>-</InfoValue>
                   </InfoRow>

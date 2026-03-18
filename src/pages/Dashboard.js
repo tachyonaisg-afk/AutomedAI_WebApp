@@ -553,7 +553,7 @@ const Dashboard = () => {
       iconColor: "#3b82f6",
     },
     {
-      title: "Fees Collected",
+      title: "Fees Collected Today",
       value:
         feesCollected === "-"
           ? "-"
@@ -612,12 +612,18 @@ const Dashboard = () => {
       const today = getTodayDate();
 
       const body = new URLSearchParams();
-      body.append("doctype", "Sales Invoice");
 
+      body.append("doctype", "Sales Invoice");
       body.append(
         "fields",
         JSON.stringify([
           "name",
+          "patient",
+          "patient_name",
+          "posting_date",
+          "company",
+          "status",
+          "total_qty",
           "net_total"
         ])
       );
@@ -637,7 +643,7 @@ const Dashboard = () => {
 
       const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",
-        body,
+        body.toString(), 
         {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",

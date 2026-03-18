@@ -1521,6 +1521,35 @@ const PatientRegistration = () => {
     }
   };
 
+  useEffect(() => {
+    setItems((prevItems) => {
+      let filteredItems;
+
+      if (showPHCOnly) {
+        filteredItems = prevItems.filter((item) =>
+          item.itemName?.toUpperCase().startsWith("PHC")
+        );
+      } else {
+        filteredItems = prevItems.filter(
+          (item) => !item.itemName?.toUpperCase().startsWith("PHC")
+        );
+      }
+
+      // ✅ Ensure at least one empty row exists
+      if (filteredItems.length === 0) {
+        return [{
+          item: "",
+          itemName: "",
+          qty: 1,
+          rate: 0,
+          amount: 0,
+        }];
+      }
+
+      return filteredItems;
+    });
+  }, [showPHCOnly]);
+
   const calculateTotals = () => {
     const totalQty = items.reduce((sum, item) => sum + parseFloat(item.qty || 0), 0);
     const grossTotal = items.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);

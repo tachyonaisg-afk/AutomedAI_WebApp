@@ -705,7 +705,7 @@ const PathLabDashboard = () => {
           "company",
           "status",
           "total_qty",
-          "net_total",
+          "net_total"
         ])
       );
 
@@ -724,7 +724,7 @@ const PathLabDashboard = () => {
 
       const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",
-        body,
+        body.toString(),
         {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
