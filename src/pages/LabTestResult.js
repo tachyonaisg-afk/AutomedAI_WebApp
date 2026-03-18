@@ -688,7 +688,7 @@ const LabTestResult = () => {
       const descriptive_test_items = testResults
         .filter((r) => r.type === "descriptive")
         .map((result) => ({
-          lab_test_name: result.parameter,
+          lab_test_particulars: result.parameter,
           result_value: result.value,
         }));
 
