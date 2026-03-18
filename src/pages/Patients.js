@@ -192,8 +192,8 @@ const Patients = () => {
     { key: "age", label: "AGE" },
     // { key: "sex", label: "SEX" },
     { key: "mobile", label: "MOBILE" },
-    { key: "email", label: "EMAIL" },
-    { key: "uid", label: "UID" },
+    // { key: "email", label: "EMAIL" },
+    // { key: "uid", label: "UID" },
     { key: "actions", label: "ACTIONS" },
   ];
 
@@ -248,7 +248,7 @@ const Patients = () => {
         }}
       >
         <CreditCard />
-        Add Billing
+        Bill
       </ViewButton>
 
       {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && (
@@ -524,7 +524,7 @@ const Patients = () => {
       <PatientsContainer>
         {loading && <div>Loading patients...</div>}
         {error && <div style={{ color: "red" }}>Error: {error}</div>}
-
+        
         <HeaderSection>
           <TitleSection>
             <Title>Patient Records</Title>

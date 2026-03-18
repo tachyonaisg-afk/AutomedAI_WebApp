@@ -93,6 +93,7 @@ const TableCell = styled.td`
 
   &:last-child {
     padding-right: 24px;
+    display: flex;
   }
 `;
 

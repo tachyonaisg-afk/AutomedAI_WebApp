@@ -1832,7 +1832,7 @@ const OPDPatientRegistration = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (currentStep < 3) {
+        if (currentStep < 2) {
             handleNextStep();
         } else {
             if (requiresAppointment) {

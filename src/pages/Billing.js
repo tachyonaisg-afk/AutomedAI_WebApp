@@ -592,7 +592,7 @@ const Billing = () => {
       color: "#f57c00",
     },
     {
-      label: "Paid This Month",
+      label: "Collection This Month",
       value: `₹${summary.paidThisMonth.toLocaleString()}`,
       // change: "+18.3%",
       positive: true,
