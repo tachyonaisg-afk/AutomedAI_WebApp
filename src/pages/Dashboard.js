@@ -611,12 +611,11 @@ const Dashboard = () => {
     try {
       const today = getTodayDate();
 
-      const body = new URLSearchParams();
-
-      body.append("doctype", "Sales Invoice");
-      body.append(
-        "fields",
-        JSON.stringify([
+      // 1. Construct a clean JS object instead of URLSearchParams.
+      // Notice you don't need to JSON.stringify the arrays anymore.
+      const payload = {
+        doctype: "Sales Invoice",
+        fields: [
           "name",
           "patient",
           "patient_name",
@@ -625,29 +624,24 @@ const Dashboard = () => {
           "status",
           "total_qty",
           "net_total"
-        ])
-      );
-
-      body.append(
-        "filters",
-        JSON.stringify([
+        ],
+        filters: [
           ["status", "!=", "Cancelled"],
           ["company", "=", company],
           ["posting_date", "=", today],
+          // Note: Because of this child-table filter, Frappe will do a SQL JOIN.
+          // This causes duplicate parent records, which your logic below correctly handles!
           ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
-        ])
-      );
+        ],
+        limit_page_length: 1000,
+        limit_start: 0
+      };
 
-      body.append("limit_page_length", "1000");
-      body.append("limit_start", "0");
-
+      // 2. Send it as standard JSON. Axios handles the Content-Type automatically.
       const res = await api.post(
         "https://hms.automedai.in/api/method/frappe.client.get_list",
-        body.toString(), 
+        payload,
         {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
           withCredentials: true,
         }
       );
