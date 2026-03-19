@@ -199,15 +199,51 @@ const LoginForm = () => {
     }
 
     setLoading(true);
+
     try {
-      // Use email as username for login
       const success = await login(email, password);
-      if (success) {
-        navigate("/opd");
-      } else {
+
+      if (!success) {
         setError("Invalid email or password");
+        return;
       }
+
+      // Fetch role after login
+      const res = await fetch(
+        `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${email}"]]`
+      );
+
+      const data = await res.json();
+
+      const role = data?.data?.[0]?.role_profile_name;
+
+      // Store role for sidebar usage
+      const userData = JSON.parse(localStorage.getItem("user")) || {};
+      userData.role = role;
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // Role based redirect
+      if (
+        role === "Admin_OPD" ||
+        role === "Front_Desk_OPD"
+      ) {
+        navigate("/opd");
+      }
+      else if (
+        role === "Admin_LAB" ||
+        role === "Front_Desk_LAB"
+      ) {
+        navigate("/pathlab");
+      }
+      else if (role === "Admin_OPD_LAB") {
+        navigate("/opd");
+      }
+      else {
+        navigate("/opd"); // fallback
+      }
+
     } catch (err) {
+      console.error(err);
       setError("An error occurred during login. Please try again.");
     } finally {
       setLoading(false);
