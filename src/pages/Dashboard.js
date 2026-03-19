@@ -1006,7 +1006,7 @@ const Dashboard = () => {
       if (data.success) {
         setDoctorPatientCountMap((prev) => ({
           ...prev,
-          [doctorId]: data.data?.count || 0,
+          [doctorId]: data.data?.total_patients || 0,
         }));
       } else {
         setDoctorPatientCountMap((prev) => ({

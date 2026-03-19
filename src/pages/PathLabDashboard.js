@@ -986,6 +986,9 @@ const PathLabDashboard = () => {
       }
     });
   };
+  const handlePendingTestResultsClick= () => {
+    navigate("/pathlab/labtest");
+  };
 
   return (
     <Layout>
@@ -1077,7 +1080,8 @@ const PathLabDashboard = () => {
 
                   const isClickable =
                     insight.title === "Fees Collected" ||
-                    insight.title === "Pending Sample Collections";
+                    insight.title === "Pending Sample Collections" ||
+                    insight.title === "Pending Test Results";
 
                   return (
                     <InsightCard
@@ -1092,6 +1096,9 @@ const PathLabDashboard = () => {
                           handleFeesCollectedClick();
                         } else if (insight.title === "Pending Sample Collections") {
                           handlePendingSamplesClick();
+                        }
+                        else if (insight.title === "Pending Test Results") {
+                          handlePendingTestResultsClick();
                         }
                       }}
                     >
