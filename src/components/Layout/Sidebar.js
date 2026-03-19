@@ -335,16 +335,22 @@ const Sidebar = () => {
   }, [currentUser]);
 
   const canAccessOPD =
+    role === "" ||
+    role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD" ||
     role === "Front_Desk_OPD";
 
   const canAccessPathLab =
+    role === "" ||
+    role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
     role === "Front_Desk_LAB";
 
   const canAccessReports =
+    role === "" ||
+    role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
     role === "Admin_OPD" ||
@@ -352,10 +358,14 @@ const Sidebar = () => {
     role === "Front_Desk_OPD";
 
   const canAccessOPDAdmin =
+    role === "" ||
+    role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD";
 
   const canAccessPathLabAdmin =
+    role === "" ||
+    role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB";
 
