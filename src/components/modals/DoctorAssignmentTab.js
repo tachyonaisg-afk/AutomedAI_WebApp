@@ -327,7 +327,7 @@ const DoctorAssignmentTab = () => {
     const [editData, setEditData] = useState(null);
     const [rooms, setRooms] = useState([]);
     const getTodayDate = () => new Date().toLocaleDateString("en-CA");
-
+    const [doctorFeeMap, setDoctorFeeMap] = useState({});
     const [selectedDate, setSelectedDate] = useState(getTodayDate());
     const [selectedCompany, setSelectedCompany] = useState("");
 
@@ -370,6 +370,24 @@ const DoctorAssignmentTab = () => {
 
     }, []);
 
+    const fetchDoctorFee = async (company, doctorId) => {
+        try {
+            const res = await fetch(
+                `https://midl.automedai.in/doctor_company/empanel/company/${encodeURIComponent(company)}/doctor/${doctorId}`
+            );
+
+            const data = await res.json();
+
+            if (data.success && data.data?.consultation_fee) {
+                setDoctorFeeMap((prev) => ({
+                    ...prev,
+                    [doctorId]: data.data.consultation_fee,
+                }));
+            }
+        } catch (error) {
+            console.error("Error fetching fee:", error);
+        }
+    };
 
     // ✅ Fetch Companies
     const fetchCompanies = async () => {
@@ -612,6 +630,14 @@ const DoctorAssignmentTab = () => {
 
             if (data.success && Array.isArray(data.data)) {
                 setAvailabilityList(data.data);
+
+                // ✅ Fetch fees for each doctor
+                data.data.forEach((item) => {
+                    if (!doctorFeeMap[item.doctor_id]) {
+                        fetchDoctorFee(item.company, item.doctor_id);
+                    }
+                });
+
             } else {
                 setAvailabilityList([]);
             }
@@ -1051,6 +1077,8 @@ const DoctorAssignmentTab = () => {
 
                         <th>End</th>
 
+                        <th>Fee</th>
+
                         <th>Clinic</th>
 
                         <th>Actions</th>
@@ -1079,6 +1107,10 @@ const DoctorAssignmentTab = () => {
                                 <td>{formatToAMPM(item.from_time)}</td>
 
                                 <td>{formatToAMPM(item.to_time)}</td>
+
+                                <td>
+                                    ₹{doctorFeeMap[item.doctor_id] || "—"}
+                                </td>
 
                                 <td>
                                     {item.company}
