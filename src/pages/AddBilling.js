@@ -767,6 +767,10 @@ const AddBilling = () => {
   const [serviceUnits, setServiceUnits] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [doctorResults, setDoctorResults] = useState([]);
+  const [showDoctorResults, setShowDoctorResults] = useState(false);
+  const [searchingDoctor, setSearchingDoctor] = useState(false);
 
   // Fetch dropdown options on mount
   useEffect(() => {
@@ -821,6 +825,75 @@ const AddBilling = () => {
       console.error("Error fetching default item:", error);
     }
   };
+
+  const searchDoctors = useCallback(async (value) => {
+    if (!value || value.length < 2) {
+      setDoctorResults([]);
+      setShowDoctorResults(false);
+      return;
+    }
+
+    setSearchingDoctor(true);
+
+    try {
+      const fields = encodeURIComponent(
+        JSON.stringify([
+          "name",
+          "practitioner_name",
+          "mobile_phone",
+          "custom_registration_number",
+        ])
+      );
+
+      const nameFilter = encodeURIComponent(
+        JSON.stringify([["practitioner_name", "like", `%${value}%`]])
+      );
+
+      const regFilter = encodeURIComponent(
+        JSON.stringify([["custom_registration_number", "like", `%${value}%`]])
+      );
+
+      const mobileFilter = encodeURIComponent(
+        JSON.stringify([["mobile_phone", "like", `%${value}%`]])
+      );
+
+      const base =
+        "https://hms.automedai.in/api/resource/Healthcare Practitioner";
+
+      const [nameRes, regRes, mobileRes] = await Promise.all([
+        apiService.get(`${base}?fields=${fields}&filters=${nameFilter}`),
+        apiService.get(`${base}?fields=${fields}&filters=${regFilter}`),
+        apiService.get(`${base}?fields=${fields}&filters=${mobileFilter}`),
+      ]);
+
+      const merged = [
+        ...(nameRes.data.data || []),
+        ...(regRes.data.data || []),
+        ...(mobileRes.data.data || []),
+      ];
+
+      // remove duplicates
+      const uniqueDoctors = Array.from(
+        new Map(merged.map((doc) => [doc.name, doc])).values()
+      );
+
+      setDoctorResults(uniqueDoctors);
+      setShowDoctorResults(true);
+
+    } catch (error) {
+      console.error("Doctor search error:", error);
+    } finally {
+      setSearchingDoctor(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchDoctors(doctorSearch);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [doctorSearch, searchDoctors]);
 
   const fetchDropdownOptions = async () => {
     try {
@@ -1601,27 +1674,69 @@ const AddBilling = () => {
               </FormGroup> */}
 
               <FormGroup>
-                <FormLabel>Referring Practitioner</FormLabel>
+                <FormLabel>
+                  Referring Practitioner<RequiredStar>*</RequiredStar>
+                </FormLabel>
 
-                <ReactSelect
-                  classNamePrefix="react-select"
-                  options={practitionerOptions}
-                  placeholder="Select practitioner"
-                  isClearable
-                  isSearchable
-                  required
-                  value={practitionerOptions.find(
-                    (opt) => opt.value === billingData.ref_practitioner
-                  )}
-                  onChange={(selectedOption) =>
-                    handleBillingChange({
-                      target: {
-                        name: "ref_practitioner",
-                        value: selectedOption ? selectedOption.value : "",
-                      },
-                    })
-                  }
-                />
+                {billingData.ref_practitioner ? (
+                  <SelectedTag>
+                    <span>{billingData.ref_practitioner}</span>
+                    <ClearButton
+                      type="button"
+                      onClick={() =>
+                        setBillingData((prev) => ({
+                          ...prev,
+                          ref_practitioner: "",
+                        }))
+                      }
+                    >
+                      <X />
+                    </ClearButton>
+                  </SelectedTag>
+                ) : (
+                  <SearchInputWrapper>
+                    <SearchInput
+                      type="text"
+                      placeholder="Search doctor by name / mobile / reg no..."
+                      value={doctorSearch}
+                      onChange={(e) => setDoctorSearch(e.target.value)}
+                      onFocus={() =>
+                        doctorSearch.length >= 2 && setShowDoctorResults(true)
+                      }
+                      onBlur={() => setTimeout(() => setShowDoctorResults(false), 200)}
+                    />
+
+                    <SearchIcon>
+                      {searchingDoctor ? <Loader2 /> : <Search />}
+                    </SearchIcon>
+
+                    {showDoctorResults && (
+                      <SearchResults>
+                        {doctorResults.length > 0 ? (
+                          doctorResults.map((doc, index) => (
+                            <SearchResultItem
+                              key={index}
+                              onMouseDown={() => {
+                                setBillingData((prev) => ({
+                                  ...prev,
+                                  ref_practitioner: doc.name,
+                                }));
+                                setDoctorSearch("");
+                                setShowDoctorResults(false);
+                              }}
+                            >
+                              {doc.practitioner_name} ({doc.mobile_phone || "No Mobile"})
+                            </SearchResultItem>
+                          ))
+                        ) : (
+                          <SearchResultEmpty>
+                            {searchingDoctor ? "Searching..." : "No doctors found"}
+                          </SearchResultEmpty>
+                        )}
+                      </SearchResults>
+                    )}
+                  </SearchInputWrapper>
+                )}
               </FormGroup>
 
               <FormGroup>

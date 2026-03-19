@@ -555,7 +555,7 @@ const PathLabDashboard = () => {
       iconColor: "#3b82f6",
     },
     {
-      title: "Fees Collected",
+      title: "Fees Collected Today",
       value: `₹${Number(feesCollected).toFixed(2)}`,
       // value: feesCollected,
       color: "default",
@@ -1078,11 +1078,11 @@ const PathLabDashboard = () => {
                         cursor: isClickable ? "pointer" : "default"
                       }}
                       accentColor={insight.accentColor}
-                      onClick={
-                        insight.title === "Fees Collected"
-                          ? handleFeesCollectedClick
-                          : undefined
-                      }
+                      // onClick={
+                      //   insight.title === "Fees Collected"
+                      //     ? handleFeesCollectedClick
+                      //     : undefined
+                      // }
                     >
                       <InsightTitle>
                         <InsightIconWrapper iconBg={insight.iconBg} iconColor={insight.iconColor}>

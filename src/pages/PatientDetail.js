@@ -4,6 +4,7 @@ import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
+import { ArrowLeft } from "lucide-react";
 
 const PatientDetailContainer = styled.div`
   display: flex;
@@ -364,6 +365,7 @@ const PatientDetail = () => {
             </PatientBasicInfo>
           </PatientInfo>
           <ActionButtons>
+            <EditButton onClick={() => window.history.back()}><ArrowLeft size={16}/>Back</EditButton>
             <EditButton onClick={handleEditProfile}>Edit Profile</EditButton>
             <BookButton onClick={handleBookAppointment}>Book Appointment/Billing</BookButton>
             {patientData?.custom_company?.toLowerCase() ===

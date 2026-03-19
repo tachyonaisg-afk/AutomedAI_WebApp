@@ -342,6 +342,30 @@ const Patients = () => {
     }
   };
 
+  const fetchDashboardPatientCount = async () => {
+    try {
+      if (!dashboardCompany || !dashboardDate) return;
+
+      const res = await fetch(
+        `https://midl.automedai.in/appointments/company-patient-count?company=${encodeURIComponent(
+          dashboardCompany
+        )}&appointment_date=${dashboardDate}`
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        const count = data.data?.total_patients || 0;
+        setTotalCount(count);
+      } else {
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error("❌ Dashboard count error:", error);
+      setTotalCount(0);
+    }
+  };
+
   const fetchPatients = async (page, limit, patientId = null) => {
     try {
       setLoading(true);
@@ -426,7 +450,8 @@ const Patients = () => {
         );
 
         setPatientsData(mappedPatients);
-        setTotalCount(mappedPatients.length);
+        // setTotalCount(mappedPatients.length);
+        await fetchDashboardPatientCount();
         return;
       }
 
@@ -487,6 +512,12 @@ const Patients = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isDashboardFilter && dashboardCompany && dashboardDate) {
+      fetchDashboardPatientCount();
+    }
+  }, [dashboardCompany, dashboardDate, isDashboardFilter]);
 
   useEffect(() => {
     fetchPatients(currentPage, rowsPerPage, selectedPatientId);

@@ -814,7 +814,6 @@ const OPDPatientRegistration = () => {
     const [itemResults, setItemResults] = useState([]);
     const [showItemResults, setShowItemResults] = useState(false);
     const [searchingItem, setSearchingItem] = useState(false);
-    const [showPHCOnly, setShowPHCOnly] = useState(false);
     const [isAadhaarOCRScannerOpen, setIsAadhaarOCRScannerOpen] = useState(false);
     const casteOptions = [
         { label: "General", value: "General" },
@@ -1066,9 +1065,7 @@ const OPDPatientRegistration = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if (name === "company") {
-            setShowPHCOnly(false);
-        }
+        
         // Handle DOB change - calculate age
         if (name === "dateOfBirth") {
             setFormData((prev) => ({
@@ -1227,24 +1224,6 @@ const OPDPatientRegistration = () => {
         }));
     };
 
-    const getLockedCategory = useCallback(() => {
-        const validItems = items.filter(
-            (item) =>
-                item.item &&
-                item.item !== "STO-ITEM-2025-00539"
-        );
-
-        if (validItems.length === 0) return null;
-
-        const firstItemName = validItems[0].itemName?.toUpperCase() || "";
-
-        if (firstItemName.startsWith("LAB")) return "LAB";
-        if (firstItemName.startsWith("PLB")) return "PLB";
-        if (firstItemName.startsWith("PHC")) return "PHC";
-
-        return null;
-    }, [items]);
-
     // Debounced item search
     const searchItems = useCallback(async (query) => {
         if (!query || query.length < 2) {
@@ -1256,93 +1235,24 @@ const OPDPatientRegistration = () => {
         setSearchingItem(true);
 
         try {
-            let finalQuery = query.trim();
-
-            // Normalize prefix (PLB / LAB / PHC)
-            const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
-
-            if (prefixMatch) {
-                const prefix = prefixMatch[1].toUpperCase();
-                finalQuery = finalQuery.replace(/^(plb|lab|phc)\s+/i, `${prefix}- `);
-            }
-            const lockedCategory = getLockedCategory();
-
-            // -----------------------------
-            // PHC ONLY MODE
-            // -----------------------------
-            if (showPHCOnly) {
-                finalQuery = `PHC- ${query.trim()}`;
-            }
-            // -----------------------------
-            // LOCKED CATEGORY MODE
-            // -----------------------------
-            else if (lockedCategory) {
-                const cleanedQuery = query
-                    .trim()
-                    .replace(/^(plb|lab|phc)-?\s*/i, "");
-
-                finalQuery = `${lockedCategory}- ${cleanedQuery}`;
-            }
-
             const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
                 doctype: "Item",
-                txt: finalQuery,
+                txt: query.trim(),
                 page_length: 10,
             });
 
             let results = response.data?.results || response.data?.message || [];
 
-            console.log("📊 Search results data:", results);
-            console.log("📋 Processed search results:", results);
+            // ✅ FILTER: Exclude LAB, PHC, PLB
+            results = results.filter((item) => {
+                const desc = item.description?.toUpperCase() || "";
 
-            // --------------------------------------
-            // Filter PHC visibility logic
-            // --------------------------------------
-            // Normalize typed query
-            const typed = query.trim().toUpperCase();
-
-            // ------------------------------------------------
-            // PHC MODE (Highest Priority)
-            // ------------------------------------------------
-            if (showPHCOnly) {
-                results = results.filter((item) =>
-                    item.description?.toUpperCase().startsWith("PHC")
+                return !(
+                    desc.startsWith("LAB") ||
+                    desc.startsWith("PHC") ||
+                    desc.startsWith("PLB")
                 );
-            }
-
-            // ------------------------------------------------
-            // LOCKED CATEGORY MODE (Second Priority)
-            // ------------------------------------------------
-            else if (lockedCategory) {
-                results = results.filter((item) =>
-                    item.description?.toUpperCase().startsWith(lockedCategory)
-                );
-            }
-
-            // ------------------------------------------------
-            // NORMAL MODE (Default Behaviour)
-            // ------------------------------------------------
-            else {
-                // Never show PHC in normal mode
-                results = results.filter(
-                    (item) => !item.description?.toUpperCase().startsWith("PHC")
-                );
-
-                // If explicitly typing PLB → show PLB
-                if (typed.startsWith("PLB")) {
-                    results = results.filter((item) =>
-                        item.description?.toUpperCase().startsWith("PLB")
-                    );
-                }
-                // Otherwise → default LAB
-                else {
-                    results = results.filter((item) =>
-                        item.description?.toUpperCase().startsWith("LAB")
-                    );
-                }
-            }
-
-
+            });
 
             setItemResults(results);
             setShowItemResults(true);
@@ -1352,7 +1262,7 @@ const OPDPatientRegistration = () => {
         } finally {
             setSearchingItem(false);
         }
-    }, [showPHCOnly, getLockedCategory]);
+    }, []);
 
     // Debounce effect for item search
     useEffect(() => {
@@ -2519,29 +2429,6 @@ const OPDPatientRegistration = () => {
                                     <ItemsTitle>Items</ItemsTitle>
 
                                     <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-
-                                        {(
-                                            formData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
-                                            formData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
-                                        ) && (
-                                                <label
-                                                    style={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: "6px",
-                                                        fontSize: "16px",
-                                                        fontWeight: "600",
-                                                        color: "#333333",
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={showPHCOnly}
-                                                        onChange={(e) => setShowPHCOnly(e.target.checked)}
-                                                    />
-                                                    Show Government Rate Only
-                                                </label>
-                                            )}
 
                                         <IconButton type="button" onClick={addItem}>
                                             <Plus />
