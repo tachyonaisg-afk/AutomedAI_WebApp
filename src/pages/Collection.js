@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Search, Filter, Plus, Check, X } from "lucide-react";
@@ -363,6 +364,8 @@ const IconButton = styled.button`
 const Collection = () => {
   usePageTitle("Sample Collection");
   const navigate = useNavigate();
+  const location = useLocation();
+  const filtersFromState = location.state?.filters;
   const [searchQuery, setSearchQuery] = useState("");
   const [collectionsData, setCollectionsData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -418,12 +421,22 @@ const Collection = () => {
         "_seen",
       ]);
 
-      const response = await apiService.get(API_ENDPOINTS.SAMPLE_COLLECTION.LIST, {
+      const params = {
         limit_start: 0,
         limit_page_length: 1200,
         fields: fields,
         order_by: "creation desc",
-      });
+      };
+
+      // ✅ Apply dashboard filter if exists
+      if (filtersFromState) {
+        params.filters = JSON.stringify(filtersFromState);
+      }
+
+      const response = await apiService.get(
+        API_ENDPOINTS.SAMPLE_COLLECTION.LIST,
+        params
+      );
 
       if (response.data?.data) {
         // Transform API response to match table format
@@ -467,7 +480,7 @@ const Collection = () => {
   useEffect(() => {
     fetchCollections();
     fetchEmployees();
-  }, []);
+  }, [filtersFromState]);
 
   const columns = [
     { key: "sample_id", label: "SAMPLE ID" },
@@ -738,6 +751,11 @@ const Collection = () => {
     <Layout>
       <CollectionContainer>
         <PageTitle>Sample Collection List</PageTitle>
+        {filtersFromState?.docstatus === 0 && (
+          <div style={{ marginBottom: "10px", color: "#f59e0b" }}>
+            Showing Pending Samples
+          </div>
+        )}
 
         <ToolbarSection>
           <SearchContainer>

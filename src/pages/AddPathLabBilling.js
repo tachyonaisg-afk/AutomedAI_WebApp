@@ -719,7 +719,7 @@ const SearchButton = styled.button`
   }
 `;
 
-const AddBilling = () => {
+const AddPathLabBilling = () => {
   usePageTitle("Add Billing");
   const navigate = useNavigate();
   const location = useLocation();
@@ -761,6 +761,7 @@ const AddBilling = () => {
   const [itemResults, setItemResults] = useState([]);
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
+  const [showPHCOnly, setShowPHCOnly] = useState(false);
   // Dropdown options
   const [practitioners, setPractitioners] = useState([]);
   const [serviceUnits, setServiceUnits] = useState([]);
@@ -998,6 +999,23 @@ const AddBilling = () => {
     }
   }, []);
 
+  const getLockedCategory = useCallback(() => {
+    const validItems = items.filter(
+      (item) =>
+        item.item &&
+        item.item !== "STO-ITEM-2025-00539"
+    );
+
+    if (validItems.length === 0) return null;
+
+    const firstItemName = validItems[0].itemName?.toUpperCase() || "";
+
+    if (firstItemName.startsWith("LAB")) return "LAB";
+    if (firstItemName.startsWith("PLB")) return "PLB";
+    if (firstItemName.startsWith("PHC")) return "PHC";
+
+    return null;
+  }, [items]);
   // Debounced item search
   const searchItems = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -1009,24 +1027,91 @@ const AddBilling = () => {
     setSearchingItem(true);
 
     try {
+      let finalQuery = query.trim();
+
+      // Normalize prefix (PLB / LAB / PHC)
+      const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
+
+      if (prefixMatch) {
+        const prefix = prefixMatch[1].toUpperCase();
+        finalQuery = finalQuery.replace(/^(plb|lab|phc)\s+/i, `${prefix}- `);
+      }
+      const lockedCategory = getLockedCategory();
+
+      // -----------------------------
+      // PHC ONLY MODE
+      // -----------------------------
+      if (showPHCOnly) {
+        finalQuery = `PHC- ${query.trim()}`;
+      }
+      // -----------------------------
+      // LOCKED CATEGORY MODE
+      // -----------------------------
+      else if (lockedCategory) {
+        const cleanedQuery = query
+          .trim()
+          .replace(/^(plb|lab|phc)-?\s*/i, "");
+
+        finalQuery = `${lockedCategory}- ${cleanedQuery}`;
+      }
+
       const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
         doctype: "Item",
-        txt: query.trim(),
+        txt: finalQuery,
         page_length: 10,
       });
 
       let results = response.data?.results || response.data?.message || [];
 
-      // ✅ FILTER: Exclude LAB, PHC, PLB
-      results = results.filter((item) => {
-        const desc = item.description?.toUpperCase() || "";
+      console.log("📊 Search results data:", results);
+      console.log("📋 Processed search results:", results);
 
-        return !(
-          desc.startsWith("LAB") ||
-          desc.startsWith("PHC") ||
-          desc.startsWith("PLB")
+      // --------------------------------------
+      // Filter PHC visibility logic
+      // --------------------------------------
+      // Normalize typed query
+      const typed = query.trim().toUpperCase();
+
+      // ------------------------------------------------
+      // PHC MODE (Highest Priority)
+      // ------------------------------------------------
+      if (showPHCOnly) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith("PHC")
         );
-      });
+      }
+
+      // ------------------------------------------------
+      // LOCKED CATEGORY MODE (Second Priority)
+      // ------------------------------------------------
+      else if (lockedCategory) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith(lockedCategory)
+        );
+      }
+
+      // ------------------------------------------------
+      // NORMAL MODE (Default Behaviour)
+      // ------------------------------------------------
+      else {
+        // Never show PHC in normal mode
+        results = results.filter(
+          (item) => !item.description?.toUpperCase().startsWith("PHC")
+        );
+
+        // If explicitly typing PLB → show PLB
+        if (typed.startsWith("PLB")) {
+          results = results.filter((item) =>
+            item.description?.toUpperCase().startsWith("PLB")
+          );
+        }
+        // Otherwise → default LAB
+        else {
+          results = results.filter((item) =>
+            item.description?.toUpperCase().startsWith("LAB")
+          );
+        }
+      }
 
       setItemResults(results);
       setShowItemResults(true);
@@ -1036,7 +1121,7 @@ const AddBilling = () => {
     } finally {
       setSearchingItem(false);
     }
-  }, []);
+  }, [showPHCOnly, getLockedCategory]);
 
   // Debounce effect for patient search
   useEffect(() => {
@@ -1226,33 +1311,33 @@ const AddBilling = () => {
       "Automed AI": "UPI-AAI - AMAI",
     }
   };
-  // useEffect(() => {
-  //   setItems((prevItems) => {
-  //     let filteredItems;
+  useEffect(() => {
+    setItems((prevItems) => {
+      let filteredItems;
 
-  //     if (showPHCOnly) {
-  //       filteredItems = prevItems.filter((item) =>
-  //         item.itemName?.toUpperCase().startsWith("PHC")
-  //       );
-  //     } else {
-  //       filteredItems = prevItems.filter(
-  //         (item) => !item.itemName?.toUpperCase().startsWith("PHC")
-  //       );
-  //     }
+      if (showPHCOnly) {
+        filteredItems = prevItems.filter((item) =>
+          item.itemName?.toUpperCase().startsWith("PHC")
+        );
+      } else {
+        filteredItems = prevItems.filter(
+          (item) => !item.itemName?.toUpperCase().startsWith("PHC")
+        );
+      }
 
-  //     if (filteredItems.length === 0) {
-  //       return [{
-  //         item: "",
-  //         itemName: "",
-  //         qty: 1,
-  //         rate: 0,
-  //         amount: 0,
-  //       }];
-  //     }
+      if (filteredItems.length === 0) {
+        return [{
+          item: "",
+          itemName: "",
+          qty: 1,
+          rate: 0,
+          amount: 0,
+        }];
+      }
 
-  //     return filteredItems;
-  //   });
-  // }, [showPHCOnly]);
+      return filteredItems;
+    });
+  }, [showPHCOnly]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1734,6 +1819,20 @@ const AddBilling = () => {
 
               <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
+                {(
+                  billingData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
+                  billingData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
+                ) && (
+                    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
+                      <input
+                        type="checkbox"
+                        checked={showPHCOnly}
+                        onChange={(e) => setShowPHCOnly(e.target.checked)}
+                      />
+                      Show Government Rate Only
+                    </label>
+                  )}
+
                 <IconButton type="button" onClick={addItem}>
                   <Plus />
                 </IconButton>
@@ -1920,4 +2019,4 @@ const AddBilling = () => {
   );
 };
 
-export default AddBilling;
+export default AddPathLabBilling;

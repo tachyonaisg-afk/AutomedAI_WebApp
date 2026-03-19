@@ -978,6 +978,14 @@ const PathLabDashboard = () => {
       }
     });
   };
+  const handlePendingSamplesClick = () => {
+    navigate("/sample-collection", {
+      state: {
+        filters: { docstatus: 0 },
+        fromDashboard: true
+      }
+    });
+  };
 
   return (
     <Layout>
@@ -1068,7 +1076,8 @@ const PathLabDashboard = () => {
                   const IconComponent = insight.icon;
 
                   const isClickable =
-                    insight.title === "Fees Collected";
+                    insight.title === "Fees Collected" ||
+                    insight.title === "Pending Sample Collections";
 
                   return (
                     <InsightCard
@@ -1078,11 +1087,13 @@ const PathLabDashboard = () => {
                         cursor: isClickable ? "pointer" : "default"
                       }}
                       accentColor={insight.accentColor}
-                      // onClick={
-                      //   insight.title === "Fees Collected"
-                      //     ? handleFeesCollectedClick
-                      //     : undefined
-                      // }
+                      onClick={() => {
+                        if (insight.title === "Fees Collected") {
+                          handleFeesCollectedClick();
+                        } else if (insight.title === "Pending Sample Collections") {
+                          handlePendingSamplesClick();
+                        }
+                      }}
                     >
                       <InsightTitle>
                         <InsightIconWrapper iconBg={insight.iconBg} iconColor={insight.iconColor}>
@@ -1101,84 +1112,6 @@ const PathLabDashboard = () => {
             )}
           </Section>
         </FadeInWrapper>
-
-        {/* <FadeInWrapper ref={(el) => (sectionRefs.current.doctor = el)} data-sectionid="doctor" visible={visibleSections.doctor} delay={0.15} style={{ position: 'relative', zIndex: 1 }}>
-          <Section>
-            <SectionTitle>Assigned Doctors</SectionTitle>
-
-            <div style={{ display: "flex", gap: "16px", marginBottom: "20px" }}>
-              <select
-                value={selectedCompany}
-                onChange={(e) => setSelectedCompany(e.target.value)}
-                style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
-                hidden
-              >
-                {companies.length === 0 ? (
-                  <option>Loading companies...</option>
-                ) : (
-                  companies.map((company, index) => (
-                    <option key={index} value={company.name}>
-                      {company.name}
-                    </option>
-                  ))
-                )}
-              </select>
-
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #ddd" }}
-              />
-            </div>
-
-            {isLoading ? (
-              <DoctorAvailabilityCard>
-                <SkeletonBlock height="120px" style={{ width: "100%" }} />
-              </DoctorAvailabilityCard>
-            ) : (
-              <DoctorAvailabilityCard>
-                {availableSlots.length === 0 ? (
-                  <p>No doctors available.</p>
-                ) : (
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr>
-                        <th style={thStyle}>Doctor ID</th>
-                        <th style={thStyle}>Doctor Name</th>
-                        <th style={thStyle}>Company</th>
-                        <th style={thStyle}>Available Date</th>
-                        <th style={thStyle}>Start Time</th>
-                        <th style={thStyle}>End Time</th>
-                        <th style={thStyle}>Room Name</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {availableSlots.map((slot) => (
-                        <tr key={slot.id}>
-                          <td style={tdStyle}>{slot.doctor_id}</td>
-                          <td style={tdStyle}>
-                            {slot.doctor_name}
-                          </td>
-                          <td style={tdStyle}>{slot.company}</td>
-                          <td style={tdStyle}>
-                            {new Date(slot.schedule_date).toLocaleDateString("en-IN")}
-                          </td>
-                          <td style={tdStyle}>{formatTimeToAMPM(slot.from_time)}</td>
-                          <td style={tdStyle}>{formatTimeToAMPM(slot.to_time)}</td>
-                          <td style={tdStyle}>
-                            {slot.room_name}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </DoctorAvailabilityCard>
-            )}
-          </Section>
-
-        </FadeInWrapper> */}
       </PageWrapper>
     </Layout>
   );

@@ -633,7 +633,7 @@ const Dashboard = () => {
           // This causes duplicate parent records, which your logic below correctly handles!
           ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
         ],
-        limit_page_length: 1000,
+        limit_page_length: 10000,
         limit_start: 0
       };
 
