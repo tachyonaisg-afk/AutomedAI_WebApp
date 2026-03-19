@@ -1065,7 +1065,7 @@ const OPDPatientRegistration = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        
+
         // Handle DOB change - calculate age
         if (name === "dateOfBirth") {
             setFormData((prev) => ({
@@ -1727,7 +1727,11 @@ const OPDPatientRegistration = () => {
                     alert("Patient registered successfully!");
                 }
 
-                navigate("/opd/recent-opd-patients");
+                navigate(`/prescription/${patientId}`, {
+                    state: {
+                        autoPrint: true
+                    }
+                });
             } else {
                 console.error("Error creating patient:", data);
                 alert(`Error creating patient: ${data.message || "Unknown error"}`);

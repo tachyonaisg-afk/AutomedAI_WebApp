@@ -31,6 +31,7 @@ import RecentOPDPatients from './pages/RecentOPDPatients';
 import OPDPatientRegistration from './pages/OPDPatientRegistration';
 import EmpanelDoctor from './pages/EmpanelDoctor';
 import PathLabDashboard from './pages/PathLabDashboard';
+import AddPathLabBilling from './pages/AddPathLabBilling';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -207,7 +208,7 @@ function App() {
             path="/pathlab/billing/add"
             element={
               <ProtectedRoute>
-                <AddBilling />
+                <AddPathLabBilling />
               </ProtectedRoute>
             }
           />

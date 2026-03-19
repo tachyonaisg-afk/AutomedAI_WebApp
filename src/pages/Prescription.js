@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Printer, Download, ArrowLeft } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
@@ -489,6 +490,7 @@ const Prescription = () => {
   usePageTitle("Prescription");
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const todayISO = new Date().toISOString().split("T")[0];
   const [patientData, setPatientData] = useState(null);
   const [practitioners, setPractitioners] = useState([]);
@@ -902,6 +904,17 @@ const Prescription = () => {
     window.print();
   };
 
+  useEffect(() => {
+    if (location.state?.autoPrint && patientData && !loading) {
+      setTimeout(() => {
+        handlePrint();
+
+        // Remove state so refresh doesn't re-trigger
+        navigate(location.pathname, { replace: true });
+      }, 800);
+    }
+  }, [location.state, patientData, loading]);
+
   const handleDownloadPDF = async () => {
     try {
       const html2pdf = (await import('html2pdf.js')).default;
@@ -946,6 +959,7 @@ const Prescription = () => {
       </Container>
     );
   }
+
 
   return (
     <Container>
