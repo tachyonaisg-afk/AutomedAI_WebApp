@@ -826,6 +826,18 @@ const PathLabDashboard = () => {
     fetchDoctorAvailability();
   }, [selectedCompany, selectedDate]);
 
+  const handleSearchKeyDown = (e) => {
+    if (e.key === "Enter" && searchQuery.trim()) {
+      navigate("/patients", {
+        state: {
+          searchQuery: searchQuery.trim(),
+        },
+      });
+
+      setShowSearchResults(false);
+    }
+  };
+
   // Search patients function
   const searchPatients = async (query) => {
     if (!query.trim()) {
@@ -1034,6 +1046,7 @@ const PathLabDashboard = () => {
                   placeholder="Search for a patient by name, ID, or phone number"
                   value={searchQuery}
                   onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyDown}
                   onFocus={() => searchQuery.length >= 2 && searchResults.length > 0 && setShowSearchResults(true)}
                   onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                 />
