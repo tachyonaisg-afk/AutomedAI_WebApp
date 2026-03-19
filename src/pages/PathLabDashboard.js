@@ -979,7 +979,7 @@ const PathLabDashboard = () => {
     });
   };
   const handlePendingSamplesClick = () => {
-    navigate("/sample-collection", {
+    navigate("/pathlab/collection", {
       state: {
         filters: { docstatus: 0 },
         fromDashboard: true

@@ -964,9 +964,9 @@ const Prescription = () => {
   return (
     <Container>
       <Sidebar>
-        <BackButton onClick={() => navigate(`/patients/${id}`)}>
+        <BackButton onClick={() => window.history.back()}>
           <ArrowLeft />
-          Back to Patient
+          Back
         </BackButton>
 
         <Title style={{ fontSize: '18px', marginTop: '16px' }}>Prescription</Title>

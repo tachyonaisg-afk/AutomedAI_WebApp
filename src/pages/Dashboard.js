@@ -532,6 +532,7 @@ const Dashboard = () => {
   const [doctorRoomMap, setDoctorRoomMap] = useState({});
   const [totalPatientsToday, setTotalPatientsToday] = useState("-");
   const [pathlabSalesToday, setPathlabSalesToday] = useState(0);
+  const [doctorPatientCountMap, setDoctorPatientCountMap] = useState({});
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/opd/patient-registration" },
@@ -828,6 +829,14 @@ const Dashboard = () => {
                 selectedCompany
               );
             }
+            //patient count
+            if (!doctorPatientCountMap[slot.doctor_id]) {
+              fetchDoctorPatientCount(
+                slot.doctor_id,
+                selectedCompany,
+                selectedDate
+              );
+            }
           });
         } else {
           setAvailableSlots([]);
@@ -983,6 +992,34 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error("Room fetch error:", error);
+    }
+  };
+
+  const fetchDoctorPatientCount = async (doctorId, company, date) => {
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/appointments/count?doctor_id=${doctorId}&company=${encodeURIComponent(company)}&appointment_date=${date}`
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setDoctorPatientCountMap((prev) => ({
+          ...prev,
+          [doctorId]: data.data?.count || 0,
+        }));
+      } else {
+        setDoctorPatientCountMap((prev) => ({
+          ...prev,
+          [doctorId]: 0,
+        }));
+      }
+    } catch (error) {
+      console.error("Doctor patient count error:", error);
+      setDoctorPatientCountMap((prev) => ({
+        ...prev,
+        [doctorId]: 0,
+      }));
     }
   };
 
@@ -1188,11 +1225,13 @@ const Dashboard = () => {
                       <tr>
                         <th style={thStyle}>Doctor ID</th>
                         <th style={thStyle}>Doctor Name</th>
-                        <th style={thStyle}>Company</th>
-                        <th style={thStyle}>Available Date</th>
+                        <th style={thStyle}>Clinic</th>
+                        {/* <th style={thStyle}>Available Date</th> */}
                         <th style={thStyle}>Start Time</th>
                         <th style={thStyle}>End Time</th>
                         <th style={thStyle}>Room Name</th>
+                        <th style={thStyle}>Tickets Issued</th>
+
                       </tr>
                     </thead>
                     <tbody>
@@ -1203,13 +1242,16 @@ const Dashboard = () => {
                             {slot.doctor_name}
                           </td>
                           <td style={tdStyle}>{slot.company}</td>
-                          <td style={tdStyle}>
+                          {/* <td style={tdStyle}>
                             {new Date(slot.schedule_date).toLocaleDateString("en-IN")}
-                          </td>
+                          </td> */}
                           <td style={tdStyle}>{formatTimeToAMPM(slot.from_time)}</td>
                           <td style={tdStyle}>{formatTimeToAMPM(slot.to_time)}</td>
                           <td style={tdStyle}>
                             {slot.room_name}
+                          </td>
+                          <td style={tdStyle}>
+                            {doctorPatientCountMap[slot.doctor_id] ?? "-"}
                           </td>
                         </tr>
                       ))}
