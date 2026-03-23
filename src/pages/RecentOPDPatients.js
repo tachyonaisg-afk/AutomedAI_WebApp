@@ -271,7 +271,7 @@ const RecentOPDPatients = () => {
       const response = await api.get(
         `/resource/Sales Invoice`,
         {
-          limit_page_length: 20,
+          // limit_page_length: 20,
           fields: JSON.stringify([
             "name",
             "patient",

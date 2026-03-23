@@ -251,7 +251,7 @@ const Sidebar = () => {
   const [opdDropdownHeight, setOPDDropdownHeight] = useState(isOPDActive ? "auto" : 0);
   const opdDropdownRef = useRef(null);
   const isOPDInitialMount = useRef(true);
-  const [role, setRole] = useState(null);
+  // const [role, setRole] = useState(null);
   // PathLab dropdown state
   const isPathLabActive = location.pathname.startsWith("/pathlab");
   const [isPathLabOpen, setIsPathLabOpen] = useState(isPathLabActive);
@@ -300,74 +300,60 @@ const Sidebar = () => {
   //     console.error("Error reading user from localStorage:", error);
   //   }
   // }, []);
-  const userData = localStorage.getItem("user");
-  let currentUser = null;
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const role = userData?.role;
+  const currentUser = userData?.username;
 
-  if (userData) {
-    try {
-      const parsedUser = JSON.parse(userData);
-      currentUser = parsedUser?.username;
-    } catch (error) {
-      console.error("Error parsing user:", error);
-    }
-  }
+  // useEffect(() => {
+  //   const fetchUserRole = async () => {
+  //     if (!currentUser) return;
 
-  useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!currentUser) return;
+  //     try {
+  //       const res = await api.get(
+  //         `/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${currentUser}"]]`
+  //       );
 
-      try {
-        const res = await api.get(
-          `/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${currentUser}"]]`
-        );
+  //       const data = await res.json();
 
-        const data = await res.json();
+  //       if (data?.data?.length) {
+  //         setRole(data.data[0].role_profile_name);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching user role:", error);
+  //     }
+  //   };
 
-        if (data?.data?.length) {
-          setRole(data.data[0].role_profile_name);
-        }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
-      }
-    };
-
-    fetchUserRole();
-  }, [currentUser]);
+  //   fetchUserRole();
+  // }, [currentUser]);
 
   const canAccessOPD =
-    role === "" ||
-    role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD" ||
     role === "Front_Desk_OPD";
 
   const canAccessPathLab =
-    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
-    role === null ||
     role === "Front_Desk_LAB";
 
   const canAccessReports =
-    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
     role === "Admin_OPD" ||
     role === "Front_Desk_LAB" ||
-    role === null ||
     role === "Front_Desk_OPD";
 
   const canAccessOPDAdmin =
-    role === "" ||
     role === "Admin_OPD_LAB" ||
-    role === null ||
     role === "Admin_OPD";
 
   const canAccessPathLabAdmin =
-    role === "" ||
     role === "Admin_OPD_LAB" ||
-    role === null ||
     role === "Admin_LAB";
+  const homeRoute =
+  role === "Admin_LAB" || role === "Front_Desk_LAB"
+    ? "/pathlab"
+    : "/opd";
 
   // OPD submenu items
   const opdSubItems = [
@@ -464,7 +450,7 @@ const Sidebar = () => {
 
   return (
     <SidebarContainer>
-      <SidebarLogo to="/opd">
+      <SidebarLogo to={homeRoute}>
         <LogoIcon src="/Logo_light_web.png" alt="Logo" />
       </SidebarLogo>
 
