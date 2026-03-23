@@ -805,7 +805,7 @@ const Dashboard = () => {
         setIsLoading(true);
 
         const res = await fetch(
-          `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${selectedCompany}&schedule_date=${selectedDate}`
+          `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${encodeURIComponent(selectedCompany)}&schedule_date=${selectedDate}`
         );
 
         const data = await res.json();
