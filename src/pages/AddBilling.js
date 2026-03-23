@@ -738,7 +738,10 @@ const AddBilling = () => {
     patient_name: "",
     apply_discount_on: "Grand Total",
     additional_discount_percentage: 0,
-    ref_practitioner: "",
+    ref_practitioner: {
+      id: "",
+      name: "",
+    },
     service_unit: "",
     payment_type: "Cash",
     due_date: new Date().toISOString().split("T")[0],
@@ -971,22 +974,16 @@ const AddBilling = () => {
 
   useEffect(() => {
     const applyDoctorFee = async () => {
-      if (!billingData.ref_practitioner) return;
+      const doctorId = billingData.ref_practitioner?.id;
+      if (!doctorId) return;
       if (items.length === 0) return;
 
-      const doctorId = billingData.ref_practitioner;
-      const company = billingData.company;
-
-      // Fetch fee
-      const fee = await fetchDoctorFee(company, doctorId);
-
+      const fee = await fetchDoctorFee(billingData.company, doctorId);
       if (!fee) return;
 
-      // ✅ Update ONLY default item (index 0)
       setItems((prevItems) => {
         const updated = [...prevItems];
 
-        // Apply only on first item (default item)
         if (updated[0]) {
           const qty = parseFloat(updated[0].qty) || 1;
 
@@ -1002,7 +999,7 @@ const AddBilling = () => {
     };
 
     applyDoctorFee();
-  }, [billingData.ref_practitioner, billingData.company]);
+  }, [billingData.ref_practitioner?.id, billingData.company]);
 
   //   useEffect(() => {
   //   const loadDefaultItem = async () => {
@@ -1383,8 +1380,8 @@ const AddBilling = () => {
       };
 
       // Add optional fields if they have values
-      if (billingData.ref_practitioner) {
-        invoicePayload.ref_practitioner = billingData.ref_practitioner;
+      if (billingData.ref_practitioner?.id) {
+        invoicePayload.ref_practitioner = billingData.ref_practitioner?.id;
       }
       // if (billingData.service_unit) {
       //   invoicePayload.service_unit = billingData.service_unit;
@@ -1656,15 +1653,15 @@ const AddBilling = () => {
                   Referring Practitioner<RequiredStar>*</RequiredStar>
                 </FormLabel>
 
-                {billingData.ref_practitioner ? (
+                {billingData.ref_practitioner?.id ? (
                   <SelectedTag>
-                    <span>{billingData.ref_practitioner}</span>
+                    <span>{billingData.ref_practitioner.name}</span>
                     <ClearButton
                       type="button"
                       onClick={() =>
                         setBillingData((prev) => ({
                           ...prev,
-                          ref_practitioner: "",
+                          ref_practitioner: { id: "", name: "" },
                         }))
                       }
                     >
@@ -1697,7 +1694,10 @@ const AddBilling = () => {
                               onMouseDown={() => {
                                 setBillingData((prev) => ({
                                   ...prev,
-                                  ref_practitioner: doc.name,
+                                  ref_practitioner: {
+                                    id: doc.name,
+                                    name: doc.practitioner_name,
+                                  },
                                 }));
                                 setDoctorSearch("");
                                 setShowDoctorResults(false);
@@ -1980,7 +1980,7 @@ const AddBilling = () => {
           </ActionButtons>
         </form>
       </BillingContainer>
-    </Layout>
+    </Layout >
   );
 };
 

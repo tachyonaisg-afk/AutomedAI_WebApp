@@ -32,6 +32,7 @@ import OPDPatientRegistration from './pages/OPDPatientRegistration';
 import EmpanelDoctor from './pages/EmpanelDoctor';
 import PathLabDashboard from './pages/PathLabDashboard';
 import AddPathLabBilling from './pages/AddPathLabBilling';
+import PathlabPatients from './pages/PathlabPatients';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -180,11 +181,20 @@ function App() {
             }
           />
           {/* PathLab Routes */}
+
           <Route
             path="/pathlab"
             element={
               <ProtectedRoute>
                 <PathLabDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/patients"
+            element={
+              <ProtectedRoute>
+                <PathlabPatients />
               </ProtectedRoute>
             }
           />

@@ -1064,10 +1064,10 @@ const Prescription = () => {
                 <Printer />
                 Print
               </PrintButton>
-              <DownloadButton onClick={handleDownloadPDF}>
+              {/* <DownloadButton onClick={handleDownloadPDF}>
                 <Download />
                 Download PDF
-              </DownloadButton>
+              </DownloadButton> */}
             </ButtonGroup>
           </PreviewHeader>
 

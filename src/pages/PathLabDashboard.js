@@ -828,7 +828,7 @@ const PathLabDashboard = () => {
 
   const handleSearchKeyDown = (e) => {
     if (e.key === "Enter" && searchQuery.trim()) {
-      navigate("/patients", {
+      navigate("/pathlab/patients", {
         state: {
           searchQuery: searchQuery.trim(),
         },
@@ -882,7 +882,7 @@ const PathLabDashboard = () => {
     setSearchQuery("");
     setSearchResults([]);
     // Navigate to patients page with selected patient info
-    navigate('/patients', {
+    navigate('/pathlab/patients', {
       state: {
         selectedPatientId: patientId,
         selectedPatientDescription: patient.description
