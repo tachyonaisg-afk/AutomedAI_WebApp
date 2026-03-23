@@ -616,6 +616,8 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
                                                 name="mobile_phone"
                                                 value={formData.mobile_phone}
                                                 onChange={handleChange}
+                                                pattern="[0-9]{10}"
+                                                maxLength={10}
                                                 required
                                             />
                                         </InputGroup>

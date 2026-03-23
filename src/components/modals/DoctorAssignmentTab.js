@@ -505,7 +505,7 @@ const DoctorAssignmentTab = () => {
 
         try {
             const res = await fetch(
-                `https://midl.automedai.in/rooms/all?company=${company}`
+                `https://midl.automedai.in/rooms/all?company=${encodeURIComponent(company)}`
             );
 
             const data = await res.json();
@@ -623,7 +623,7 @@ const DoctorAssignmentTab = () => {
 
         try {
             const res = await fetch(
-                `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${selectedCompany}&schedule_date=${selectedDate}`
+                `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${encodeURIComponent(selectedCompany)}&schedule_date=${selectedDate}`
             );
 
             const data = await res.json();

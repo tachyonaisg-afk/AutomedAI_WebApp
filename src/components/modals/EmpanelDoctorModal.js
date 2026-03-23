@@ -396,25 +396,25 @@ function EmpanelDoctorModal({ onClose }) {
   });
 
   // ✅ Fetch Current User
-      useEffect(() => {
-  
-          try {
-  
-              const userData = localStorage.getItem("user");
-  
-              if (!userData) return;
-  
-              const parsedUser = JSON.parse(userData);
-  
-              if (parsedUser?.full_name) {
-  
-                  setCurrentUser(parsedUser.full_name);
-  
-              }
-  
-          } catch { }
-  
-      }, []);
+  useEffect(() => {
+
+    try {
+
+      const userData = localStorage.getItem("user");
+
+      if (!userData) return;
+
+      const parsedUser = JSON.parse(userData);
+
+      if (parsedUser?.full_name) {
+
+        setCurrentUser(parsedUser.full_name);
+
+      }
+
+    } catch { }
+
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -600,6 +600,8 @@ function EmpanelDoctorModal({ onClose }) {
                         name="mobile_phone"
                         value={formData.mobile_phone}
                         onChange={handleChange}
+                        pattern="[0-9]{10}"
+                        maxLength={10}
                         required
                       />
                     </InputGroup>
