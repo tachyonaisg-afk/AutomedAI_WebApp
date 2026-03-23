@@ -1724,6 +1724,7 @@ const AddBilling = () => {
                   name="posting_date"
                   value={billingData.posting_date}
                   onChange={handleBillingChange}
+                  disabled
                 />
               </FormGroup>
 

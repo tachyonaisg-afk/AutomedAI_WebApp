@@ -718,6 +718,7 @@ const OPDPatientRegistration = () => {
     const [availableDoctors, setAvailableDoctors] = useState([]);
     const [loadingDoctors, setLoadingDoctors] = useState(false);
     const [mobileError, setMobileError] = useState("");
+    const [doctorFeeMap, setDoctorFeeMap] = useState({});
     const [newDoctorData, setNewDoctorData] = useState({
         first_name: "",
         last_name: "",
@@ -1406,7 +1407,7 @@ const OPDPatientRegistration = () => {
             setLoadingDoctors(false);
         }
     };
-    
+
     useEffect(() => {
         const selectedDate =
             formData.appointmentDate || new Date().toISOString().split("T")[0];
@@ -1816,6 +1817,71 @@ const OPDPatientRegistration = () => {
 
         return nowIST <= doctorEndTime;
     });
+
+    const fetchDoctorFee = async (company, doctorId) => {
+        try {
+            const res = await fetch(
+                `https://midl.automedai.in/doctor_company/empanel/company/${encodeURIComponent(company)}/doctor/${doctorId}`
+            );
+
+            const data = await res.json();
+
+            if (data.success && data.data?.consultation_fee) {
+                const fee = data.data.consultation_fee;
+
+                setDoctorFeeMap((prev) => ({
+                    ...prev,
+                    [doctorId]: fee,
+                }));
+
+                return fee;
+            }
+
+            return null;
+        } catch (error) {
+            console.error("Error fetching fee:", error);
+            return null;
+        }
+    };
+    useEffect(() => {
+        const applyDoctorFee = async () => {
+            const doctorId = billingData.referringPractitioner;
+            const company = formData.company;
+
+            if (!doctorId || !company) return;
+            if (items.length === 0) return;
+
+            // Check if consultation item exists
+            const hasConsultationItem = items.some(
+                (item) => item.item === "STO-ITEM-2025-00539"
+            );
+
+            if (!hasConsultationItem) return;
+
+            // Fetch fee
+            const fee = await fetchDoctorFee(company, doctorId);
+
+            if (!fee) return;
+
+            // Apply fee ONLY to consultation item
+            setItems((prevItems) =>
+                prevItems.map((item) => {
+                    if (item.item === "STO-ITEM-2025-00539") {
+                        const qty = parseFloat(item.qty) || 1;
+
+                        return {
+                            ...item,
+                            rate: fee,
+                            amount: fee * qty,
+                        };
+                    }
+                    return item;
+                })
+            );
+        };
+
+        applyDoctorFee();
+    }, [billingData.referringPractitioner, formData.company]);
 
     return (
         <Layout>
@@ -2416,12 +2482,35 @@ const OPDPatientRegistration = () => {
                                                     .find((opt) => opt.value === billingData.referringPractitioner) || null
                                             }
 
-                                            onChange={(selected) =>
+                                            onChange={async (selected) => {
+                                                const doctorId = selected ? selected.value : "";
+
                                                 setBillingData((prev) => ({
                                                     ...prev,
-                                                    referringPractitioner: selected ? selected.value : "",
-                                                }))
-                                            }
+                                                    referringPractitioner: doctorId,
+                                                }));
+
+                                                if (!doctorId) return;
+
+                                                const fee = await fetchDoctorFee(formData.company, doctorId);
+
+                                                if (!fee) return;
+
+                                                setItems((prevItems) =>
+                                                    prevItems.map((item) => {
+                                                        if (item.item === "STO-ITEM-2025-00539") {
+                                                            const qty = parseFloat(item.qty) || 1;
+
+                                                            return {
+                                                                ...item,
+                                                                rate: fee,
+                                                                amount: fee * qty,
+                                                            };
+                                                        }
+                                                        return item;
+                                                    })
+                                                );
+                                            }}
 
                                             placeholder={
                                                 loadingDoctors
