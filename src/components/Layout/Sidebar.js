@@ -327,16 +327,22 @@ const Sidebar = () => {
   // }, [currentUser]);
 
   const canAccessOPD =
+    role === null ||
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD" ||
     role === "Front_Desk_OPD";
 
   const canAccessPathLab =
+    role === null ||
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
     role === "Front_Desk_LAB";
 
   const canAccessReports =
+    role === null ||
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
     role === "Admin_OPD" ||
@@ -344,16 +350,21 @@ const Sidebar = () => {
     role === "Front_Desk_OPD";
 
   const canAccessOPDAdmin =
+    role === null ||
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD";
 
   const canAccessPathLabAdmin =
+    role === null ||
+    role === "" ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB";
+
   const homeRoute =
-  role === "Admin_LAB" || role === "Front_Desk_LAB"
-    ? "/pathlab"
-    : "/opd";
+    role === "Admin_LAB" || role === "Front_Desk_LAB"
+      ? "/pathlab"
+      : "/opd";
 
   // OPD submenu items
   const opdSubItems = [
