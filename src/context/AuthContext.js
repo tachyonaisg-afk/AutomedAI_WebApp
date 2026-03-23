@@ -62,11 +62,32 @@ export const AuthProvider = ({ children }) => {
       // ERPNext returns 200 OK on successful login with cookies set
       // Response structure: { message: "Logged In", home_page: "/app/home", full_name: "User Name" }
       if (response.ok) {
+        let role = null;
+
+        try {
+          // Fetch role from ERPNext
+          const roleRes = await fetch(
+            `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${username}"]]`,
+            {
+              method: "GET",
+              credentials: "include", // VERY IMPORTANT
+            }
+          );
+
+          const roleData = await roleRes.json();
+          console.log("Role API Response:", roleData);
+
+          role = roleData?.data?.[0]?.role_profile_name || null;
+        } catch (err) {
+          console.error("Error fetching role:", err);
+        }
+
         const userData = {
           username,
           full_name: data.full_name || username,
           home_page: data.home_page || '/dashboard',
-          message: data.message
+          message: data.message,
+          role: role || null,
         };
 
         setIsAuthenticated(true);

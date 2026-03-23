@@ -749,7 +749,7 @@ const AddBilling = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [doctorFeeMap, setDoctorFeeMap] = useState({});
   // Search states
   const [patientSearch, setPatientSearch] = useState("");
   const [patientResults, setPatientResults] = useState([]);
@@ -942,6 +942,68 @@ const AddBilling = () => {
       console.error("Error fetching dropdown options:", err);
     }
   };
+
+  const fetchDoctorFee = async (company, doctorId) => {
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/doctor_company/empanel/company/${encodeURIComponent(company)}/doctor/${doctorId}`
+      );
+
+      const data = await res.json();
+
+      if (data.success && data.data?.consultation_fee) {
+        const fee = data.data.consultation_fee;
+
+        setDoctorFeeMap((prev) => ({
+          ...prev,
+          [doctorId]: fee,
+        }));
+
+        return fee; // ✅ IMPORTANT
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error fetching fee:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const applyDoctorFee = async () => {
+      if (!billingData.ref_practitioner) return;
+      if (items.length === 0) return;
+
+      const doctorId = billingData.ref_practitioner;
+      const company = billingData.company;
+
+      // Fetch fee
+      const fee = await fetchDoctorFee(company, doctorId);
+
+      if (!fee) return;
+
+      // ✅ Update ONLY default item (index 0)
+      setItems((prevItems) => {
+        const updated = [...prevItems];
+
+        // Apply only on first item (default item)
+        if (updated[0]) {
+          const qty = parseFloat(updated[0].qty) || 1;
+
+          updated[0] = {
+            ...updated[0],
+            rate: fee,
+            amount: fee * qty,
+          };
+        }
+
+        return updated;
+      });
+    };
+
+    applyDoctorFee();
+  }, [billingData.ref_practitioner, billingData.company]);
+
   //   useEffect(() => {
   //   const loadDefaultItem = async () => {
   //     try {
@@ -1214,6 +1276,7 @@ const AddBilling = () => {
 
     return { totalQty, grossTotal, discountAmount, netTotal };
   };
+
   const paidToMapping = {
     Cash: {
       "Ramakrishna Mission Sargachi": "Cash - RKMS",

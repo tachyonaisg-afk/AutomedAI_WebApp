@@ -217,30 +217,34 @@ const LoginForm = () => {
 
       const role = data?.data?.[0]?.role_profile_name;
 
-      // Store role for sidebar usage
-      const userData = JSON.parse(localStorage.getItem("user")) || {};
-      userData.role = role;
-      localStorage.setItem("user", JSON.stringify(userData));
+      // // Store role for sidebar usage
+      // const userData = JSON.parse(localStorage.getItem("user")) || {};
+      // userData.role = role;
+      // localStorage.setItem("user", JSON.stringify(userData));
 
       // Role based redirect
       if (
+        role === null ||
         role === "Admin_OPD" ||
         role === "Front_Desk_OPD"
       ) {
         navigate("/opd");
       }
       else if (
+        role === null ||
         role === "Admin_LAB" ||
         role === "Front_Desk_LAB"
       ) {
         navigate("/pathlab");
       }
-      else if (role === "Admin_OPD_LAB") {
+      else if (role === null || role === "Admin_OPD_LAB") {
         navigate("/opd");
       }
       else {
-        navigate("/opd"); // fallback
+        navigate("/opd"); 
       }
+
+      // navigate("/opd");
 
     } catch (err) {
       console.error(err);

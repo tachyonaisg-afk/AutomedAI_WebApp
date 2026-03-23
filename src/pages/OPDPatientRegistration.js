@@ -1406,6 +1406,7 @@ const OPDPatientRegistration = () => {
             setLoadingDoctors(false);
         }
     };
+    
     useEffect(() => {
         const selectedDate =
             formData.appointmentDate || new Date().toISOString().split("T")[0];
@@ -1774,6 +1775,47 @@ const OPDPatientRegistration = () => {
         const last4 = uid.slice(-4);
         return `********${last4}`;
     };
+
+    const getCurrentISTTime = () => {
+        const now = new Date();
+
+        // Convert to IST manually
+        const istOffset = 5.5 * 60; // minutes
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        const istTime = new Date(utc + istOffset * 60000);
+
+        return istTime;
+    };
+
+    const filteredDoctors = availableDoctors.filter((doc) => {
+        if (!doc.to_time) return false;
+
+        if (!formData.appointmentDate) return true;
+
+        const getTodayIST = () => {
+            const now = new Date();
+            const istOffset = 5.5 * 60;
+            const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+            return new Date(utc + istOffset * 60000)
+                .toISOString()
+                .split("T")[0];
+        };
+
+        const today = getTodayIST();
+
+        if (formData.appointmentDate !== today) return true;
+
+        const nowIST = getCurrentISTTime();
+
+        const [hours, minutes] = doc.to_time.split(":");
+        const doctorEndTime = new Date(nowIST);
+
+        doctorEndTime.setHours(parseInt(hours));
+        doctorEndTime.setMinutes(parseInt(minutes));
+        doctorEndTime.setSeconds(0);
+
+        return nowIST <= doctorEndTime;
+    });
 
     return (
         <Layout>
@@ -2360,13 +2402,13 @@ const OPDPatientRegistration = () => {
                                         </FormLabel>
 
                                         <Select
-                                            options={availableDoctors.map((doc) => ({
+                                            options={filteredDoctors.map((doc) => ({
                                                 label: `${doc.doctor_name} (${doc.room_name}) ${doc.from_time.slice(0, 5)} - ${doc.to_time.slice(0, 5)}`,
                                                 value: doc.doctor_id,
                                             }))}
 
                                             value={
-                                                availableDoctors
+                                                filteredDoctors
                                                     .map((doc) => ({
                                                         label: `${doc.doctor_name} (${doc.room_name}) ${doc.from_time.slice(0, 5)} - ${doc.to_time.slice(0, 5)}`,
                                                         value: doc.doctor_id,
@@ -2384,7 +2426,7 @@ const OPDPatientRegistration = () => {
                                             placeholder={
                                                 loadingDoctors
                                                     ? "Loading available doctors..."
-                                                    : availableDoctors.length === 0
+                                                    : filteredDoctors.length === 0
                                                         ? "No doctors available for selected date"
                                                         : "Select available doctor..."
                                             }
