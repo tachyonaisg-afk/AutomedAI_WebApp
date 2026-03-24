@@ -322,19 +322,19 @@ const TableHeader = styled.th`
   }
 
   &:nth-child(3) {
-    width: 200px; /* Item Name */
+    width: 400px; /* Item Name */
   }
 
   &:nth-child(4) {
-    width: 80px;
-  }
-
-  &:nth-child(5) {
     width: 100px;
   }
 
-  &:nth-child(6) {
+  &:nth-child(5) {
     width: 120px;
+  }
+
+  &:nth-child(6) {
+    width: 140px;
   }
 
   &:last-child {
@@ -576,7 +576,7 @@ const SearchResults = styled.div`
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
   z-index: 9999;
   margin-top: 4px;
@@ -723,10 +723,33 @@ const ErrorText = styled.span`
   }
 `;
 
+const modalOverlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+};
+
+const modalStyle = {
+    background: "#fff",
+    padding: "24px",
+    borderRadius: "8px",
+    width: "400px",
+    maxWidth: "90%",
+};
+
 const OPDPatientRegistration = () => {
     usePageTitle("OPD Patient Registration");
     const navigate = useNavigate();
     const location = useLocation();
+    const resultRefs = useRef([]);
+    const formRef = useRef(null);
     const [currentStep, setCurrentStep] = useState(1);
     const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
     const [pincodeError, setPincodeError] = useState("");
@@ -737,6 +760,7 @@ const OPDPatientRegistration = () => {
     const [mobileError, setMobileError] = useState("");
     const [doctorFeeMap, setDoctorFeeMap] = useState({});
     const [activeResultIndex, setActiveResultIndex] = useState(-1);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [newDoctorData, setNewDoctorData] = useState({
         first_name: "",
         last_name: "",
@@ -1785,6 +1809,27 @@ const OPDPatientRegistration = () => {
             createPatient();
         }
     };
+
+    const handleConfirmSubmit = () => {
+        setShowConfirmModal(false);
+        handleSubmit();
+    };
+
+    const handleCancelSubmit = () => {
+        setShowConfirmModal(false);
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (showConfirmModal && e.key === "Enter") {
+                handleConfirmSubmit();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [showConfirmModal]);
+
     const requiresAppointment = items.some(
         (item) => item.item === "STO-ITEM-2025-00539"
     );
@@ -1861,6 +1906,7 @@ const OPDPatientRegistration = () => {
             return null;
         }
     };
+
     useEffect(() => {
         const applyDoctorFee = async () => {
             const doctorId = billingData.referringPractitioner;
@@ -1901,6 +1947,19 @@ const OPDPatientRegistration = () => {
         applyDoctorFee();
     }, [billingData.referringPractitioner, formData.company]);
 
+    useEffect(() => {
+        if (activeResultIndex >= 0 && resultRefs.current[activeResultIndex]) {
+            resultRefs.current[activeResultIndex].scrollIntoView({
+                block: "nearest",
+                behavior: "smooth", // optional (remove if you want instant)
+            });
+        }
+    }, [activeResultIndex]);
+
+    useEffect(() => {
+        resultRefs.current = [];
+    }, [itemResults]);
+
     return (
         <Layout>
             {isSubmitting && (
@@ -1929,7 +1988,7 @@ const OPDPatientRegistration = () => {
                     </ProgressBarContainer>
                 </ProgressIndicator>
 
-                <form onSubmit={handleSubmit}>
+                <form ref={formRef} onSubmit={handleSubmit}>
                     {currentStep === 1 && (
                         <>
                             <AadhaarSection>
@@ -2070,7 +2129,7 @@ const OPDPatientRegistration = () => {
                                             placeholder="Select Gender"
                                             isSearchable
                                             isClearable
-                                            // required
+                                        // required
                                         />
                                     </FormGroup>
 
@@ -2680,6 +2739,7 @@ const OPDPatientRegistration = () => {
                                                                         {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
                                                                             <SearchResultItem
                                                                                 key={idx}
+                                                                                ref={(el) => (resultRefs.current[idx] = el)}
                                                                                 onMouseDown={() => handleItemSelect(itemResult, index)}
                                                                                 style={{
                                                                                     backgroundColor: activeResultIndex === idx ? "#eee" : "white",
@@ -2825,7 +2885,19 @@ const OPDPatientRegistration = () => {
                             <BackButton type="button" onClick={handlePreviousStep}>
                                 Back
                             </BackButton>
-                            <NextButton type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit and Send to Doctor"}</NextButton>
+                            <NextButton
+                                type="submit"
+                                onClick={() => {
+                                    if (formRef.current.checkValidity()) {
+                                        setShowConfirmModal(true);
+                                    } else {
+                                        formRef.current.reportValidity(); // shows validation errors
+                                    }
+                                }}
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? "Submitting..." : "Submit and Send to Doctor"}
+                            </NextButton>
                         </ActionButtons>
                     )}
 
@@ -2842,6 +2914,22 @@ const OPDPatientRegistration = () => {
                     onDataExtracted={handleAadhaarDataExtracted}
                 />
 
+                {showConfirmModal && (
+                    <div style={modalOverlayStyle}>
+                        <div style={modalStyle}>
+                            <h3 style={{ marginBottom: "12px", }}>Confirm Submission</h3>
+                            <p style={{ marginBottom: "12px", fontSize: "14px" }}>Are you sure you want to submit and send to doctor?</p>
+
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+                                <BackButton onClick={handleCancelSubmit}>Cancel</BackButton>
+
+                                <NextButton onClick={handleConfirmSubmit}>
+                                    Submit
+                                </NextButton>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </RegistrationContainer>
         </Layout>
     );

@@ -321,9 +321,26 @@ const TableHeader = styled.th`
     width: 50px;
   }
 
+  &:nth-child(3) {
+    width: 400px; /* Item Name */
+  }
+
+  &:nth-child(4) {
+    width: 100px;
+  }
+
+  &:nth-child(5) {
+    width: 120px;
+  }
+
+  &:nth-child(6) {
+    width: 140px;
+  }
+
   &:last-child {
+    width: 10px;
     text-align: right;
-    padding-right: 16px;
+    padding-right: 5px;
   }
 `;
 
@@ -559,7 +576,7 @@ const SearchResults = styled.div`
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
   z-index: 9999;
   margin-top: 4px;
@@ -705,11 +722,33 @@ const ErrorText = styled.span`
     }
   }
 `;
+const modalOverlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 9999,
+};
+
+const modalStyle = {
+  background: "#fff",
+  padding: "24px",
+  borderRadius: "8px",
+  width: "400px",
+  maxWidth: "90%",
+};
 
 const PatientRegistration = () => {
   usePageTitle("Patient Registration");
   const navigate = useNavigate();
   const location = useLocation();
+  const resultRefs = useRef([]);
+  const formRef = useRef(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isAadhaarScannerOpen, setIsAadhaarScannerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -717,6 +756,8 @@ const PatientRegistration = () => {
   const [isAadhaarOCRScannerOpen, setIsAadhaarOCRScannerOpen] = useState(false);
   const [pincodeError, setPincodeError] = useState("");
   const [mobileError, setMobileError] = useState("");
+  const [activeResultIndex, setActiveResultIndex] = useState(-1);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [newDoctorData, setNewDoctorData] = useState({
     first_name: "",
     last_name: "",
@@ -1917,6 +1958,27 @@ const PatientRegistration = () => {
       createPatient();
     }
   };
+
+  const handleConfirmSubmit = () => {
+    setShowConfirmModal(false);
+    handleSubmit();
+  };
+
+  const handleCancelSubmit = () => {
+    setShowConfirmModal(false);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (showConfirmModal && e.key === "Enter") {
+        handleConfirmSubmit();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showConfirmModal]);
+
   const requiresAppointment = items.some(
     (item) => item.item === "STO-ITEM-2025-00539"
   );
@@ -1925,6 +1987,18 @@ const PatientRegistration = () => {
     const last4 = uid.slice(-4);
     return `********${last4}`;
   };
+
+  useEffect(() => {
+    if (activeResultIndex >= 0 && resultRefs.current[activeResultIndex]) {
+      resultRefs.current[activeResultIndex].scrollIntoView({
+        block: "nearest",
+        behavior: "smooth", // optional (remove if you want instant)
+      });
+    }
+  }, [activeResultIndex]);
+  useEffect(() => {
+    resultRefs.current = [];
+  }, [itemResults]);
 
   return (
     <Layout>
@@ -1954,7 +2028,7 @@ const PatientRegistration = () => {
           </ProgressBarContainer>
         </ProgressIndicator>
 
-        <form onSubmit={handleSubmit}>
+        <form ref={formRef} onSubmit={handleSubmit}>
           {currentStep === 1 && (
             <>
               <AadhaarSection>
@@ -2622,6 +2696,21 @@ const PatientRegistration = () => {
                             {item.item ? (
                               <ItemInput type="text" value={item.item} disabled />) : (
                               <>
+                                {/* <ItemInput
+                                                                    type="text"
+                                                                    placeholder="Search item..."
+                                                                    value={itemSearchIndex === index ? itemSearch : ""}
+                                                                    onChange={(e) => {
+                                                                        setItemSearchIndex(index);
+                                                                        setItemSearch(e.target.value);
+                                                                    }}
+                                                                    onFocus={() => {
+                                                                        setItemSearchIndex(index);
+                                                                        if (itemSearch.length >= 2)
+                                                                            setShowItemResults(true);
+                                                                    }}
+                                                                    onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                                                /> */}
                                 <ItemInput
                                   type="text"
                                   placeholder="Search item..."
@@ -2629,23 +2718,69 @@ const PatientRegistration = () => {
                                   onChange={(e) => {
                                     setItemSearchIndex(index);
                                     setItemSearch(e.target.value);
+                                    setActiveResultIndex(-1); // reset selection
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (!showItemResults) return;
+
+                                    if (e.key === "ArrowDown") {
+                                      e.preventDefault();
+                                      setActiveResultIndex((prev) =>
+                                        prev < itemResults.length - 1 ? prev + 1 : 0
+                                      );
+                                    }
+
+                                    if (e.key === "ArrowUp") {
+                                      e.preventDefault();
+                                      setActiveResultIndex((prev) =>
+                                        prev > 0 ? prev - 1 : itemResults.length - 1
+                                      );
+                                    }
+
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      if (activeResultIndex >= 0) {
+                                        handleItemSelect(itemResults[activeResultIndex], index);
+                                      }
+                                    }
                                   }}
                                   onFocus={() => {
                                     setItemSearchIndex(index);
-                                    if (itemSearch.length >= 2)
-                                      setShowItemResults(true);
+                                    if (itemSearch.length >= 2) setShowItemResults(true);
                                   }}
-                                  onBlur={() => setTimeout(() => setShowItemResults(false), 200)} />
+                                  onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                />
+
+                                {/* {showItemResults && itemSearchIndex === index && (
+                                                                    <SearchResults>
+                                                                        {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
+                                                                            <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
+                                                                                {itemResult.description || ""}
+                                                                            </SearchResultItem>))) : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
+
+                                                                            </SearchResultEmpty>
+                                                                        )}
+                                                                    </SearchResults>)} */}
                                 {showItemResults && itemSearchIndex === index && (
                                   <SearchResults>
                                     {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
-                                      <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
+                                      <SearchResultItem
+                                        key={idx}
+                                        ref={(el) => (resultRefs.current[idx] = el)}
+                                        onMouseDown={() => handleItemSelect(itemResult, index)}
+                                        style={{
+                                          backgroundColor: activeResultIndex === idx ? "#eee" : "white",
+                                          cursor: "pointer",
+                                        }}
+                                      >
                                         {itemResult.description || ""}
-                                      </SearchResultItem>))) : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
+                                      </SearchResultItem>)))
+                                      : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
 
                                       </SearchResultEmpty>
-                                    )}
-                                  </SearchResults>)}
+                                      )}
+                                  </SearchResults>)
+                                }
                               </>
                             )}
                           </ItemSearchWrapper>
@@ -2953,7 +3088,19 @@ const PatientRegistration = () => {
               <BackButton type="button" onClick={handlePreviousStep}>
                 Back
               </BackButton>
-              <NextButton type="submit" disabled={isSubmitting}>{isSubmitting ? "Submitting..." : "Submit and Send to Doctor"}</NextButton>
+              <NextButton
+                type="submit"
+                onClick={() => {
+                  if (formRef.current.checkValidity()) {
+                    setShowConfirmModal(true);
+                  } else {
+                    formRef.current.reportValidity(); // shows validation errors
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit and Send to Doctor"}
+              </NextButton>
             </ActionButtons>
           )}
 
@@ -3096,6 +3243,23 @@ const PatientRegistration = () => {
               </ModalActions>
             </ModalContent>
           </ModalOverlay>
+        )}
+
+        {showConfirmModal && (
+          <div style={modalOverlayStyle}>
+            <div style={modalStyle}>
+              <h3 style={{ marginBottom: "12px", }}>Confirm Submission</h3>
+              <p style={{ marginBottom: "12px", fontSize: "14px" }}>Are you sure you want to submit and send to doctor?</p>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+                <BackButton onClick={handleCancelSubmit}>Cancel</BackButton>
+
+                <NextButton onClick={handleConfirmSubmit}>
+                  Submit
+                </NextButton>
+              </div>
+            </div>
+          </div>
         )}
 
       </RegistrationContainer>
