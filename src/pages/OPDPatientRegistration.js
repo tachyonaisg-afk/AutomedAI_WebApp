@@ -1716,8 +1716,8 @@ const OPDPatientRegistration = () => {
                                     mode_of_payment: billingData.mode_of_payment, // Todo This can be changed if needed
                                     party_type: "Customer",
                                     party: customer,
-                                    paid_amount: (netTotal===0) ? 0.01 : netTotal,
-                                    received_amount: (netTotal===0) ? 0.01 : netTotal,
+                                    paid_amount: (netTotal === 0) ? 0.01 : netTotal,
+                                    received_amount: (netTotal === 0) ? 0.01 : netTotal,
                                     target_exchange_rate: 1,
                                     reference_no: billingData.reference_no,
                                     reference_date: billingData.reference_date,
@@ -1727,9 +1727,9 @@ const OPDPatientRegistration = () => {
                                         {
                                             reference_doctype: "Sales Invoice",
                                             reference_name: invoiceName,
-                                            total_amount: (netTotal===0) ? 0.01 : netTotal,
-                                            outstanding_amount: (netTotal===0) ? 0.01 : netTotal,
-                                            allocated_amount: (netTotal===0) ? 0.01 : netTotal,
+                                            total_amount: (netTotal === 0) ? 0.01 : netTotal,
+                                            outstanding_amount: (netTotal === 0) ? 0.01 : netTotal,
+                                            allocated_amount: (netTotal === 0) ? 0.01 : netTotal,
                                         }
                                     ]
                                 };
@@ -2129,7 +2129,7 @@ const OPDPatientRegistration = () => {
                                             placeholder="Select Gender"
                                             isSearchable
                                             isClearable
-                                        // required
+                                            required
                                         />
                                     </FormGroup>
 
