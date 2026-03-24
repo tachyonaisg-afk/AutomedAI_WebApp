@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -319,51 +319,38 @@ const TableRow = styled.tr`
 `;
 
 const TableHeader = styled.th`
-  padding: 12px 8px;
+  padding: 12px;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
   color: #666666;
   text-transform: uppercase;
-  white-space: nowrap;
 
   &:first-child {
     padding-left: 16px;
-    width: 40px;
-  }
-
-  &:nth-child(2) {
-    width: 180px; /* Item Code */
+    width: 50px;
   }
 
   &:nth-child(3) {
-    width: 200px; /* Item Name */
+    width: 300px; /* Item Name */
   }
 
   &:nth-child(4) {
-    width: 180px; /* Warehouse */
+    width: 100px;
   }
 
   &:nth-child(5) {
-    width: 80px; /* UOM */
+    width: 120px;
   }
 
   &:nth-child(6) {
-    width: 120px; /* Qty */
+    width: 140px;
   }
 
-  &:nth-child(7) {
-    width: 100px; /* Rate */
-  }
-
-  &:nth-child(8) {
-    width: 120px; /* Amount */
+  &:last-child {
+    width: 10px;
     text-align: right;
-    padding-right: 16px;
-  }
-
-  &:nth-child(9) {
-    width: 50px; /* Delete button */
+    padding-right: 0px;
   }
 `;
 
@@ -723,7 +710,7 @@ const AddPathLabBilling = () => {
   usePageTitle("Add Billing");
   const navigate = useNavigate();
   const location = useLocation();
-
+  const resultRefs = useRef([]);
   // Determine base path for navigation (handles both /billing and /opd/billing)
   const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 
@@ -738,7 +725,10 @@ const AddPathLabBilling = () => {
     patient_name: "",
     apply_discount_on: "Grand Total",
     additional_discount_percentage: 0,
-    ref_practitioner: "",
+    ref_practitioner: {
+      id: "",
+      name: "",
+    },
     service_unit: "",
     payment_type: "Cash",
     due_date: new Date().toISOString().split("T")[0],
@@ -755,13 +745,14 @@ const AddPathLabBilling = () => {
   const [patientResults, setPatientResults] = useState([]);
   const [showPatientResults, setShowPatientResults] = useState(false);
   const [searchingPatient, setSearchingPatient] = useState(false);
-
+  const [activeResultIndex, setActiveResultIndex] = useState(-1);
   const [itemSearchIndex, setItemSearchIndex] = useState(null);
   const [itemSearch, setItemSearch] = useState("");
   const [itemResults, setItemResults] = useState([]);
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
   const [showPHCOnly, setShowPHCOnly] = useState(false);
+  const [doctorFeeMap, setDoctorFeeMap] = useState({});
   // Dropdown options
   const [practitioners, setPractitioners] = useState([]);
   const [serviceUnits, setServiceUnits] = useState([]);
@@ -943,6 +934,62 @@ const AddPathLabBilling = () => {
       console.error("Error fetching dropdown options:", err);
     }
   };
+
+  const fetchDoctorFee = async (company, doctorId) => {
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/doctor_company/empanel/company/${encodeURIComponent(company)}/doctor/${doctorId}`
+      );
+
+      const data = await res.json();
+
+      if (data.success && data.data?.consultation_fee) {
+        const fee = data.data.consultation_fee;
+
+        setDoctorFeeMap((prev) => ({
+          ...prev,
+          [doctorId]: fee,
+        }));
+
+        return fee; // ✅ IMPORTANT
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error fetching fee:", error);
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const applyDoctorFee = async () => {
+      const doctorId = billingData.ref_practitioner?.id;
+      if (!doctorId) return;
+      if (items.length === 0) return;
+
+      const fee = await fetchDoctorFee(billingData.company, doctorId);
+      if (!fee) return;
+
+      setItems((prevItems) => {
+        const updated = [...prevItems];
+
+        if (updated[0]) {
+          const qty = parseFloat(updated[0].qty) || 1;
+
+          updated[0] = {
+            ...updated[0],
+            rate: fee,
+            amount: fee * qty,
+          };
+        }
+
+        return updated;
+      });
+    };
+
+    applyDoctorFee();
+  }, [billingData.ref_practitioner?.id, billingData.company]);
+
   //   useEffect(() => {
   //   const loadDefaultItem = async () => {
   //     try {
@@ -1405,8 +1452,8 @@ const AddPathLabBilling = () => {
       };
 
       // Add optional fields if they have values
-      if (billingData.ref_practitioner) {
-        invoicePayload.ref_practitioner = billingData.ref_practitioner;
+      if (billingData.ref_practitioner?.id) {
+        invoicePayload.ref_practitioner = billingData.ref_practitioner?.id;
       }
       // if (billingData.service_unit) {
       //   invoicePayload.service_unit = billingData.service_unit;
@@ -1444,8 +1491,8 @@ const AddPathLabBilling = () => {
         mode_of_payment: billingData.payment_type,
         party_type: "Customer",
         party: billingData.customer,
-        paid_amount: invoiceTotal,
-        received_amount: invoiceTotal,
+        paid_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
+        received_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
         target_exchange_rate: 1,
         paid_to: paidToAccount,
         paid_to_account_currency: "INR",
@@ -1455,9 +1502,9 @@ const AddPathLabBilling = () => {
           {
             reference_doctype: "Sales Invoice",
             reference_name: salesInvoiceId,
-            total_amount: invoiceTotal,
-            outstanding_amount: invoiceTotal,
-            allocated_amount: invoiceTotal
+            total_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
+            outstanding_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
+            allocated_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal
           }
         ]
       };
@@ -1595,6 +1642,19 @@ const AddPathLabBilling = () => {
 
   const totals = calculateTotals();
 
+  useEffect(() => {
+    if (activeResultIndex >= 0 && resultRefs.current[activeResultIndex]) {
+      resultRefs.current[activeResultIndex].scrollIntoView({
+        block: "nearest",
+        behavior: "smooth", // optional (remove if you want instant)
+      });
+    }
+  }, [activeResultIndex]);
+
+  useEffect(() => {
+    resultRefs.current = [];
+  }, [itemResults]);
+
   return (
     <Layout>
       <BillingContainer>
@@ -1678,15 +1738,15 @@ const AddPathLabBilling = () => {
                   Referring Practitioner<RequiredStar>*</RequiredStar>
                 </FormLabel>
 
-                {billingData.ref_practitioner ? (
+                {billingData.ref_practitioner?.id ? (
                   <SelectedTag>
-                    <span>{billingData.ref_practitioner}</span>
+                    <span>{billingData.ref_practitioner.name}</span>
                     <ClearButton
                       type="button"
                       onClick={() =>
                         setBillingData((prev) => ({
                           ...prev,
-                          ref_practitioner: "",
+                          ref_practitioner: { id: "", name: "" },
                         }))
                       }
                     >
@@ -1719,7 +1779,10 @@ const AddPathLabBilling = () => {
                               onMouseDown={() => {
                                 setBillingData((prev) => ({
                                   ...prev,
-                                  ref_practitioner: doc.name,
+                                  ref_practitioner: {
+                                    id: doc.name,
+                                    name: doc.practitioner_name,
+                                  },
                                 }));
                                 setDoctorSearch("");
                                 setShowDoctorResults(false);
@@ -1861,6 +1924,7 @@ const AddPathLabBilling = () => {
                         {item.item ? (
                           <ItemInput type="text" value={item.item} disabled />) : (
                           <>
+
                             <ItemInput
                               type="text"
                               placeholder="Search item..."
@@ -1868,23 +1932,59 @@ const AddPathLabBilling = () => {
                               onChange={(e) => {
                                 setItemSearchIndex(index);
                                 setItemSearch(e.target.value);
+                                setActiveResultIndex(-1); // reset selection
+                              }}
+                              onKeyDown={(e) => {
+                                if (!showItemResults) return;
+
+                                if (e.key === "ArrowDown") {
+                                  e.preventDefault();
+                                  setActiveResultIndex((prev) =>
+                                    prev < itemResults.length - 1 ? prev + 1 : 0
+                                  );
+                                }
+
+                                if (e.key === "ArrowUp") {
+                                  e.preventDefault();
+                                  setActiveResultIndex((prev) =>
+                                    prev > 0 ? prev - 1 : itemResults.length - 1
+                                  );
+                                }
+
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  if (activeResultIndex >= 0) {
+                                    handleItemSelect(itemResults[activeResultIndex], index);
+                                  }
+                                }
                               }}
                               onFocus={() => {
                                 setItemSearchIndex(index);
-                                if (itemSearch.length >= 2)
-                                  setShowItemResults(true);
+                                if (itemSearch.length >= 2) setShowItemResults(true);
                               }}
-                              onBlur={() => setTimeout(() => setShowItemResults(false), 200)} />
+                              onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                            />
+
                             {showItemResults && itemSearchIndex === index && (
                               <SearchResults>
                                 {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
-                                  <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
+                                  <SearchResultItem
+                                    key={idx}
+                                    ref={(el) => (resultRefs.current[idx] = el)}
+                                    onMouseDown={() => handleItemSelect(itemResult, index)}
+                                    style={{
+                                      backgroundColor: activeResultIndex === idx ? "#eee" : "white",
+                                      cursor: "pointer",
+                                    }}
+                                  >
                                     {itemResult.description || ""}
-                                  </SearchResultItem>))) : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
+                                  </SearchResultItem>)))
+                                  : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
 
                                   </SearchResultEmpty>
-                                )}
-                              </SearchResults>)}
+                                  )}
+                              </SearchResults>)
+                            }
                           </>
                         )}
                       </ItemSearchWrapper>

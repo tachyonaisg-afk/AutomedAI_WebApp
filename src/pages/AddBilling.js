@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -319,51 +319,38 @@ const TableRow = styled.tr`
 `;
 
 const TableHeader = styled.th`
-  padding: 12px 8px;
+  padding: 12px;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
   color: #666666;
   text-transform: uppercase;
-  white-space: nowrap;
 
   &:first-child {
     padding-left: 16px;
-    width: 40px;
-  }
-
-  &:nth-child(2) {
-    width: 180px; /* Item Code */
+    width: 50px;
   }
 
   &:nth-child(3) {
-    width: 200px; /* Item Name */
+    width: 300px; /* Item Name */
   }
 
   &:nth-child(4) {
-    width: 180px; /* Warehouse */
+    width: 100px;
   }
 
   &:nth-child(5) {
-    width: 80px; /* UOM */
+    width: 120px;
   }
 
   &:nth-child(6) {
-    width: 120px; /* Qty */
+    width: 140px;
   }
 
-  &:nth-child(7) {
-    width: 100px; /* Rate */
-  }
-
-  &:nth-child(8) {
-    width: 120px; /* Amount */
+  &:last-child {
+    width: 10px;
     text-align: right;
-    padding-right: 16px;
-  }
-
-  &:nth-child(9) {
-    width: 50px; /* Delete button */
+    padding-right: 0px;
   }
 `;
 
@@ -723,7 +710,7 @@ const AddBilling = () => {
   usePageTitle("Add Billing");
   const navigate = useNavigate();
   const location = useLocation();
-
+  const resultRefs = useRef([]);
   // Determine base path for navigation (handles both /billing and /opd/billing)
   const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 
@@ -758,7 +745,7 @@ const AddBilling = () => {
   const [patientResults, setPatientResults] = useState([]);
   const [showPatientResults, setShowPatientResults] = useState(false);
   const [searchingPatient, setSearchingPatient] = useState(false);
-
+  const [activeResultIndex, setActiveResultIndex] = useState(-1);
   const [itemSearchIndex, setItemSearchIndex] = useState(null);
   const [itemSearch, setItemSearch] = useState("");
   const [itemResults, setItemResults] = useState([]);
@@ -1419,8 +1406,8 @@ const AddBilling = () => {
         mode_of_payment: billingData.payment_type,
         party_type: "Customer",
         party: billingData.customer,
-        paid_amount: invoiceTotal,
-        received_amount: invoiceTotal,
+        paid_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
+        received_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
         target_exchange_rate: 1,
         paid_to: paidToAccount,
         paid_to_account_currency: "INR",
@@ -1430,9 +1417,9 @@ const AddBilling = () => {
           {
             reference_doctype: "Sales Invoice",
             reference_name: salesInvoiceId,
-            total_amount: invoiceTotal,
-            outstanding_amount: invoiceTotal,
-            allocated_amount: invoiceTotal
+            total_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
+            outstanding_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
+            allocated_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal
           }
         ]
       };
@@ -1569,6 +1556,19 @@ const AddBilling = () => {
   }));
 
   const totals = calculateTotals();
+
+  useEffect(() => {
+    if (activeResultIndex >= 0 && resultRefs.current[activeResultIndex]) {
+      resultRefs.current[activeResultIndex].scrollIntoView({
+        block: "nearest",
+        behavior: "smooth", // optional (remove if you want instant)
+      });
+    }
+  }, [activeResultIndex]);
+
+  useEffect(() => {
+    resultRefs.current = [];
+  }, [itemResults]);
 
   return (
     <Layout>
@@ -1825,6 +1825,7 @@ const AddBilling = () => {
                         {item.item ? (
                           <ItemInput type="text" value={item.item} disabled />) : (
                           <>
+
                             <ItemInput
                               type="text"
                               placeholder="Search item..."
@@ -1832,23 +1833,59 @@ const AddBilling = () => {
                               onChange={(e) => {
                                 setItemSearchIndex(index);
                                 setItemSearch(e.target.value);
+                                setActiveResultIndex(-1); // reset selection
+                              }}
+                              onKeyDown={(e) => {
+                                if (!showItemResults) return;
+
+                                if (e.key === "ArrowDown") {
+                                  e.preventDefault();
+                                  setActiveResultIndex((prev) =>
+                                    prev < itemResults.length - 1 ? prev + 1 : 0
+                                  );
+                                }
+
+                                if (e.key === "ArrowUp") {
+                                  e.preventDefault();
+                                  setActiveResultIndex((prev) =>
+                                    prev > 0 ? prev - 1 : itemResults.length - 1
+                                  );
+                                }
+
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  if (activeResultIndex >= 0) {
+                                    handleItemSelect(itemResults[activeResultIndex], index);
+                                  }
+                                }
                               }}
                               onFocus={() => {
                                 setItemSearchIndex(index);
-                                if (itemSearch.length >= 2)
-                                  setShowItemResults(true);
+                                if (itemSearch.length >= 2) setShowItemResults(true);
                               }}
-                              onBlur={() => setTimeout(() => setShowItemResults(false), 200)} />
+                              onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                            />
+
                             {showItemResults && itemSearchIndex === index && (
                               <SearchResults>
                                 {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
-                                  <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
+                                  <SearchResultItem
+                                    key={idx}
+                                    ref={(el) => (resultRefs.current[idx] = el)}
+                                    onMouseDown={() => handleItemSelect(itemResult, index)}
+                                    style={{
+                                      backgroundColor: activeResultIndex === idx ? "#eee" : "white",
+                                      cursor: "pointer",
+                                    }}
+                                  >
                                     {itemResult.description || ""}
-                                  </SearchResultItem>))) : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
+                                  </SearchResultItem>)))
+                                  : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
 
                                   </SearchResultEmpty>
-                                )}
-                              </SearchResults>)}
+                                  )}
+                              </SearchResults>)
+                            }
                           </>
                         )}
                       </ItemSearchWrapper>
