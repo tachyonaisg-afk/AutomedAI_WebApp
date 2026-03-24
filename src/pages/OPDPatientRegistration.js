@@ -731,6 +731,7 @@ const OPDPatientRegistration = () => {
     const [loadingDoctors, setLoadingDoctors] = useState(false);
     const [mobileError, setMobileError] = useState("");
     const [doctorFeeMap, setDoctorFeeMap] = useState({});
+    const [activeResultIndex, setActiveResultIndex] = useState(-1);
     const [newDoctorData, setNewDoctorData] = useState({
         first_name: "",
         last_name: "",
@@ -2604,7 +2605,7 @@ const OPDPatientRegistration = () => {
                                                         {item.item ? (
                                                             <ItemInput type="text" value={item.item} disabled />) : (
                                                             <>
-                                                                <ItemInput
+                                                                {/* <ItemInput
                                                                     type="text"
                                                                     placeholder="Search item..."
                                                                     value={itemSearchIndex === index ? itemSearch : ""}
@@ -2617,8 +2618,49 @@ const OPDPatientRegistration = () => {
                                                                         if (itemSearch.length >= 2)
                                                                             setShowItemResults(true);
                                                                     }}
-                                                                    onBlur={() => setTimeout(() => setShowItemResults(false), 200)} />
-                                                                {showItemResults && itemSearchIndex === index && (
+                                                                    onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                                                /> */}
+                                                                <ItemInput
+                                                                    type="text"
+                                                                    placeholder="Search item..."
+                                                                    value={itemSearchIndex === index ? itemSearch : ""}
+                                                                    onChange={(e) => {
+                                                                        setItemSearchIndex(index);
+                                                                        setItemSearch(e.target.value);
+                                                                        setActiveResultIndex(-1); // reset selection
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (!showItemResults) return;
+
+                                                                        if (e.key === "ArrowDown") {
+                                                                            e.preventDefault();
+                                                                            setActiveResultIndex((prev) =>
+                                                                                prev < itemResults.length - 1 ? prev + 1 : 0
+                                                                            );
+                                                                        }
+
+                                                                        if (e.key === "ArrowUp") {
+                                                                            e.preventDefault();
+                                                                            setActiveResultIndex((prev) =>
+                                                                                prev > 0 ? prev - 1 : itemResults.length - 1
+                                                                            );
+                                                                        }
+
+                                                                        if (e.key === "Enter") {
+                                                                            e.preventDefault();
+                                                                            if (activeResultIndex >= 0) {
+                                                                                handleItemSelect(itemResults[activeResultIndex], index);
+                                                                            }
+                                                                        }
+                                                                    }}
+                                                                    onFocus={() => {
+                                                                        setItemSearchIndex(index);
+                                                                        if (itemSearch.length >= 2) setShowItemResults(true);
+                                                                    }}
+                                                                    onBlur={() => setTimeout(() => setShowItemResults(false), 200)}
+                                                                />
+
+                                                                {/* {showItemResults && itemSearchIndex === index && (
                                                                     <SearchResults>
                                                                         {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
                                                                             <SearchResultItem key={idx} onMouseDown={() => handleItemSelect(itemResult, index)} >
@@ -2627,7 +2669,26 @@ const OPDPatientRegistration = () => {
 
                                                                             </SearchResultEmpty>
                                                                         )}
-                                                                    </SearchResults>)}
+                                                                    </SearchResults>)} */}
+                                                                {showItemResults && itemSearchIndex === index && (
+                                                                    <SearchResults>
+                                                                        {itemResults.length > 0 ? (itemResults.map((itemResult, idx) => (
+                                                                            <SearchResultItem
+                                                                                key={idx}
+                                                                                onMouseDown={() => handleItemSelect(itemResult, index)}
+                                                                                style={{
+                                                                                    backgroundColor: activeResultIndex === idx ? "#eee" : "white",
+                                                                                    cursor: "pointer",
+                                                                                }}
+                                                                            >
+                                                                                {itemResult.description || ""}
+                                                                            </SearchResultItem>)))
+                                                                            : (<SearchResultEmpty> {searchingItem ? "Searching..." : "No items found"}
+
+                                                                            </SearchResultEmpty>
+                                                                            )}
+                                                                    </SearchResults>)
+                                                                }
                                                             </>
                                                         )}
                                                     </ItemSearchWrapper>
