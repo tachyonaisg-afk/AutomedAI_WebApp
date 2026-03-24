@@ -382,6 +382,8 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
     const [companies, setCompanies] = useState([]);
     const [selectedCompany, setSelectedCompany] = useState("");
     const [currentUser, setCurrentUser] = useState("");
+    const [isEmpanelled, setIsEmpanelled] = useState(false);
+    const [originalFee, setOriginalFee] = useState(null);
     const [formData, setFormData] = useState({
         first_name: "",
         middle_name: "",
@@ -465,6 +467,37 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
         fetchCompanies();
     }, []);
 
+    useEffect(() => {
+        const checkEmpanelment = async () => {
+            if (!doctor?.name || !selectedCompany) return;
+
+            try {
+                const res = await api.get(
+                    `https://midl.automedai.in/doctor_company/empanel/company/${encodeURIComponent(selectedCompany)}/doctor/${doctor.name}`
+                );
+
+                if (res.data?.success && res.data?.data?.isEmpanel) {
+                    setIsEmpanelled(true);
+                    setOriginalFee(Number(res.data.data.consultation_fee));
+
+                    // sync fee from empanel API
+                    setFormData(prev => ({
+                        ...prev,
+                        consultation_fee: res.data.data.consultation_fee
+                    }));
+                } else {
+                    setIsEmpanelled(false);
+                }
+
+            } catch (err) {
+                console.log("Empanel check failed", err);
+                setIsEmpanelled(false);
+            }
+        };
+
+        checkEmpanelment();
+    }, [doctor, selectedCompany]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -483,48 +516,36 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
                 custom_specializedqualification: formData.custom_specializedqualification
             };
 
-            // 🔹 Create Practitioner
+            // 🔹 Update Practitioner
             const res = await api.put(
                 `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctor.name}`,
                 payload
             );
 
-            console.log("Doctor Updated:", res.data);
-
-            // 🔹 Extract Doctor ID
             const doctorId = res.data?.data?.name;
 
-            // 🔹 Call second API for empanelment
-            // const empanelPayload = {
-            //     company: selectedCompany,
-            //     doctor_id: doctorId,
-            //     doctor_name: practitionerName,
-            //     consultation_fee: formData.consultation_fee,
-            //     created_by: currentUser
-            // };
+            // ✅ CHECK: If fee changed OR auto empanel
+            const feeChanged =
+                Number(formData.consultation_fee) !== Number(originalFee);
 
-            // const empanelRes = await api.post(
-            //     "https://midl.automedai.in/doctor_company/empanel",
-            //     empanelPayload
-            // );
+            if ((isEmpanelled && feeChanged) || autoEmpanel) {
+                const empanelPayload = {
+                    company: selectedCompany,
+                    doctor_id: doctorId,
+                    doctor_name: practitionerName,
+                    consultation_fee: formData.consultation_fee,
+                    created_by: currentUser
+                };
 
-            // console.log("Empanel Response:", empanelRes.data);
+                const empanelRes = await api.post(
+                    "https://midl.automedai.in/doctor_company/empanel",
+                    empanelPayload
+                );
 
-            // if (empanelRes.data.success) {
-            //     alert("Doctor empanelled successfully");
-            // } else {
-            //     alert(empanelRes.data.message);
-            // }
-            alert("Doctor updated successfully");
-
-            // Auto empanel if coming from empanel button
-            if (autoEmpanel && empanelDoctor) {
-                await empanelDoctor({
-                    name: doctor.name,
-                    practitioner_name: `${formData.first_name} ${formData.last_name}`,
-                    op_consulting_charge: formData.consultation_fee
-                });
+                console.log("Empanel/Update Response:", empanelRes.data);
             }
+
+            alert("Doctor updated successfully");
 
             onClose();
 
@@ -725,18 +746,20 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
                                         required
                                     />
                                 </InputGroup>
-                                <InputGroup>
-                                    <InputLabel>
-                                        Consultation Fee<span>*</span>
-                                    </InputLabel>
-                                    <FormControl
-                                        name="consultation_fee"
-                                        value={formData.consultation_fee}
-                                        onChange={handleChange}
-                                        type="number"
-                                        required
-                                    />
-                                </InputGroup>
+                                {(isEmpanelled || autoEmpanel) && (
+                                    <InputGroup>
+                                        <InputLabel>
+                                            Consultation Fee<span>*</span>
+                                        </InputLabel>
+                                        <FormControl
+                                            name="consultation_fee"
+                                            value={formData.consultation_fee}
+                                            onChange={handleChange}
+                                            type="number"
+                                            required
+                                        />
+                                    </InputGroup>
+                                )}
                                 <InputGroup className="col-span-2">
                                     <InputLabel>Specialized Qualification</InputLabel>
                                     <FormControl
