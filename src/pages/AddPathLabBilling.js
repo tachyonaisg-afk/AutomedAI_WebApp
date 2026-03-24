@@ -2012,7 +2012,12 @@ const AddPathLabBilling = () => {
             <ItemFooter>
               <FooterItem>
                 <FooterLabel>Discount %</FooterLabel>
-                <DiscountInput type="number" name="discountPercent" value={billingData.discountPercent} onChange={handleBillingChange} />
+                <DiscountInput
+                  type="number"
+                  name="additional_discount_percentage"
+                  value={billingData.additional_discount_percentage}
+                  onChange={handleBillingChange}
+                />
               </FooterItem>
               <FooterItem>
                 <FooterLabel>Total Qty:</FooterLabel>
