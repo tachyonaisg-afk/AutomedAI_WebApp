@@ -321,6 +321,18 @@ const TableHeader = styled.th`
     width: 50px;
   }
 
+  &:nth-child(3) {
+    width: 190px; /* Item Name */
+  }
+
+  &:nth-child(4) {
+    width: 60px;
+  }
+
+  &:nth-child(5) {
+    width: 60px;
+  }
+
   &:last-child {
     text-align: right;
     padding-right: 16px;
