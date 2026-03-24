@@ -322,20 +322,25 @@ const TableHeader = styled.th`
   }
 
   &:nth-child(3) {
-    width: 190px; /* Item Name */
+    width: 200px; /* Item Name */
   }
 
   &:nth-child(4) {
-    width: 60px;
+    width: 80px;
   }
 
   &:nth-child(5) {
-    width: 60px;
+    width: 100px;
+  }
+
+  &:nth-child(6) {
+    width: 120px;
   }
 
   &:last-child {
+    width: 10px;
     text-align: right;
-    padding-right: 16px;
+    padding-right: 5px;
   }
 `;
 
@@ -2065,7 +2070,7 @@ const OPDPatientRegistration = () => {
                                             placeholder="Select Gender"
                                             isSearchable
                                             isClearable
-                                            required
+                                            // required
                                         />
                                     </FormGroup>
 
