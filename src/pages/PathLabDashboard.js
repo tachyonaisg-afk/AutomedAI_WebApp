@@ -537,7 +537,7 @@ const PathLabDashboard = () => {
 
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/patient-registration" },
-    { icon: Users, label: "Recent Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", route: "/opd/recent-opd-patients" },
+    { icon: Users, label: "Recent Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", route: "/pathlab/recent-pathlab-patients" },
     { icon: CreditCard, label: "PathLab Billing", bgColor: "#f5f3ff", iconColor: "#8b5cf6", borderColor: "#8b5cf6", route: "/pathlab/billing" },
     { icon: ClipboardCheck, label: "Lab Stocks", bgColor: "#f0fdf4", iconColor: "#10b981", borderColor: "#10b981", route: null },
     { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },

@@ -1704,60 +1704,64 @@ const OPDPatientRegistration = () => {
                             const paidToAccount =
                                 paidToMapping[billingData.mode_of_payment]?.[formData.company] || "";
                             // Create Payment Entry
-                            try {
-                                console.log("Creating Payment Entry...");
+                            if (netTotal > 0) {
+                                try {
+                                    console.log("Creating Payment Entry...");
 
-                                const paymentPayload = {
-                                    doctype: "Payment Entry",
-                                    docstatus: 1,
-                                    payment_type: "Receive",
-                                    posting_date: new Date().toISOString().split("T")[0],
-                                    company: company,
-                                    mode_of_payment: billingData.mode_of_payment, // Todo This can be changed if needed
-                                    party_type: "Customer",
-                                    party: customer,
-                                    paid_amount: (netTotal === 0) ? 0.01 : netTotal,
-                                    received_amount: (netTotal === 0) ? 0.01 : netTotal,
-                                    target_exchange_rate: 1,
-                                    reference_no: billingData.reference_no,
-                                    reference_date: billingData.reference_date,
-                                    paid_to: paidToAccount,
-                                    paid_to_account_currency: "INR",
-                                    references: [
-                                        {
-                                            reference_doctype: "Sales Invoice",
-                                            reference_name: invoiceName,
-                                            total_amount: (netTotal === 0) ? 0.01 : netTotal,
-                                            outstanding_amount: (netTotal === 0) ? 0.01 : netTotal,
-                                            allocated_amount: (netTotal === 0) ? 0.01 : netTotal,
-                                        }
-                                    ]
-                                };
+                                    const paymentPayload = {
+                                        doctype: "Payment Entry",
+                                        docstatus: 1,
+                                        payment_type: "Receive",
+                                        posting_date: new Date().toISOString().split("T")[0],
+                                        company: company,
+                                        mode_of_payment: billingData.mode_of_payment,
+                                        party_type: "Customer",
+                                        party: customer,
+                                        paid_amount: netTotal,
+                                        received_amount: netTotal,
+                                        target_exchange_rate: 1,
+                                        reference_no: billingData.reference_no,
+                                        reference_date: billingData.reference_date,
+                                        paid_to: paidToAccount,
+                                        paid_to_account_currency: "INR",
+                                        references: [
+                                            {
+                                                reference_doctype: "Sales Invoice",
+                                                reference_name: invoiceName,
+                                                total_amount: netTotal,
+                                                outstanding_amount: netTotal,
+                                                allocated_amount: netTotal,
+                                            }
+                                        ]
+                                    };
 
-                                console.log("Payment Entry payload:", paymentPayload);
+                                    const paymentResponse = await fetch("https://hms.automedai.in/api/resource/Payment%20Entry", {
+                                        method: "POST",
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                            Accept: "application/json",
+                                        },
+                                        credentials: "include",
+                                        body: JSON.stringify(paymentPayload),
+                                    });
 
-                                const paymentResponse = await fetch("https://hms.automedai.in/api/resource/Payment%20Entry", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        Accept: "application/json",
-                                    },
-                                    credentials: "include",
-                                    body: JSON.stringify(paymentPayload),
-                                });
+                                    const paymentData = await paymentResponse.json();
 
-                                const paymentData = await paymentResponse.json();
-
-                                if (paymentResponse.ok) {
-                                    console.log("Payment Entry created successfully:", paymentData);
-                                    alert("Patient registered, invoice created, and payment recorded successfully!");
-                                } else {
-                                    console.error("Error creating Payment Entry:", paymentData);
-                                    alert(`Patient and invoice created, but payment recording failed: ${paymentData.message || "Unknown error"}`);
+                                    if (paymentResponse.ok) {
+                                        console.log("Payment Entry created successfully:", paymentData);
+                                        alert("Patient registered, invoice created, and payment recorded successfully!");
+                                    } else {
+                                        console.error("Error creating Payment Entry:", paymentData);
+                                        alert(`Patient and invoice created, but payment failed: ${paymentData.message || "Unknown error"}`);
+                                    }
+                                } catch (paymentError) {
+                                    console.error("Error creating Payment Entry:", paymentError);
+                                    alert("Patient and invoice created, but payment failed. Please record manually.");
                                 }
-                            } catch (paymentError) {
-                                console.error("Error creating Payment Entry:", paymentError);
-                                alert("Patient and invoice created, but payment recording failed. Please record payment manually.");
+                            } else {
+                                console.log("Skipping Payment Entry: netTotal is 0");
+
+                                alert("Patient registered and invoice created successfully (no payment needed).");
                             }
                         } else {
                             console.error("Error creating Sales Invoice:", invoiceData);
@@ -1810,9 +1814,16 @@ const OPDPatientRegistration = () => {
         }
     };
 
+    // const handleConfirmSubmit = () => {
+    //     setShowConfirmModal(false);
+    //     handleSubmit();
+    // };
     const handleConfirmSubmit = () => {
         setShowConfirmModal(false);
-        handleSubmit();
+
+        if (formRef.current) {
+            formRef.current.requestSubmit(); // ✅ triggers real form submit
+        }
     };
 
     const handleCancelSubmit = () => {
@@ -2886,7 +2897,7 @@ const OPDPatientRegistration = () => {
                                 Back
                             </BackButton>
                             <NextButton
-                                type="submit"
+                                type="button"
                                 onClick={() => {
                                     if (formRef.current.checkValidity()) {
                                         setShowConfirmModal(true);

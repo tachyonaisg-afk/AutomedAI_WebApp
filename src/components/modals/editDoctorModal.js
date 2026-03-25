@@ -384,6 +384,7 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
     const [currentUser, setCurrentUser] = useState("");
     const [isEmpanelled, setIsEmpanelled] = useState(false);
     const [originalFee, setOriginalFee] = useState(null);
+    const [originalName, setOriginalName] = useState("");
     const [formData, setFormData] = useState({
         first_name: "",
         middle_name: "",
@@ -399,6 +400,8 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
 
     useEffect(() => {
         if (doctor) {
+            const fullName = `${doctor.first_name || ""} ${doctor.last_name || ""}`.trim();
+            setOriginalName(fullName);
 
             setFormData({
                 first_name: doctor.first_name || "",
@@ -504,6 +507,8 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
         try {
             const practitionerName = `${formData.first_name} ${formData.last_name}`;
 
+            const nameChanged = practitionerName !== originalName;
+
             const payload = {
                 first_name: formData.first_name,
                 last_name: formData.last_name,
@@ -528,21 +533,49 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
             const feeChanged =
                 Number(formData.consultation_fee) !== Number(originalFee);
 
-            if ((isEmpanelled && feeChanged) || autoEmpanel) {
-                const empanelPayload = {
-                    company: selectedCompany,
-                    doctor_id: doctorId,
-                    doctor_name: practitionerName,
-                    consultation_fee: formData.consultation_fee,
-                    created_by: currentUser
-                };
+            // ✅ CASE 1: Already empanelled → UPDATE if fee OR name changed
+            if (isEmpanelled && (feeChanged || nameChanged)) {
+                try {
+                    const updatePayload = {
+                        company: selectedCompany,
+                        doctor_id: doctorId,
+                        consultation_fee: Number(formData.consultation_fee),
+                        updated_by: currentUser
+                    };
 
-                const empanelRes = await api.post(
-                    "https://midl.automedai.in/doctor_company/empanel",
-                    empanelPayload
-                );
+                    const updateRes = await api.put(
+                        "https://midl.automedai.in/doctor_company/update-empanel-doctor",
+                        updatePayload
+                    );
 
-                console.log("Empanel/Update Response:", empanelRes.data);
+                    console.log("Update Empanel Response:", updateRes.data);
+
+                } catch (err) {
+                    console.error("Update empanel failed", err);
+                }
+            }
+
+            // ✅ CASE 2: Not empanelled → CREATE (only if autoEmpanel)
+            else if (!isEmpanelled && autoEmpanel) {
+                try {
+                    const empanelPayload = {
+                        company: selectedCompany,
+                        doctor_id: doctorId,
+                        doctor_name: practitionerName, // 👈 name included here
+                        consultation_fee: Number(formData.consultation_fee),
+                        created_by: currentUser
+                    };
+
+                    const empanelRes = await api.post(
+                        "https://midl.automedai.in/doctor_company/empanel",
+                        empanelPayload
+                    );
+
+                    console.log("Empanel Response:", empanelRes.data);
+
+                } catch (err) {
+                    console.error("Empanel failed", err);
+                }
             }
 
             alert("Doctor updated successfully");

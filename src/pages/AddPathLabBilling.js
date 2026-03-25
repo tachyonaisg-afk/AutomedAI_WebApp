@@ -1480,39 +1480,45 @@ const AddPathLabBilling = () => {
       console.log("Step 3: Creating Payment Entry...");
       const paidToAccount =
         paidToMapping[billingData.payment_type]?.[billingData.company] || "";
+      let paymentEntryId = null;
+      if (invoiceTotal > 0) {
+        console.log("Step 3: Creating Payment Entry...");
 
-      const paymentPayload = {
-        doctype: "Payment Entry",
-        docstatus: 1,
-        payment_type: "Receive",
-        posting_date: billingData.posting_date,
-        due_date: billingData.due_date,
-        company: billingData.company,
-        mode_of_payment: billingData.payment_type,
-        party_type: "Customer",
-        party: billingData.customer,
-        paid_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
-        received_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
-        target_exchange_rate: 1,
-        paid_to: paidToAccount,
-        paid_to_account_currency: "INR",
-        reference_no: billingData.reference_no,
-        reference_date: billingData.reference_date,
-        references: [
-          {
-            reference_doctype: "Sales Invoice",
-            reference_name: salesInvoiceId,
-            total_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
-            outstanding_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal,
-            allocated_amount: (invoiceTotal === 0) ? 0.01 : invoiceTotal
-          }
-        ]
-      };
-      console.log("Payment Payload", paymentPayload);
+        const paymentPayload = {
+          doctype: "Payment Entry",
+          docstatus: 1,
+          payment_type: "Receive",
+          posting_date: billingData.posting_date,
+          due_date: billingData.due_date,
+          company: billingData.company,
+          mode_of_payment: billingData.payment_type,
+          party_type: "Customer",
+          party: billingData.customer,
+          paid_amount: invoiceTotal,
+          received_amount: invoiceTotal,
+          target_exchange_rate: 1,
+          paid_to: paidToAccount,
+          paid_to_account_currency: "INR",
+          reference_no: billingData.reference_no,
+          reference_date: billingData.reference_date,
+          references: [
+            {
+              reference_doctype: "Sales Invoice",
+              reference_name: salesInvoiceId,
+              total_amount: invoiceTotal,
+              outstanding_amount: invoiceTotal,
+              allocated_amount: invoiceTotal
+            }
+          ]
+        };
 
-      const paymentResponse = await apiService.post("/resource/Payment Entry", paymentPayload);
-      const paymentEntryId = paymentResponse.data?.data?.name;
-      console.log(`Step 3 Complete: Payment Entry ${paymentEntryId} created`);
+        const paymentResponse = await apiService.post("/resource/Payment Entry", paymentPayload);
+        paymentEntryId = paymentResponse.data?.data?.name;
+
+        console.log(`Step 3 Complete: Payment Entry ${paymentEntryId} created`);
+      } else {
+        console.log("Step 3 Skipped: Invoice total is 0, no payment entry needed");
+      }
 
       // ============ Step 4 & 5: Create Lab Tests for each item ============
       // COMMENTED OUT FOR TESTING - Lab test creation is disabled
@@ -1609,7 +1615,10 @@ const AddPathLabBilling = () => {
       */
 
       // Success!
-      alert(`Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}\nPayment Entry: ${paymentEntryId}`);
+      alert(
+        `Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}` +
+        (paymentEntryId ? `\nPayment Entry: ${paymentEntryId}` : "\n(No payment needed)")
+      );
       navigate(basePath);
 
     } catch (err) {
@@ -1735,7 +1744,7 @@ const AddPathLabBilling = () => {
 
               <FormGroup>
                 <FormLabel>
-                  Referring Practitioner<RequiredStar>*</RequiredStar>
+                  Referring Practitioner
                 </FormLabel>
 
                 {billingData.ref_practitioner?.id ? (

@@ -256,6 +256,7 @@ const RecentOPDPatients = () => {
     try {
       setLoading(true);
       setError(null);
+
       const filters = [
         ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
       ];
@@ -268,26 +269,38 @@ const RecentOPDPatients = () => {
         filters.push(["company", "=", selectedCompany]);
       }
 
-      const response = await api.get(
-        `/resource/Sales Invoice`,
-        {
-          // limit_page_length: 20,
+      const response = await api.get(`/resource/Sales Invoice`, {
+        params: {
           fields: JSON.stringify([
             "name",
             "patient",
             "patient_name",
             "posting_date",
+            "posting_time", // ✅ added
             "company",
             "status",
             "total_qty",
             "net_total",
           ]),
-          order_by: "posting_date desc",
+          order_by: "posting_date desc, posting_time desc", // ✅ fixed sorting
           filters: JSON.stringify(filters),
-        }
-      );
+          limit_page_length: 100000, // ✅ added
+        },
+      });
 
-      const rawData = response.data?.data || [];
+      let rawData = response.data?.data || [];
+
+      // 🔥 Optional fallback sorting (recommended for safety)
+      rawData = rawData.sort((a, b) => {
+        const dateA = new Date(
+          `${a.posting_date} ${a.posting_time || "00:00:00"}`
+        );
+        const dateB = new Date(
+          `${b.posting_date} ${b.posting_time || "00:00:00"}`
+        );
+        return dateB - dateA;
+      });
+
       setPatientsData(rawData);
     } catch (err) {
       console.error("Error fetching patients:", err);
@@ -323,7 +336,7 @@ const RecentOPDPatients = () => {
     : "Recent OPD Patient Records";
 
   const pageSubtitle = isDashboardFilter
-    ? `Showing all OPD patients for ${new Date(selectedDate).toLocaleDateString(
+    ? `Showing all patients for ${new Date(selectedDate).toLocaleDateString(
       "en-IN",
       { day: "numeric", month: "long", year: "numeric" }
     )}`
