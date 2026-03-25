@@ -275,22 +275,20 @@ const RecentPathLabPatients = () => {
             }
 
             const response = await api.get(`/resource/Sales Invoice`, {
-                params: {
-                    fields: JSON.stringify([
-                        "name",
-                        "patient",
-                        "patient_name",
-                        "posting_date",
-                        "posting_time",
-                        "company",
-                        "status",
-                        "total_qty",
-                        "net_total",
-                    ]),
-                    order_by: "posting_date desc, posting_time desc",
-                    filters: JSON.stringify(filters),
-                    limit_page_length: 200000, // ✅ updated
-                },
+                fields: JSON.stringify([
+                    "name",
+                    "patient",
+                    "patient_name",
+                    "posting_date",
+                    "posting_time",
+                    "company",
+                    "status",
+                    "total_qty",
+                    "net_total",
+                ]),
+                order_by: "posting_date desc, posting_time desc",
+                filters: JSON.stringify(filters),
+                limit_page_length: 200000,
             });
 
             let rawData = response.data?.data || [];
