@@ -965,7 +965,8 @@ const LabTestResult = () => {
           <Button
             className="primary"
             onClick={handlePublishReport}
-            disabled={publishing}
+            // disabled={publishing}
+            disabled
           >
             {publishing ? "Publishing..." : "Publish Report"}
           </Button>

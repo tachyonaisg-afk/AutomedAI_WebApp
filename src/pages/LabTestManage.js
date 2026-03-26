@@ -160,140 +160,141 @@ const PageButton = styled.button`
 // ================= COMPONENT =================
 
 function LabTestManage() {
-  const [tests, setTests] = useState([]);
-  const [filteredTests, setFilteredTests] = useState([]);
-  const [search, setSearch] = useState("");
+    const [tests, setTests] = useState([]);
+    const [filteredTests, setFilteredTests] = useState([]);
+    const [search, setSearch] = useState("");
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
-  const navigate=useNavigate();
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchTests();
-  }, []);
+    useEffect(() => {
+        fetchTests();
+    }, []);
 
-  useEffect(() => {
-    handleSearch();
-  }, [search, tests]);
+    useEffect(() => {
+        handleSearch();
+    }, [search, tests]);
 
-  const fetchTests = async () => {
-    try {
-      const res = await api.get(
-        `https://hms.automedai.in/api/resource/Lab%20Test?fields=["name","lab_test_name","department"]`
-      );
-      const data = await res.json();
+    const fetchTests = async () => {
+        try {
+            const res = await api.get(
+                `/resource/Lab Test?fields=["name","lab_test_name","department"]`
+            );
 
-      setTests(data.data || []);
-      setFilteredTests(data.data || []);
-    } catch (err) {
-      console.error("Error fetching lab tests:", err);
-    }
-  };
+            const data = res.data;
 
-  const handleSearch = () => {
-    const filtered = tests.filter((test) =>
-      test.lab_test_name.toLowerCase().includes(search.toLowerCase()) ||
-      test.name.toLowerCase().includes(search.toLowerCase()) ||
-      (test.department || "").toLowerCase().includes(search.toLowerCase())
+            setTests(data.data || []);
+            setFilteredTests(data.data || []);
+        } catch (err) {
+            console.error("Error fetching lab tests:", err);
+        }
+    };
+
+    const handleSearch = () => {
+        const filtered = tests.filter((test) =>
+            test.lab_test_name.toLowerCase().includes(search.toLowerCase()) ||
+            test.name.toLowerCase().includes(search.toLowerCase()) ||
+            (test.department || "").toLowerCase().includes(search.toLowerCase())
+        );
+
+        setFilteredTests(filtered);
+        setCurrentPage(1);
+    };
+
+    // Pagination logic
+    const totalPages = Math.ceil(filteredTests.length / pageSize);
+    const start = (currentPage - 1) * pageSize;
+    const currentData = filteredTests.slice(start, start + pageSize);
+
+    return (
+        <Layout>
+            <PageWrapper>
+
+                <Heading>Lab Test Management</Heading>
+
+                {/* Search */}
+                <SearchWrapper>
+                    <SearchBox>
+                        <SearchInput
+                            placeholder="Search by Test Name / ID / Department"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                        <SearchButton>
+                            <Search size={16} />
+                            Search
+                        </SearchButton>
+                    </SearchBox>
+                </SearchWrapper>
+
+                {/* Add Button */}
+                <TableHeader>
+                    <AddButton onClick={() => navigate("/pathlab/admin/test-manage/add")}>
+                        Add New Test
+                    </AddButton>
+                </TableHeader>
+
+                {/* Table */}
+                <TableWrapper>
+                    <Table>
+                        <Thead>
+                            <tr>
+                                <Th>Test ID</Th>
+                                <Th>Test Name</Th>
+                                <Th>Department</Th>
+                                <Th>Actions</Th>
+                            </tr>
+                        </Thead>
+
+                        <tbody>
+                            {currentData.length > 0 ? (
+                                currentData.map((test) => (
+                                    <tr key={test.name}>
+                                        <Td>{test.name}</Td>
+                                        <Td>{test.lab_test_name}</Td>
+                                        <Td>{test.department}</Td>
+                                        <Td>
+                                            <ActionButtons>
+                                                <EditButton>
+                                                    <Edit size={14} />
+                                                </EditButton>
+                                                <DeleteButton>
+                                                    <Trash size={14} />
+                                                </DeleteButton>
+                                            </ActionButtons>
+                                        </Td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <EmptyMessage colSpan="4">
+                                        No lab tests found
+                                    </EmptyMessage>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </TableWrapper>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <PaginationWrapper>
+                        {[...Array(totalPages)].map((_, i) => (
+                            <PageButton
+                                key={i}
+                                active={currentPage === i + 1}
+                                onClick={() => setCurrentPage(i + 1)}
+                            >
+                                {i + 1}
+                            </PageButton>
+                        ))}
+                    </PaginationWrapper>
+                )}
+            </PageWrapper>
+        </Layout>
     );
-
-    setFilteredTests(filtered);
-    setCurrentPage(1);
-  };
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredTests.length / pageSize);
-  const start = (currentPage - 1) * pageSize;
-  const currentData = filteredTests.slice(start, start + pageSize);
-
-  return (
-    <Layout>
-      <PageWrapper>
-
-        <Heading>Lab Test Management</Heading>
-
-        {/* Search */}
-        <SearchWrapper>
-          <SearchBox>
-            <SearchInput
-              placeholder="Search by Test Name / ID / Department"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <SearchButton>
-              <Search size={16} />
-              Search
-            </SearchButton>
-          </SearchBox>
-        </SearchWrapper>
-
-        {/* Add Button */}
-        <TableHeader>
-          <AddButton onClick={() => navigate("/pathlab/admin/test-manage/add")}>
-            Add New Test
-          </AddButton>
-        </TableHeader>
-
-        {/* Table */}
-        <TableWrapper>
-          <Table>
-            <Thead>
-              <tr>
-                <Th>Test ID</Th>
-                <Th>Test Name</Th>
-                <Th>Department</Th>
-                <Th>Actions</Th>
-              </tr>
-            </Thead>
-
-            <tbody>
-              {currentData.length > 0 ? (
-                currentData.map((test) => (
-                  <tr key={test.name}>
-                    <Td>{test.name}</Td>
-                    <Td>{test.lab_test_name}</Td>
-                    <Td>{test.department}</Td>
-                    <Td>
-                      <ActionButtons>
-                        <EditButton>
-                          <Edit size={14} />
-                        </EditButton>
-                        <DeleteButton>
-                          <Trash size={14} />
-                        </DeleteButton>
-                      </ActionButtons>
-                    </Td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <EmptyMessage colSpan="4">
-                    No lab tests found
-                  </EmptyMessage>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </TableWrapper>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <PaginationWrapper>
-            {[...Array(totalPages)].map((_, i) => (
-              <PageButton
-                key={i}
-                active={currentPage === i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </PageButton>
-            ))}
-          </PaginationWrapper>
-        )}
-      </PageWrapper>
-    </Layout>
-  );
 }
 
 export default LabTestManage;

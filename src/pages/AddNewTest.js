@@ -266,21 +266,16 @@ function AddNewTest() {
     const fetchDropdowns = async () => {
         try {
             const [ig, uom, dept, comp] = await Promise.all([
-                api.get("https://hms.automedai.in/api/resource/Item Group"),
-                api.get("https://hms.automedai.in/api/resource/Lab%20Test%20UOM"),
-                api.get("https://hms.automedai.in/api/resource/Medical Department?limit_page_length=1500"),
-                api.get("https://hms.automedai.in/api/resource/Company"),
+                api.get("/resource/Item Group"),
+                api.get("/resource/Lab Test UOM"),
+                api.get("/resource/Medical Department?limit_page_length=1500"),
+                api.get("/resource/Company"),
             ]);
 
-            const igData = await ig.json();
-            const uomData = await uom.json();
-            const deptData = await dept.json();
-            const compData = await comp.json();
-
-            setItemGroups(igData.data || []);
-            setUoms(uomData.data || []);
-            setDepartments(deptData.data || []);
-            setCompany(compData.data?.[0]?.name || "");
+            setItemGroups(ig.data.data || []);
+            setUoms(uom.data.data || []);
+            setDepartments(dept.data.data || []);
+            setCompany(comp.data.data?.[0]?.name || "");
         } catch (err) {
             console.error(err);
         }
@@ -319,71 +314,47 @@ function AddNewTest() {
 
         try {
             // STEP 1: CREATE ITEM
-            const itemRes = await api.post(
-                "https://hms.automedai.in/api/resource/Item",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
+            const itemRes = await api.post("/resource/Item", {
+                item_name: form.lab_test_name,
+                item_group: form.item_group,
+                stock_uom: "Nos",
+                gst_hsn_code: form.gst_hsn_code || "999312",
+                maintain_stock: 0,
+                is_stock_item: 0,
+                item_defaults: [
+                    {
+                        company: company,
+                        default_price_list: "Standard Selling",
                     },
-                    body: JSON.stringify({
-                        item_name: form.lab_test_name,
-                        item_group: form.item_group,
-                        stock_uom: "Nos",
-                        gst_hsn_code: form.gst_hsn_code || "999312",
-                        maintain_stock: 0,
-                        is_stock_item: 0,
-                        item_defaults: [
-                            {
-                                company: company,
-                                default_price_list: "Standard Selling",
-                            },
-                        ],
-                    }),
-                }
-            );
+                ],
+            });
 
-            const itemData = await itemRes.json();
-
-            if (!itemRes.ok) {
-                throw new Error(itemData.message || "Item creation failed");
-            }
-
-            const createdItem = itemData.data.name;
+            const createdItem = itemRes.data.data.name;
 
             // STEP 2: CREATE LAB TEST
-            const labRes = await api.post(
-                "https://hms.automedai.in/api/resource/Lab Test Template",
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        lab_test_name: form.lab_test_name,
-                        lab_test_code: form.lab_test_code,
-                        lab_test_description: form.description,
-                        department: form.department,
-                        lab_test_group: form.item_group,
-                        lab_test_template_type: form.lab_test_template_type,
-                        lab_test_rate: Number(form.lab_test_rate),
-                        link_existing_item: 1,
-                        item: createdItem,
-                        custom_display_name: form.custom_display_name,
-                        lab_test_uom: form.lab_test_uom,
-                        result_type: form.lab_test_template_type,
-                        lab_test_normal_range: form.normal_range,
-                        sample: form.sample,
-                        sample_qty: 1,
-                        custom_company: company,
-                    }),
-                }
-            );
+            const labRes = await api.post("/resource/Lab Test Template", {
+                lab_test_name: form.lab_test_name,
+                lab_test_code: form.lab_test_code,
+                lab_test_description: form.description,
+                department: form.department,
+                lab_test_group: form.item_group,
+                lab_test_template_type: form.lab_test_template_type,
+                lab_test_rate: Number(form.lab_test_rate),
+                link_existing_item: 1,
+                item: createdItem,
+                custom_display_name: form.custom_display_name,
+                lab_test_uom: form.lab_test_uom,
+                result_type: form.lab_test_template_type,
+                lab_test_normal_range: form.normal_range,
+                sample: form.sample,
+                sample_qty: 1,
+                custom_company: company,
+            });
 
-            const labData = await labRes.json();
+            const labData = labRes.data;
 
-            if (!labRes.ok) {
-                throw new Error(labData.message || "Lab Test creation failed");
+            if (!labData?.data) {
+                throw new Error("Lab Test creation failed");
             }
 
             alert("Lab Test Created Successfully ✅");
