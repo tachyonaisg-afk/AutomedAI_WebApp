@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { ArrowLeft } from "lucide-react";
+import api from "../services/api";
 
 // ================= STYLES =================
 
@@ -265,10 +266,10 @@ function AddNewTest() {
     const fetchDropdowns = async () => {
         try {
             const [ig, uom, dept, comp] = await Promise.all([
-                fetch("https://hms.automedai.in/api/resource/Item Group"),
-                fetch("https://hms.automedai.in/api/resource/Lab%20Test%20UOM"),
-                fetch("https://hms.automedai.in/api/resource/Medical Department?limit_page_length=1500"),
-                fetch("https://hms.automedai.in/api/resource/Company"),
+                api.get("https://hms.automedai.in/api/resource/Item Group"),
+                api.get("https://hms.automedai.in/api/resource/Lab%20Test%20UOM"),
+                api.get("https://hms.automedai.in/api/resource/Medical Department?limit_page_length=1500"),
+                api.get("https://hms.automedai.in/api/resource/Company"),
             ]);
 
             const igData = await ig.json();
@@ -318,7 +319,7 @@ function AddNewTest() {
 
         try {
             // STEP 1: CREATE ITEM
-            const itemRes = await fetch(
+            const itemRes = await api.post(
                 "https://hms.automedai.in/api/resource/Item",
                 {
                     method: "POST",
@@ -351,7 +352,7 @@ function AddNewTest() {
             const createdItem = itemData.data.name;
 
             // STEP 2: CREATE LAB TEST
-            const labRes = await fetch(
+            const labRes = await api.post(
                 "https://hms.automedai.in/api/resource/Lab Test Template",
                 {
                     method: "POST",

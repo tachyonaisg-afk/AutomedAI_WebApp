@@ -3,6 +3,7 @@ import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Search, Edit, Trash } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 // ================= STYLES =================
 
@@ -178,7 +179,7 @@ function LabTestManage() {
 
   const fetchTests = async () => {
     try {
-      const res = await fetch(
+      const res = await api.get(
         `https://hms.automedai.in/api/resource/Lab%20Test?fields=["name","lab_test_name","department"]`
       );
       const data = await res.json();
