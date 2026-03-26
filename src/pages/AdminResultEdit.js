@@ -785,7 +785,7 @@ const AdminResultEdit = () => {
 
     const isDescriptiveTest = labTestData?.descriptive_toggle === 1;
     const columnCount = isDescriptiveTest ? 2 : 5;
-    const isSubmitted = labTestData?.docstatus === 1;
+    const isSubmitted = false;
 
     return (
         <Layout>
@@ -974,12 +974,12 @@ const AdminResultEdit = () => {
                 </AttachmentsCard>
 
                 <ButtonGroup>
-                    <Button className="secondary" onClick={handleDownloadPDF}>
+                    {/* <Button className="secondary" onClick={handleDownloadPDF}>
                         Download PDF
                     </Button>
                     <Button className="outline" onClick={handlePreviewReport}>
                         Preview Report
-                    </Button>
+                    </Button> */}
                     <Button
                         className="primary"
                         onClick={handlePublishReport}

@@ -36,6 +36,8 @@ import PathlabPatients from './pages/PathlabPatients';
 import RecentPathLabPatients from './pages/RecentPathLabPatients';
 import TestResultManage from './pages/TestResultManage';
 import AdminResultEdit from './pages/AdminResultEdit';
+import LabTestManage from './pages/LabTestManage';
+import AddNewTest from './pages/AddNewTest';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -262,6 +264,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminResultEdit />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/admin/test-manage"
+            element={
+              <ProtectedRoute>
+                <LabTestManage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/admin/test-manage/add"
+            element={
+              <ProtectedRoute>
+                <AddNewTest />
               </ProtectedRoute>
             }
           />

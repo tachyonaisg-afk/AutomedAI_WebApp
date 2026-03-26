@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import DataTable from "../components/shared/DataTable";
 import styled from "styled-components";
-import { Search, Filter, FilePenLine } from "lucide-react";
+import { Search, Filter, FilePenLine, ArrowLeft } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
@@ -167,6 +167,27 @@ const ActionLink = styled.button`
     height: 16px;
   }
 `;
+
+const BackButton = styled.button`
+  padding: 8px 14px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+
+  &:hover {
+    background: #e2e8f0;
+  }
+`;
+
+const PageHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+`;
+
 function TestResultManage() {
     usePageTitle("Test Results");
     const navigate = useNavigate();
@@ -334,8 +355,12 @@ function TestResultManage() {
     return (
         <Layout>
             <ResultsContainer>
-                <PageTitle>Lab Test Results Manage</PageTitle>
-
+                <PageHeader>
+                    <BackButton onClick={() => navigate(-1)}>
+                        <ArrowLeft size={16} /> Back
+                    </BackButton>
+                    <PageTitle>Lab Test Results Manage</PageTitle>
+                </PageHeader>
                 {loading && <div>Loading completed lab tests...</div>}
                 {error && <div style={{ color: "red" }}>Error: {error}</div>}
 

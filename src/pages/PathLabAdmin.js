@@ -327,7 +327,7 @@ const OpdAdmin = () => {
             </ActionCard>
 
             <ActionCard
-            // onClick={() => navigate("/opd/admin/empanel-doctors")}
+              onClick={() => navigate("/pathlab/admin/test-manage")}
             >
               <IconWrapper variant="green">
                 <Stethoscope size={26} />
