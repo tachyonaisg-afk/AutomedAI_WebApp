@@ -948,6 +948,7 @@ const ResultPrint = () => {
       )
     );
   };
+  
   return (
     <Container>
       <Sidebar>

@@ -770,6 +770,7 @@ const LabTestResult = () => {
   };
   const isDescriptiveTest = labTestData?.descriptive_toggle === 1;
   const columnCount = isDescriptiveTest ? 2 : 5;
+  
   return (
     <Layout>
       <ResultContainer>

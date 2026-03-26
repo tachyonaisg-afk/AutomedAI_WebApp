@@ -238,7 +238,7 @@ const PathlabPatients = () => {
               patientData.customer ||
               `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
           },
-          defaultItemCode: "STO-ITEM-2025-00539",
+          // defaultItemCode: "STO-ITEM-2025-00539",
         },
       });
     } catch (err) {
@@ -268,17 +268,17 @@ const PathlabPatients = () => {
         Bill
       </ViewButton>
 
-      {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && (
+      {/* {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && ( */}
         <ViewButton
-        //   onClick={(e) => {
-        //     e.stopPropagation();
-        //     handlePrescription(row.name);
-        //   }}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleTestResult(row.name);
+          }}
         >
           <FileText />
           View Test Results
         </ViewButton>
-      )}
+      {/* )} */}
     </>
   );
   /* ========= DATA FETCH ========= */
@@ -562,7 +562,7 @@ const PathlabPatients = () => {
     return age > 70 ? `${age} yrs (Sr)` : `${age} yrs`;
   };
 
-  const handlePrescription = (id) => {
+  const handleTestResult = (id) => {
     navigate(`/prescription/${id}`);
   };
   /* ================= UI ================= */
