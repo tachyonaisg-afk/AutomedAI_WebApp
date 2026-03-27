@@ -269,15 +269,15 @@ const PathlabPatients = () => {
       </ViewButton>
 
       {/* {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && ( */}
-        <ViewButton
-          onClick={(e) => {
-            e.stopPropagation();
-            handleTestResult(row.name);
-          }}
-        >
-          <FileText />
-          View Test Results
-        </ViewButton>
+      <ViewButton
+        onClick={(e) => {
+          e.stopPropagation();
+          handleTestResult(row.name);
+        }}
+      >
+        <FileText />
+        View Test Results
+      </ViewButton>
       {/* )} */}
     </>
   );
@@ -562,8 +562,42 @@ const PathlabPatients = () => {
     return age > 70 ? `${age} yrs (Sr)` : `${age} yrs`;
   };
 
-  const handleTestResult = (id) => {
-    navigate(`/prescription/${id}`);
+  const handleTestResult = async (id) => {
+    try {
+      const res = await api.get(
+        `https://hms.automedai.in/api/resource/Lab%20Test?limit_start=0&limit_page_length=2000&fields=["name","patient","patient_name","status","sample"]&filters=[["patient","=","${id}"]]&order_by=department asc`
+      );
+
+      const data = await res.json();
+
+      if (!data?.data || data.data.length === 0) {
+        alert("Test Result Not Found");
+        return;
+      }
+
+      // Find first completed test
+      const completedTest = data.data.find(
+        (test) => test.status?.toLowerCase() === "complete"
+      );
+
+      if (!completedTest) {
+        alert("Test Result Not Found");
+        return;
+      }
+
+      // Navigate with state
+      navigate("/pathlab/result-print", {
+        state: {
+          labTestId: completedTest.name,
+          patientId: completedTest.patient,
+          patientName: completedTest.patient_name,
+        },
+      });
+
+    } catch (error) {
+      console.error("Error fetching test results:", error);
+      alert("Something went wrong while fetching test results");
+    }
   };
   /* ================= UI ================= */
 
