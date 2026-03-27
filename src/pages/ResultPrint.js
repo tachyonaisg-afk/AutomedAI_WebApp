@@ -350,12 +350,25 @@ const InfoLabel = styled.div`
   font-weight: 500;
 `;
 
+const InfoLabelC = styled.div`
+  font-size: 10px;
+`;
+
 const Colon = styled.div`
   text-align: center;
 `;
 
+const ColonC = styled.div`
+  text-align: center;
+  font-size: 10px;
+`;
+
 const InfoValue = styled.div`
   font-weight: 600;
+`;
+
+const InfoValueC = styled.div`
+  font-size: 10px;
 `;
 
 const TestSection = styled.div`
@@ -1157,15 +1170,15 @@ const ResultPrint = () => {
                   </InfoRow>
 
                   <InfoRow>
-                    <InfoLabel>Collected By</InfoLabel>
-                    <Colon>:</Colon>
-                    <InfoValue>{employees[0]?.employee_name || "N/A"}</InfoValue>
-                  </InfoRow>
-
-                  <InfoRow>
                     <InfoLabel>Report Status</InfoLabel>
                     <Colon>:</Colon>
                     <InfoValue>Final</InfoValue>
+                  </InfoRow>
+
+                  <InfoRow>
+                    <InfoLabelC>Collected By</InfoLabelC>
+                    <ColonC>:</ColonC>
+                    <InfoValueC>{employees[0]?.employee_name || "N/A"}</InfoValueC>
                   </InfoRow>
                 </div>
 

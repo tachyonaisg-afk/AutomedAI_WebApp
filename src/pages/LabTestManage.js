@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Search, Edit, Trash } from "lucide-react";
+import { Search, Edit, Trash, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
@@ -44,14 +44,15 @@ const SearchInput = styled.input`
 `;
 
 const SearchButton = styled.button`
-  padding: 12px 18px;
+  padding: 10px 10px;
+  height: fit-content;
   border: none;
   border-radius: 10px;
   background: #4a90e2;
   color: white;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   cursor: pointer;
 
   &:hover {
@@ -211,8 +212,15 @@ function LabTestManage() {
     return (
         <Layout>
             <PageWrapper>
+                <div style={{display:"flex", gap:"20px"}}>
+                    <SearchButton onClick={() => window.history.back()}>
+                    <ArrowLeft size={16} />
+                    Back
+                </SearchButton>
 
                 <Heading>Lab Test Management</Heading>
+                </div>
+                
 
                 {/* Search */}
                 <SearchWrapper>
