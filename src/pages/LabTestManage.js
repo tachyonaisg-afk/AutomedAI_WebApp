@@ -180,7 +180,7 @@ function LabTestManage() {
     const fetchTests = async () => {
         try {
             const res = await api.get(
-                `/resource/Lab Test?fields=["name","lab_test_name","department"]`
+                `/resource/Lab Test?fields=["name","lab_test_name","department"]&limit_page_length=2000`
             );
 
             const data = res.data;
@@ -222,10 +222,10 @@ function LabTestManage() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        <SearchButton>
+                        {/* <SearchButton>
                             <Search size={16} />
                             Search
-                        </SearchButton>
+                        </SearchButton> */}
                     </SearchBox>
                 </SearchWrapper>
 

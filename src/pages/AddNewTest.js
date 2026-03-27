@@ -3,7 +3,7 @@ import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { ArrowLeft } from "lucide-react";
 import api from "../services/api";
-
+import AsyncSelect from "react-select/async";
 // ================= STYLES =================
 
 const PageWrapper = styled.div`
@@ -81,7 +81,7 @@ const ModalBody = styled.div`
 const FormContent = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 1.5rem;
 `;
 
 const Section = styled.section``;
@@ -149,6 +149,29 @@ const FormControl = styled.input`
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
     border-color: #2563eb;
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const CheckBoxControl = styled.input`
+  width: 100%;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  padding: 0.625rem 1rem;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s;
+
+//   &:focus {
+//     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+//     border-color: #2563eb;
+//   }
 
   &:disabled {
     opacity: 0.5;
@@ -236,6 +259,10 @@ const SubmitButton = styled.button`
 // ================= COMPONENT =================
 
 function AddNewTest() {
+    const [groupRows, setGroupRows] = useState([]);
+    const [searchOptions, setSearchOptions] = useState([]);
+    const [loadingSearch, setLoadingSearch] = useState(false);
+    const [searchTimeout, setSearchTimeout] = useState(null);
     const [form, setForm] = useState({
         item_name: "",
         lab_test_name: "",
@@ -281,6 +308,64 @@ function AddNewTest() {
         }
     };
 
+    const addRow = () => {
+        setGroupRows(prev => [
+            ...prev,
+            {
+                type: "test",
+                lab_test_template: null,
+                description: "",
+                event: "",
+                allow_blank: 0,
+                disabled: false
+            }
+        ]);
+    };
+
+    const deleteRow = (index) => {
+        setGroupRows(prev => prev.filter((_, i) => i !== index));
+    };
+
+    // ================= HANDLE CHANGE =================
+
+    const loadOptions = async (inputValue) => {
+        if (!inputValue) return [];
+
+        try {
+            const formData = new URLSearchParams();
+            formData.append("txt", inputValue);
+            formData.append("doctype", "Lab Test Template");
+            formData.append("ignore_user_permissions", 1);
+            formData.append("reference_doctype", "Lab Test Group Template");
+            formData.append("page_length", 10);
+            formData.append(
+                "filters",
+                JSON.stringify({
+                    lab_test_template_type: ["in", ["Single", "Compound"]],
+                })
+            );
+
+            const res = await fetch(
+                "https://hms.automedai.in/api/method/frappe.desk.search.search_link",
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
+            const data = await res.json();
+
+            return data.message.map((item) => ({
+                label: item.value,
+                value: item.value,
+                description: item.description,
+            }));
+        } catch (err) {
+            console.error(err);
+            return [];
+        }
+    };
+
     // ================= HANDLE CHANGE =================
 
     const handleChange = (e) => {
@@ -298,6 +383,36 @@ function AddNewTest() {
         });
     };
 
+    const handleRowChange = (index, field, value) => {
+        const updated = [...groupRows];
+
+        // TEST SELECTED
+        if (field === "lab_test_template") {
+            updated[index].type = "test";
+            updated[index].lab_test_template = value;
+            updated[index].description = value?.description || "";
+            updated[index].event = "";
+            updated[index].allow_blank = 0;
+        }
+
+        // EVENT INPUT
+        if (field === "event") {
+            updated[index].event = value;
+
+            if (value) {
+                updated[index].type = "event";
+                updated[index].lab_test_template = null;
+                updated[index].description = "";
+                updated[index].allow_blank = 1;
+            } else {
+                updated[index].type = "test";
+                updated[index].allow_blank = 0;
+            }
+        }
+
+        setGroupRows(updated);
+    };
+
     const templateTypes = [
         "Single",
         "Compound",
@@ -307,13 +422,34 @@ function AddNewTest() {
         "No Result",
     ];
 
+    useEffect(() => {
+        if (form.lab_test_template_type === "Grouped" && groupRows.length === 0) {
+            addRow();
+        }
+    }, [form.lab_test_template_type]);
+
     // ================= SUBMIT =================
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            // STEP 1: CREATE ITEM
+            // ================= VALIDATION =================
+
+            if (!form.lab_test_name || !form.lab_test_code || !form.lab_test_rate) {
+                alert("Please fill all required fields");
+                return;
+            }
+
+            if (form.lab_test_template_type === "Grouped") {
+                if (groupRows.length === 0) {
+                    alert("Please add at least one row in grouped test");
+                    return;
+                }
+            }
+
+            // ================= STEP 1: CREATE ITEM =================
+
             const itemRes = await api.post("/resource/Item", {
                 item_name: form.lab_test_name,
                 item_group: form.item_group,
@@ -329,10 +465,48 @@ function AddNewTest() {
                 ],
             });
 
-            const createdItem = itemRes.data.data.name;
+            const createdItem = itemRes?.data?.data?.name;
 
-            // STEP 2: CREATE LAB TEST
-            const labRes = await api.post("/resource/Lab Test Template", {
+            if (!createdItem) {
+                throw new Error("Item creation failed");
+            }
+
+            // ================= BUILD GROUP DATA =================
+
+            let lab_test_groups = [];
+
+            if (form.lab_test_template_type === "Grouped") {
+                lab_test_groups = groupRows
+                    .filter((row) => row.lab_test_template || row.event)
+                    .map((row) => {
+                        if (row.type === "test" && row.lab_test_template) {
+                            return {
+                                template_or_new_line: "Add Test",
+                                lab_test_template: row.lab_test_template.value, // ✅ FIX
+                            };
+                        }
+
+                        if (row.type === "event" && row.event) {
+                            return {
+                                template_or_new_line: "Add New Line",
+                                group_event: row.event,
+                                allow_blank: 1,
+                            };
+                        }
+
+                        return null;
+                    })
+                    .filter(Boolean);
+
+                if (lab_test_groups.length === 0) {
+                    alert("Invalid grouped rows. Please check your entries.");
+                    return;
+                }
+            }
+
+            // ================= STEP 2: CREATE LAB TEST =================
+
+            const payload = {
                 lab_test_name: form.lab_test_name,
                 lab_test_code: form.lab_test_code,
                 lab_test_description: form.description,
@@ -349,19 +523,36 @@ function AddNewTest() {
                 sample: form.sample,
                 sample_qty: 1,
                 custom_company: company,
-            });
 
-            const labData = labRes.data;
+                // ✅ only include if grouped
+                ...(form.lab_test_template_type === "Grouped" && {
+                    lab_test_groups,
+                }),
+            };
+
+            const labRes = await api.post("/resource/Lab Test Template", payload);
+
+            const labData = labRes?.data;
 
             if (!labData?.data) {
                 throw new Error("Lab Test creation failed");
             }
 
+            // ================= SUCCESS =================
+
             alert("Lab Test Created Successfully ✅");
             window.history.back();
+
         } catch (err) {
             console.error(err);
-            alert(err.message);
+
+            // Better error handling
+            const errorMessage =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Something went wrong";
+
+            alert(errorMessage);
         }
     };
 
@@ -520,6 +711,130 @@ function AddNewTest() {
                                 </GridLayout2Col>
                             </Section>
 
+
+                            {form.lab_test_template_type === "Grouped" && (
+                                <Section>
+                                    <SectionHeader style={{ justifyContent: "space-between" }}>
+                                        <SectionTitle>Grouped Tests</SectionTitle>
+                                        <SubmitButton type="button" onClick={addRow}>
+                                            + Add Row
+                                        </SubmitButton>
+                                    </SectionHeader>
+
+                                    <div style={{ overflowX: "auto", minHeight: "200px" }}>
+                                        <table
+                                            style={{
+                                                width: "100%",
+                                                borderCollapse: "separate",
+                                                borderSpacing: "10px 10px",
+                                            }}
+                                        >
+                                            <thead style={{ background: "#bbd9f8", height: "40px" }}>
+                                                <tr style={{ background: "#f8fafc" }}>
+                                                    <th>No.</th>
+                                                    <th>Test Name</th>
+                                                    <th>Description</th>
+                                                    <th>Event</th>
+                                                    <th>Allow Blank</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody style={{ background: "#f8fafc" }}>
+                                                {groupRows.map((row, index) => (
+                                                    <tr key={index}>
+                                                        <td style={{ textAlign: "center" }}>{index + 1}</td>
+
+                                                        {/* TEST NAME */}
+                                                        <td style={{ minWidth: "220px" }}>
+                                                            <AsyncSelect
+                                                                cacheOptions
+                                                                defaultOptions
+                                                                loadOptions={loadOptions}
+                                                                value={row.lab_test_template}
+                                                                isDisabled={row.type === "event"}
+                                                                onChange={(selected) =>
+                                                                    handleRowChange(index, "lab_test_template", selected)
+                                                                }
+                                                                placeholder="Search Test..."
+
+                                                                menuPortalTarget={document.body}   // ✅ KEY FIX
+                                                                menuPosition="fixed"               // ✅ important
+
+                                                                styles={{
+                                                                    control: (base) => ({
+                                                                        ...base,
+                                                                        minHeight: "38px",
+                                                                        borderRadius: "8px",
+                                                                        borderColor: "#e2e8f0",
+                                                                        backgroundColor: "#f8fafc",
+                                                                    }),
+                                                                    menuPortal: (base) => ({
+                                                                        ...base,
+                                                                        zIndex: 9999, // ensure on top
+                                                                    }),
+                                                                    menu: (base) => ({
+                                                                        ...base,
+                                                                        zIndex: 9999,
+                                                                    }),
+                                                                }}
+                                                            />
+                                                        </td>
+
+                                                        {/* DESCRIPTION */}
+                                                        <td>
+                                                            <FormControl
+                                                                value={row.description}
+                                                                disabled
+                                                            />
+                                                        </td>
+
+                                                        {/* EVENT */}
+                                                        <td>
+                                                            <FormControl
+                                                                disabled={row.type === "test" && row.lab_test_template}
+                                                                value={row.event}
+                                                                onChange={(e) =>
+                                                                    handleRowChange(index, "event", e.target.value)
+                                                                }
+                                                            />
+                                                        </td>
+
+                                                        {/* ALLOW BLANK */}
+                                                        <td>
+                                                            <CheckBoxControl
+                                                                type="checkbox"
+                                                                checked={row.allow_blank === 1}
+                                                                readOnly
+                                                            />
+                                                        </td>
+                                                        <td style={{ textAlign: "center" }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => deleteRow(index)}
+                                                                style={{
+                                                                    // background: "#ef4444",
+                                                                    color: "#ff0000",
+                                                                    border: "none",
+                                                                    padding: "6px 12px",
+                                                                    borderRadius: "6px",
+                                                                    cursor: "pointer",
+                                                                    fontSize: "22px",
+                                                                    fontWeight: "bold",
+                                                                    textAlign: "center",
+                                                                }}
+                                                            >
+                                                                X
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </Section>
+                            )}
+
                             <Divider />
 
                             {/* DETAILS */}
@@ -550,6 +865,8 @@ function AddNewTest() {
                                     </InputGroup>
                                 </GridLayout2Col>
                             </Section>
+
+
 
                         </FormContent>
                     </ModalBody>

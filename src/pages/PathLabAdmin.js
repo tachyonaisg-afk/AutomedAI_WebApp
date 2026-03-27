@@ -335,7 +335,9 @@ const OpdAdmin = () => {
               <ActionTitle>Test Manage</ActionTitle>
             </ActionCard>
 
-            <ActionCard onClick={() => navigate("/pathlab/admin/test-result-manage")}>
+            <ActionCard
+              // onClick={() => navigate("/pathlab/admin/test-result-manage")}
+            >
               <IconWrapper variant="orange">
                 <Clock size={26} />
               </IconWrapper>
