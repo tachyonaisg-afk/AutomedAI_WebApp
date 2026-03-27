@@ -38,6 +38,7 @@ import TestResultManage from './pages/TestResultManage';
 import AdminResultEdit from './pages/AdminResultEdit';
 import LabTestManage from './pages/LabTestManage';
 import AddNewTest from './pages/AddNewTest';
+import GovernmentProjectIncentives from './pages/GovernmentProjectIncentives';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -280,6 +281,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AddNewTest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/admin/government-project-incentives"
+            element={
+              <ProtectedRoute>
+                <GovernmentProjectIncentives />
               </ProtectedRoute>
             }
           />

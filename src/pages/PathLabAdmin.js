@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import {
@@ -11,12 +11,14 @@ import {
   CreditCard,
   Download,
   Search,
+  Proportions,
 } from "lucide-react";
 import usePageTitle from "../hooks/usePageTitle";
 import OpdRoomTab from "../components/modals/OpdRoomTab";
 import DoctorAvailabilityTab from "../components/modals/DoctorAvailabilityTab";
 import DoctorAssignmentTab from "../components/modals/DoctorAssignmentTab";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 /* ---------------- Styled Components ---------------- */
 
@@ -300,11 +302,30 @@ const OpdAdmin = () => {
   usePageTitle("PathLab Admin Dashboard");
   const [isManageSlotsOpen, setIsManageSlotsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("assignment");
-
+  const [company, setCompany] = useState("");
   const [rooms, setRooms] = useState([]);
   const [availability, setAvailability] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCompany = async () => {
+      try {
+        const res = await api.get(
+          "https://hms.automedai.in/api/resource/Company"
+        );
+
+        if (res.data?.data?.length > 0) {
+          // Set first company
+          setCompany(res.data.data[0].name);
+        }
+      } catch (err) {
+        console.error("Error fetching company:", err);
+      }
+    };
+
+    fetchCompany();
+  }, []);
 
   return (
     <Layout>
@@ -332,11 +353,11 @@ const OpdAdmin = () => {
               <IconWrapper variant="green">
                 <Stethoscope size={26} />
               </IconWrapper>
-              <ActionTitle>Test Manage</ActionTitle>
+              <ActionTitle>Test Template Management</ActionTitle>
             </ActionCard>
 
             <ActionCard
-              // onClick={() => navigate("/pathlab/admin/test-result-manage")}
+            // onClick={() => navigate("/pathlab/admin/test-result-manage")}
             >
               <IconWrapper variant="orange">
                 <Clock size={26} />
@@ -357,6 +378,15 @@ const OpdAdmin = () => {
               </IconWrapper>
               <ActionTitle>Export Reports</ActionTitle>
             </ActionCard>
+
+            {/* {company?.trim().toLowerCase() === "ramakrishna mission sargachi" && ( */}
+            <ActionCard onClick={() => navigate("/pathlab/admin/government-project-incentives")}>
+              <IconWrapper variant="teal">
+                <Proportions size={26} />
+              </IconWrapper>
+              <ActionTitle>Government Project Incentives</ActionTitle>
+            </ActionCard>
+            {/* )} */}
           </QuickActionsGrid>
 
           <SearchSection>

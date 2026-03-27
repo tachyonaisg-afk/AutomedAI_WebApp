@@ -139,6 +139,7 @@ const Header = () => {
     if (path === "/opd") return { pages: ["OPD", "Dashboard"] };
     if (path === "/opd/patient-registration") return { pages: ["OPD", "Patient Registration"] };
     if (path === "/opd/billing") return { pages: ["OPD", "Billing"] };
+    if (path === "/opd/billing/add") return { pages: ["OPD", "Billing", "Add Billing"] };
     if (path === "/opd/appointments") return { pages: ["OPD", "Appointments"] };
     if (path === "/opd/consultation") return { pages: ["OPD", "Consultation"] };
     if (path === "/opd/telemedicine") return { pages: ["OPD", "Telemedicine"] };
