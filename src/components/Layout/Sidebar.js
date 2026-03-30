@@ -331,6 +331,7 @@ const Sidebar = () => {
     role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_OPD" ||
+    role === "Front_Desk_OPD_LAB" ||
     role === "Front_Desk_OPD";
 
   const canAccessPathLab =
@@ -338,6 +339,7 @@ const Sidebar = () => {
     role === null ||
     role === "Admin_OPD_LAB" ||
     role === "Admin_LAB" ||
+    role === "Front_Desk_OPD_LAB" ||
     role === "Front_Desk_LAB";
 
   const canAccessReports =
@@ -347,6 +349,7 @@ const Sidebar = () => {
     role === "Admin_LAB" ||
     role === "Admin_OPD" ||
     role === "Front_Desk_LAB" ||
+    role === "Front_Desk_OPD_LAB" ||
     role === "Front_Desk_OPD";
 
   const canAccessOPDAdmin =

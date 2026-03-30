@@ -226,6 +226,7 @@ const LoginForm = () => {
       if (
         role === null ||
         role === "Admin_OPD" ||
+        role === "Front_Desk_OPD_LAB" ||
         role === "Front_Desk_OPD"
       ) {
         navigate("/opd");

@@ -1024,7 +1024,7 @@ const ResultPrint = () => {
 
     const opt = {
       margin: [0, 0, 0, 0],
-      image: { type: "jpeg", quality: 0.7 },
+      image: { type: "jpeg", quality: 0.8 },
       html2canvas: {
         scale: 1,
         useCORS: true,

@@ -6,6 +6,7 @@ import { Printer, Download, ArrowLeft } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 import Select from "react-select";
+import { MessageCircle } from "lucide-react";
 
 const Container = styled.div`
   display: flex;
@@ -486,6 +487,100 @@ const LoadingContainer = styled.div`
   color: #666666;
 `;
 
+const Spinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
+const WhatsAppButton = styled(Button)`
+  background-color: #25D366;
+  color: #ffffff;
+
+  &:hover {
+    background-color: #1ebe5d;
+  }
+`;
+
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
+
+  z-index: 9999;
+`;
+
+const ModalBox = styled.div`
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 10px;
+  width: 320px;
+  max-width: 90%;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  animation: fadeInScale 0.2s ease;
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const ModalPrimaryButton = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ModalSecondaryButton = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: #eeeeee;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+`;
+
 const Prescription = () => {
   usePageTitle("Prescription");
   const { id } = useParams();
@@ -502,6 +597,9 @@ const Prescription = () => {
   const [queueNumber, setQueueNumber] = useState(null);
   const [roomName, setRoomName] = useState(null);
   const [patientAddress, setPatientAddress] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
     selectedClinic: "",
@@ -944,6 +1042,83 @@ const Prescription = () => {
     }
   };
 
+  const generatePdfBlob = async () => {
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    const element = document.querySelector("[data-pdf-content]");
+
+    const opt = {
+      margin: 5,
+      image: { type: "jpeg", quality: 0.7 },
+      html2canvas: {
+        scale: 1,
+        useCORS: true,
+      },
+      jsPDF: {
+        unit: "mm",
+        format: paperSize === "a5" ? "a5" : "a4",
+        orientation: "landscape",
+      },
+    };
+
+    return await html2pdf().set(opt).from(element).outputPdf("blob");
+  };
+
+  const handleSendToWhatsapp = async () => {
+    try {
+      let mobile = phoneNumber || patientData?.mobile || "";
+
+      if (!mobile) {
+        setShowPhoneModal(true);
+        return;
+      }
+
+      mobile = mobile.replace(/\D/g, "");
+
+      if (mobile.length === 10) {
+        mobile = `91${mobile}`;
+      }
+
+      if (mobile.length !== 12 || !mobile.startsWith("91")) {
+        alert("Please enter a valid mobile number");
+        setShowPhoneModal(true);
+        return;
+      }
+
+      setSending(true);
+
+      const pdfBlob = await generatePdfBlob();
+
+      const formData = new FormData();
+      formData.append("user_id", patientData?.name);
+      formData.append("encounter_id", appointmentId);
+      formData.append("patient_name", patientData?.patient_name || "");
+      formData.append("phone", mobile);
+      formData.append("file_type", "prescription");
+      formData.append("pdf", pdfBlob, `prescription-${patientData?.name}.pdf`);
+
+      const response = await fetch("https://midl.automedai.in/send", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result?.success) {
+        alert("Prescription sent via WhatsApp ✅");
+        setShowPhoneModal(false);
+      } else {
+        alert(result?.message || "Failed to send ❌");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send WhatsApp ❌");
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return (
       <Container>
@@ -1064,6 +1239,11 @@ const Prescription = () => {
                 <Printer />
                 Print
               </PrintButton>
+
+              {/* <WhatsAppButton onClick={handleSendToWhatsapp} disabled={sending}>
+                {sending ? <Spinner /> : <MessageCircle />}
+                {sending ? "Sending..." : "Send to WhatsApp"}
+              </WhatsAppButton> */}
               {/* <DownloadButton onClick={handleDownloadPDF}>
                 <Download />
                 Download PDF
@@ -1158,6 +1338,40 @@ const Prescription = () => {
           </PrescriptionPreview>
         </PreviewCard>
       </MainContent>
+      {showPhoneModal && (
+        <ModalBackdrop onClick={() => setShowPhoneModal(false)}>
+          <ModalBox onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: "12px" }}>Enter Mobile Number</h3>
+
+            <Input
+              type="tel"
+              placeholder="Enter mobile number"
+              value={phoneNumber}
+              maxLength={10}
+              style={{ marginBottom: "12px", width: "100%" }}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "");
+                setPhoneNumber(value);
+              }}
+            />
+
+            <ModalButtonGroup>
+              <ModalPrimaryButton
+                disabled={sending}
+                onClick={handleSendToWhatsapp}
+              >
+                {sending ? "Sending..." : "Send"}
+              </ModalPrimaryButton>
+
+              <ModalSecondaryButton
+                onClick={() => setShowPhoneModal(false)}
+              >
+                Cancel
+              </ModalSecondaryButton>
+            </ModalButtonGroup>
+          </ModalBox>
+        </ModalBackdrop>
+      )}
     </Container>
   );
 };
