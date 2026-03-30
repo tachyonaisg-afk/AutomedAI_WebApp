@@ -522,6 +522,46 @@ const LetterheadToggle = styled.div`
   }
 `;
 
+const FormInput = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+
+  &::placeholder {
+    color: #999999;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #d0d0d0;
+  }
+`;
+
+const Spinner = styled.div`
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 const ResultPrint = () => {
   usePageTitle("Result Print");
   const navigate = useNavigate();
@@ -538,6 +578,9 @@ const ResultPrint = () => {
   const [sampleDetails, setSampleDetails] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [company, setCompany] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [sending, setSending] = useState(false);
   // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
     if (!testName) return testName;
@@ -898,8 +941,98 @@ const ResultPrint = () => {
     }
   };
 
-  const handleSendToWhatsapp = () => {
-    console.log("WhatsApp Message Sent");
+  const generatePdfBlob = async () => {
+    await waitForImages(); // important for header/footer images
+
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    const element = document.querySelector("[data-pdf-content]");
+
+    if (!element) {
+      throw new Error("PDF content not found");
+    }
+
+    const opt = {
+      margin: [0, 0, 0, 0],
+      image: { type: "jpeg", quality: 1 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        scrollY: 0,
+      },
+      jsPDF: {
+        unit: "mm",
+        format: "a4",
+        orientation: "portrait",
+      },
+    };
+
+    const pdfBlob = await html2pdf()
+      .set(opt)
+      .from(element)
+      .outputPdf("blob");
+
+    return pdfBlob;
+  };
+
+  const handleSendToWhatsapp = async () => {
+    try {
+      let mobile = phoneNumber || selectedTestDetails?.[0]?.mobile || "";
+
+      if (!mobile) {
+        setShowPhoneModal(true);
+        return;
+      }
+
+      mobile = mobile.replace(/\D/g, "");
+
+      if (mobile.length === 10) {
+        mobile = `91${mobile}`;
+      }
+
+      if (mobile.length !== 12 || !mobile.startsWith("91")) {
+        alert("Please enter a valid mobile number");
+        setShowPhoneModal(true);
+        return;
+      }
+
+      // 🔥 START LOADING
+      setSending(true);
+
+      const pdfBlob = await generatePdfBlob();
+
+      const selectedIds = selectedTests.map(t => t.id).join(",");
+
+      const formData = new FormData();
+      formData.append("user_id", patientId);
+      formData.append("item_id", selectedIds);
+      formData.append("patient_name", patientName || "");
+      formData.append("phone", mobile);
+      formData.append("file_type", "report");
+      formData.append("pdf", pdfBlob, `lab-report-${patientId}.pdf`);
+
+      const response = await fetch("https://midl.automedai.in/send", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result?.success) {
+        alert("Report sent successfully via WhatsApp ✅");
+        setShowPhoneModal(false);
+      } else {
+        alert(result?.message || "Failed to send report ❌");
+      }
+
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send WhatsApp report ❌");
+    } finally {
+      // 🔥 STOP LOADING (always runs)
+      setSending(false);
+    }
   };
 
   const selectedTests = tests.filter((test) => test.selected);
@@ -961,7 +1094,7 @@ const ResultPrint = () => {
       )
     );
   };
-  
+
   return (
     <Container>
       <Sidebar>
@@ -1084,9 +1217,9 @@ const ResultPrint = () => {
                 Download PDF
               </DownloadButton>
 
-              <WhatsAppButton onClick={handleSendToWhatsapp}>
-                <MessageCircle />
-                Send to WhatsApp
+              <WhatsAppButton onClick={handleSendToWhatsapp} disabled={sending}>
+                {sending ? <Spinner /> : <MessageCircle />}
+                {sending ? "Sending..." : "Send to WhatsApp"}
               </WhatsAppButton>
             </ButtonGroup>
 
@@ -1316,6 +1449,40 @@ const ResultPrint = () => {
           </ReportPreview>
         </PreviewCard>
       </MainContent>
+      {showPhoneModal && (
+        <div className="modal-backdrop">
+          <div className="modal-box">
+            <h3>Enter Mobile Number</h3>
+
+            <FormInput
+              type="tel"
+              placeholder="Enter mobile number"
+              value={phoneNumber}
+              maxLength={10}
+              style={{ marginBottom: "10px" }}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, ""); // only digits
+                setPhoneNumber(value);
+              }}
+            />
+
+            <div style={{ marginTop: "10px" }}>
+              <button
+                disabled={sending}
+                onClick={() => {
+                  handleSendToWhatsapp();
+                }}
+              >
+                {sending ? "Sending..." : "Send"}
+              </button>
+
+              <button onClick={() => setShowPhoneModal(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Container>
   );
 };

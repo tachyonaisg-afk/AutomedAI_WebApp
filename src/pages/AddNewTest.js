@@ -263,6 +263,7 @@ function AddNewTest() {
     const [searchOptions, setSearchOptions] = useState([]);
     const [loadingSearch, setLoadingSearch] = useState(false);
     const [searchTimeout, setSearchTimeout] = useState(null);
+    const [samples, setSamples] = useState([]);
     const [form, setForm] = useState({
         item_name: "",
         lab_test_name: "",
@@ -292,17 +293,19 @@ function AddNewTest() {
 
     const fetchDropdowns = async () => {
         try {
-            const [ig, uom, dept, comp] = await Promise.all([
+            const [ig, uom, dept, comp, sampleRes] = await Promise.all([
                 api.get("/resource/Item Group"),
                 api.get("/resource/Lab Test UOM"),
                 api.get("/resource/Medical Department?limit_page_length=1500"),
                 api.get("/resource/Company"),
+                api.get("/resource/Lab Test Sample"),
             ]);
 
             setItemGroups(ig.data.data || []);
             setUoms(uom.data.data || []);
             setDepartments(dept.data.data || []);
             setCompany(comp.data.data?.[0]?.name || "");
+            setSamples(sampleRes.data.data || []);
         } catch (err) {
             console.error(err);
         }
@@ -332,28 +335,21 @@ function AddNewTest() {
         if (!inputValue) return [];
 
         try {
-            const formData = new URLSearchParams();
-            formData.append("txt", inputValue);
-            formData.append("doctype", "Lab Test Template");
-            formData.append("ignore_user_permissions", 1);
-            formData.append("reference_doctype", "Lab Test Group Template");
-            formData.append("page_length", 10);
-            formData.append(
-                "filters",
-                JSON.stringify({
-                    lab_test_template_type: ["in", ["Single", "Compound"]],
-                })
-            );
-
-            const res = await fetch(
-                "https://hms.automedai.in/api/method/frappe.desk.search.search_link",
+            const res = await api.post(
+                "/method/frappe.desk.search.search_link",
                 {
-                    method: "POST",
-                    body: formData,
+                    txt: inputValue,
+                    doctype: "Lab Test Template",
+                    ignore_user_permissions: 1,
+                    reference_doctype: "Lab Test Group Template",
+                    page_length: 10,
+                    filters: {
+                        lab_test_template_type: ["in", ["Single", "Compound"]],
+                    },
                 }
             );
 
-            const data = await res.json();
+            const data = res.data;
 
             return data.message.map((item) => ({
                 label: item.value,
@@ -687,13 +683,19 @@ function AddNewTest() {
 
                                     <InputGroup>
                                         <InputLabel>Sample <span>*</span></InputLabel>
-                                        <FormControl
+                                        <FormSelect
                                             name="sample"
                                             value={form.sample}
                                             onChange={handleChange}
-                                            placeholder="e.g. Blood"
                                             required
-                                        />
+                                        >
+                                            <option value="">Select Sample</option>
+                                            {samples.map((s) => (
+                                                <option key={s.name} value={s.name}>
+                                                    {s.name}
+                                                </option>
+                                            ))}
+                                        </FormSelect>
                                     </InputGroup>
 
                                     <InputGroup>
