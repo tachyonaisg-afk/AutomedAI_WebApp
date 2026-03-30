@@ -562,6 +562,76 @@ const Spinner = styled.div`
   }
 `;
 
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
+
+  z-index: 9999;
+`;
+
+const ModalBox = styled.div`
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 10px;
+  width: 320px;
+  max-width: 90%;
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+  animation: fadeInScale 0.2s ease;
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
+const ModalPrimaryButton = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ModalSecondaryButton = styled.button`
+  flex: 1;
+  padding: 10px;
+  background: #eeeeee;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+`;
+
 const ResultPrint = () => {
   usePageTitle("Result Print");
   const navigate = useNavigate();
@@ -954,9 +1024,9 @@ const ResultPrint = () => {
 
     const opt = {
       margin: [0, 0, 0, 0],
-      image: { type: "jpeg", quality: 1 },
+      image: { type: "jpeg", quality: 0.7 },
       html2canvas: {
-        scale: 2,
+        scale: 1,
         useCORS: true,
         allowTaint: true,
         scrollY: 0,
@@ -1450,38 +1520,38 @@ const ResultPrint = () => {
         </PreviewCard>
       </MainContent>
       {showPhoneModal && (
-        <div className="modal-backdrop">
-          <div className="modal-box">
-            <h3>Enter Mobile Number</h3>
+        <ModalBackdrop onClick={() => setShowPhoneModal(false)}>
+          <ModalBox onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: "12px" }}>Enter Mobile Number</h3>
 
             <FormInput
               type="tel"
               placeholder="Enter mobile number"
               value={phoneNumber}
               maxLength={10}
-              style={{ marginBottom: "10px" }}
+              style={{ marginBottom: "12px", width: "100%" }}
               onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, ""); // only digits
+                const value = e.target.value.replace(/\D/g, "");
                 setPhoneNumber(value);
               }}
             />
 
-            <div style={{ marginTop: "10px" }}>
-              <button
+            <ModalButtonGroup>
+              <ModalPrimaryButton
                 disabled={sending}
-                onClick={() => {
-                  handleSendToWhatsapp();
-                }}
+                onClick={handleSendToWhatsapp}
               >
                 {sending ? "Sending..." : "Send"}
-              </button>
+              </ModalPrimaryButton>
 
-              <button onClick={() => setShowPhoneModal(false)}>
+              <ModalSecondaryButton
+                onClick={() => setShowPhoneModal(false)}
+              >
                 Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+              </ModalSecondaryButton>
+            </ModalButtonGroup>
+          </ModalBox>
+        </ModalBackdrop>
       )}
     </Container>
   );
