@@ -1292,6 +1292,8 @@ const Prescription = () => {
     return null;
   };
 
+  const letterhead = getLetterhead();
+
   return (
     <Container>
       <Sidebar>
@@ -1438,9 +1440,9 @@ const Prescription = () => {
                 marginBottom: "6px",
               }}
             >
-              {getLetterhead() && (
+              {letterhead && (
                 <img
-                  src={getLetterhead()}
+                  src={letterhead}
                   alt="Letterhead"
                   style={{
                     width: "100%",
