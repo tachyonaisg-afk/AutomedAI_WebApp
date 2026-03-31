@@ -450,13 +450,13 @@ const StaticInfoTitle = styled.div`
   font-size: ${props => props.paperSize === 'a5' ? '10px' : '12px'};
   font-weight: 600;
   color: #000;
-  padding: 8px 10px;
+  padding: 3px 10px;
   border-bottom: 1px solid #000;
   background-color: #ffffff;
 `;
 
 const StaticInfoContent = styled.div`
-  padding: 8px 10px;
+  padding: 1px 10px;
   font-size: ${props => props.paperSize === 'a5' ? '12px' : '13px'};
   line-height: 1.8;
   color: #000;
@@ -1436,8 +1436,8 @@ const Prescription = () => {
             <div
               style={{
                 width: "100%",
-                height: paperSize === "a5" ? "90px" : "120px",
-                marginBottom: "6px",
+                height: paperSize === "a5" ? "120px" : "120px",
+                marginBottom: "2px",
               }}
             >
               {letterhead && (
