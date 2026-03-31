@@ -1265,7 +1265,7 @@ const Prescription = () => {
               placeholder="Choose a doctor"
               isSearchable
               isClearable={false}
-              isDisabled={true}
+              // isDisabled={true}
               value={
                 appointmentDoctor
                   ? {
