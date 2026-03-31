@@ -831,7 +831,8 @@ const Prescription = () => {
               "practitioner",
               "practitioner_name",
               "appointment_date",
-              "creation"
+              "creation",
+              "company"
             ]),
             order_by: "creation desc",
             limit_page_length: 20,
@@ -847,6 +848,7 @@ const Prescription = () => {
         const latest = fetchedAppointments[0];
 
         setAppointmentId(latest.name);
+        setCompany(latest.company);
 
         const doctor = {
           id: latest.practitioner,
@@ -930,9 +932,11 @@ const Prescription = () => {
 
   // Fetch queue number
   useEffect(() => {
+    if (!appointmentId || !company) return;
+
     const fetchQueueNumber = async () => {
       try {
-        if (!appointmentId || !company) return;
+        console.log("🚀 Calling Queue API with:", { appointmentId, company });
 
         const response = await api.get(
           `https://midl.automedai.in/appointments/queue/${company}/${appointmentId}`
@@ -1274,6 +1278,16 @@ const Prescription = () => {
                   id: selected.value,
                   name: selected.label,
                 });
+
+                // ✅ FIND MATCHING APPOINTMENT
+                const selectedAppointment = appointments.find(
+                  (a) => a.practitioner === selected.value
+                );
+
+                if (selectedAppointment) {
+                  setAppointmentId(selectedAppointment.name);
+                  setCompany(selectedAppointment.company);
+                }
               }}
               // isDisabled={true}
               value={doctorOptions.find(

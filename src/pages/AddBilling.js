@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -760,6 +760,40 @@ const AddBilling = () => {
   const [doctorResults, setDoctorResults] = useState([]);
   const [showDoctorResults, setShowDoctorResults] = useState(false);
   const [searchingDoctor, setSearchingDoctor] = useState(false);
+  const [availableDoctors, setAvailableDoctors] = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+
+  useEffect(() => {
+    fetchAvailableDoctors(billingData.company, billingData.posting_date);
+  }, [billingData.company, billingData.posting_date]);
+
+  const fetchAvailableDoctors = async (company, date) => {
+    if (!company || !date) {
+      setAvailableDoctors([]);
+      return;
+    }
+
+    try {
+      setLoadingDoctors(true);
+
+      const response = await fetch(
+        `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${encodeURIComponent(company)}&schedule_date=${date}`
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAvailableDoctors(data.data || []);
+      } else {
+        setAvailableDoctors([]);
+      }
+    } catch (error) {
+      console.error("Error fetching available doctors:", error);
+      setAvailableDoctors([]);
+    } finally {
+      setLoadingDoctors(false);
+    }
+  };
 
   // Fetch dropdown options on mount
   useEffect(() => {
@@ -1665,6 +1699,71 @@ const AddBilling = () => {
     resultRefs.current = [];
   }, [itemResults]);
 
+  const getCurrentISTTime = () => {
+    const now = new Date();
+    const istOffset = 5.5 * 60;
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utc + istOffset * 60000);
+  };
+
+  const getTodayIST = () => {
+    const now = new Date();
+    const istOffset = 5.5 * 60;
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utc + istOffset * 60000)
+      .toISOString()
+      .split("T")[0];
+  };
+
+  const filteredDoctors = availableDoctors.filter((doc) => {
+    if (!doc.to_time) return false;
+
+    const today = getTodayIST();
+
+    if (billingData.posting_date !== today) return true;
+
+    const nowIST = getCurrentISTTime();
+
+    const [hours, minutes] = doc.to_time.split(":");
+    const doctorEndTime = new Date(nowIST);
+    doctorEndTime.setHours(parseInt(hours));
+    doctorEndTime.setMinutes(parseInt(minutes));
+    doctorEndTime.setSeconds(0);
+
+    return nowIST <= doctorEndTime;
+  });
+
+  const mergedDoctorResults = useMemo(() => {
+    // If user is typing → show search results
+    if (doctorSearch && doctorSearch.length >= 2) {
+      return doctorResults.map((doc) => ({
+        id: doc.name,
+        name: doc.practitioner_name,
+        mobile: doc.mobile_phone,
+        isAvailable: false,
+      }));
+    }
+
+    // If empty → show available doctors
+    return filteredDoctors.map((doc) => ({
+      id: doc.doctor_id,
+      name: doc.doctor_name,
+      mobile: "",
+      from_time: doc.from_time,
+      to_time: doc.to_time,
+      room: doc.room_name,
+      isAvailable: true,
+    }));
+  }, [doctorSearch, doctorResults, filteredDoctors]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAvailableDoctors((prev) => [...prev]); // trigger re-filter
+    }, 60000); // every 1 min
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Layout>
       <BillingContainer>
@@ -1701,7 +1800,7 @@ const AddBilling = () => {
                       placeholder="Search patient..."
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
-                      onFocus={() => patientSearch.length >= 2 && setShowPatientResults(true)}
+                      onFocus={() => setShowPatientResults(true)}
                       onBlur={() => setTimeout(() => setShowPatientResults(false), 200)}
                     />
                     <SearchIcon>
@@ -1782,28 +1881,49 @@ const AddBilling = () => {
 
                     {showDoctorResults && (
                       <SearchResults>
-                        {doctorResults.length > 0 ? (
-                          doctorResults.map((doc, index) => (
+                        {mergedDoctorResults.length > 0 ? (
+                          mergedDoctorResults.map((doc, index) => (
                             <SearchResultItem
                               key={index}
                               onMouseDown={() => {
                                 setBillingData((prev) => ({
                                   ...prev,
                                   ref_practitioner: {
-                                    id: doc.name,
-                                    name: doc.practitioner_name,
+                                    id: doc.id,
+                                    name: doc.name,
                                   },
                                 }));
                                 setDoctorSearch("");
                                 setShowDoctorResults(false);
                               }}
                             >
-                              {doc.practitioner_name} ({doc.mobile_phone || "No Mobile"})
+                              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                <span>
+                                  {doc.name}
+                                  {doc.mobile && ` (${doc.mobile})`}
+                                </span>
+
+                                {doc.isAvailable && (
+                                  <span style={{ color: "green", fontSize: "12px" }}>
+                                    • Available Today
+                                  </span>
+                                )}
+                              </div>
+
+                              {doc.isAvailable && (
+                                <div style={{ fontSize: "11px", color: "#666" }}>
+                                  {doc.room} | {doc.from_time?.slice(0, 5)} - {doc.to_time?.slice(0, 5)}
+                                </div>
+                              )}
                             </SearchResultItem>
                           ))
                         ) : (
                           <SearchResultEmpty>
-                            {searchingDoctor ? "Searching..." : "No doctors found"}
+                            {searchingDoctor
+                              ? "Searching..."
+                              : doctorSearch
+                                ? "No doctors found"
+                                : "No doctors available today"}
                           </SearchResultEmpty>
                         )}
                       </SearchResults>
