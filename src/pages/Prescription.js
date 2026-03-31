@@ -617,6 +617,7 @@ const Prescription = () => {
     provisionalDiagnosis: "",
     prescription: "",
   });
+
   const formatAddress = (address) => {
     if (!address) return "-";
 
@@ -699,6 +700,22 @@ const Prescription = () => {
     fetchCompanyOptions();
   }, []);
 
+  useEffect(() => {
+    if (location.state?.selectedDoctor) {
+      const doctor = location.state.selectedDoctor;
+
+      setAppointmentDoctor({
+        id: doctor.id,
+        name: doctor.name,
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        selectedDoctor: doctor.id,
+      }));
+    }
+  }, [location.state]);
+
   // Fetch patient data
   useEffect(() => {
     const fetchPatientData = async () => {
@@ -729,42 +746,88 @@ const Prescription = () => {
       try {
         if (!patientData?.name) return;
 
-        // 1️⃣ Get latest appointment
-        const appointmentRes = await api.get(
-          "/resource/Patient Appointment",
-          {
-            filters: JSON.stringify([
-              ["patient", "=", patientData.name]
-            ]),
-            fields: JSON.stringify(["name"]),
-            limit_page_length: 1
+        const passedAppointmentId = location.state?.appointmentId;
+        const passedDoctor = location.state?.selectedDoctor;
+
+        // =========================
+        // ✅ PRIORITY 1: Use passed data
+        // =========================
+        if (passedAppointmentId) {
+          console.log("Using passed appointmentId");
+
+          const res = await api.get(
+            `/resource/Patient Appointment/${passedAppointmentId}`
+          );
+
+          const appointment = res.data?.data;
+
+          if (appointment) {
+            setAppointmentId(appointment.name);
+            setCompany(appointment.company);
+
+            setAppointmentDoctor({
+              id: appointment.practitioner,
+              name: appointment.practitioner_name,
+            });
+
+            setFormData((prev) => ({
+              ...prev,
+              selectedDoctor: appointment.practitioner,
+              selectedClinic: appointment.company,
+              selectedDate: appointment.appointment_date,
+            }));
+          }
+
+          return; // ✅ STOP HERE (no fallback)
+        }
+
+        // =========================
+        // ✅ PRIORITY 2: Use doctor from billing (if passed)
+        // =========================
+        if (passedDoctor) {
+          console.log("Using doctor from billing");
+
+          setAppointmentDoctor({
+            id: passedDoctor.id,
+            name: passedDoctor.name,
           });
 
-        console.log("📊 Appointment API Response:", appointmentRes);
+          setFormData((prev) => ({
+            ...prev,
+            selectedDoctor: passedDoctor.id,
+          }));
+
+          return; // ✅ VERY IMPORTANT — STOP FALLBACK
+        }
+
+        // =========================
+        // ✅ FALLBACK: Get latest appointment
+        // =========================
+        console.log("Fallback: fetching latest appointment");
+
+        const appointmentRes = await api.get("/resource/Patient Appointment", {
+          filters: JSON.stringify([["patient", "=", patientData.name]]),
+          fields: JSON.stringify(["name"]),
+          limit_page_length: 1,
+        });
 
         const appointment =
           appointmentRes.data?.data?.length > 0
             ? appointmentRes.data.data[0]
             : null;
 
-        if (!appointment) {
-          setAppointmentId(null);
-          return;
-        }
+        if (!appointment) return;
 
-        setAppointmentId(appointment.name);
-
-        // 2️⃣ Fetch full appointment details
-        const appointmentDetailRes = await api.get(
+        const detailRes = await api.get(
           `/resource/Patient Appointment/${appointment.name}`
         );
 
-        const fullAppointment = appointmentDetailRes.data?.data;
-
-        console.log("📊 Full Appointment API Response:", fullAppointment);
+        const fullAppointment = detailRes.data?.data;
 
         if (fullAppointment?.practitioner) {
+          setAppointmentId(fullAppointment.name);
           setCompany(fullAppointment.company);
+
           setAppointmentDoctor({
             id: fullAppointment.practitioner,
             name: fullAppointment.practitioner_name,
@@ -773,31 +836,17 @@ const Prescription = () => {
           setFormData((prev) => ({
             ...prev,
             selectedDoctor: fullAppointment.practitioner,
-          }));
-        }
-        // ✅ Auto select clinic from appointment
-        if (fullAppointment?.company) {
-          const clinicOption = {
-            value: fullAppointment.company,
-            label: fullAppointment.company,
-          };
-
-          setSelectedClinic(clinicOption);
-
-          setFormData(prev => ({
-            ...prev,
             selectedClinic: fullAppointment.company,
-            selectedDate: fullAppointment.appointment_date || todayISO
+            selectedDate: fullAppointment.appointment_date,
           }));
         }
-
       } catch (err) {
-        console.error("Error fetching appointment & doctor:", err);
+        console.error("Error fetching appointment:", err);
       }
     };
 
     fetchAppointmentAndDoctor();
-  }, [patientData]);
+  }, [patientData, location.state]);
 
   useEffect(() => {
     const fetchPatientAddress = async () => {
@@ -894,14 +943,17 @@ const Prescription = () => {
     };
     fetchPractitioners();
   }, []);
+
   const doctorOptions = practitioners.map((p) => ({
     value: p.name,
     label: p.practitioner_name,
   }));
+
   const clinicDropdownOptions = companyOptions.map((c) => ({
     value: c.name,
     label: c.name,
   }));
+
   const handleFormChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({

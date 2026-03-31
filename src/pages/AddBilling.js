@@ -1391,6 +1391,81 @@ const AddBilling = () => {
       });
       console.log(`Step 2 Complete: Sales Invoice ${salesInvoiceId} submitted`);
 
+      // ============ Step 2.5: Create Appointment ============
+      let appointmentId = null;
+
+      if (billingData.ref_practitioner?.id) {
+        try {
+          console.log("Step 2.5: Creating Patient Appointment...");
+
+          const appointmentPayload = {
+            doctype: "Patient Appointment",
+            appointment_for: "Practitioner",
+            appointment_based_on_check_in: 1,
+            company: billingData.company,
+            appointment_type: "Doctor Consultation",
+            practitioner: billingData.ref_practitioner.id,
+            patient: billingData.patient,
+            appointment_date: billingData.posting_date,
+            appointment_time: new Date().toTimeString().split(" ")[0],
+            duration: "0",
+            status: "Confirmed",
+          };
+
+          const appointmentRes = await apiService.post(
+            "/resource/Patient Appointment",
+            appointmentPayload
+          );
+
+          appointmentId = appointmentRes.data?.data?.name;
+
+          console.log(`Step 2.5 Complete: Appointment ${appointmentId} created`);
+        } catch (err) {
+          console.error("Appointment creation failed:", err);
+          alert("Invoice created, but appointment failed ❌");
+        }
+      }
+
+
+      // ============ Step 2.6: Create Queue ============
+      if (appointmentId && billingData.ref_practitioner?.id) {
+        try {
+          console.log("Step 2.6: Creating Queue Number...");
+
+          const queuePayload = {
+            appointment_id: appointmentId,
+            doctor_id: billingData.ref_practitioner.id,
+            company: billingData.company,
+            patient_id: billingData.patient,
+            appointment_date: billingData.posting_date,
+          };
+
+          const queueRes = await fetch(
+            "https://midl.automedai.in/appointments/create",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(queuePayload),
+            }
+          );
+
+          const queueData = await queueRes.json();
+
+          if (queueRes.ok) {
+            console.log("Step 2.6 Complete: Queue created", queueData);
+          } else {
+            console.error("Queue creation failed:", queueData);
+            alert("Appointment created, but queue failed ❌");
+          }
+        } catch (err) {
+          console.error("Queue creation error:", err);
+          alert("Appointment created, but queue error ❌");
+        }
+      }
+
       // ============ Step 3: Create Payment Entry ============
       console.log("Step 3: Creating Payment Entry...");
       const paidToAccount =
@@ -1534,9 +1609,12 @@ const AddBilling = () => {
         `Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}` +
         (paymentEntryId ? `\nPayment Entry: ${paymentEntryId}` : "\n(No payment needed)")
       );
+
       navigate(`/prescription/${billingData.patient}`, {
         state: {
-          autoPrint: true
+          autoPrint: true,
+          selectedDoctor: billingData.ref_practitioner,
+          appointmentId: appointmentId, 
         }
       });
 
@@ -1563,6 +1641,7 @@ const AddBilling = () => {
       setLoading(false);
     }
   };
+
   const practitionerOptions = practitioners.map((p) => ({
     value: p.name,
     label: p.practitioner_name || p.name,
@@ -1574,7 +1653,7 @@ const AddBilling = () => {
     if (activeResultIndex >= 0 && resultRefs.current[activeResultIndex]) {
       resultRefs.current[activeResultIndex].scrollIntoView({
         block: "nearest",
-        behavior: "smooth", // optional (remove if you want instant)
+        behavior: "smooth",
       });
     }
   }, [activeResultIndex]);
