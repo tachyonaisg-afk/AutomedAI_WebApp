@@ -600,6 +600,7 @@ const Prescription = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const [doctorLocked, setDoctorLocked] = useState(false);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
     selectedClinic: "",
@@ -750,7 +751,7 @@ const Prescription = () => {
         const passedDoctor = location.state?.selectedDoctor;
 
         // =========================
-        // ✅ PRIORITY 1: Use passed data
+        // ✅ PRIORITY 1: Appointment ID
         // =========================
         if (passedAppointmentId) {
           console.log("Using passed appointmentId");
@@ -776,13 +777,15 @@ const Prescription = () => {
               selectedClinic: appointment.company,
               selectedDate: appointment.appointment_date,
             }));
+
+            setDoctorLocked(true); // 🔥 LOCK
           }
 
-          return; // ✅ STOP HERE (no fallback)
+          return;
         }
 
         // =========================
-        // ✅ PRIORITY 2: Use doctor from billing (if passed)
+        // ✅ PRIORITY 2: Doctor from Billing
         // =========================
         if (passedDoctor) {
           console.log("Using doctor from billing");
@@ -797,11 +800,18 @@ const Prescription = () => {
             selectedDoctor: passedDoctor.id,
           }));
 
-          return; // ✅ VERY IMPORTANT — STOP FALLBACK
+          setDoctorLocked(true); // 🔥 LOCK
+
+          return; // ✅ STOP HERE (VERY IMPORTANT)
         }
 
         // =========================
-        // ✅ FALLBACK: Get latest appointment
+        // ❌ DO NOT OVERRIDE if locked
+        // =========================
+        if (doctorLocked) return;
+
+        // =========================
+        // ✅ FALLBACK (ONLY IF NOTHING PASSED)
         // =========================
         console.log("Fallback: fetching latest appointment");
 
@@ -875,6 +885,15 @@ const Prescription = () => {
 
     fetchPatientAddress();
   }, [patientData]);
+
+  useEffect(() => {
+    if (appointmentDoctor?.id) {
+      setFormData((prev) => ({
+        ...prev,
+        selectedDoctor: appointmentDoctor.id,
+      }));
+    }
+  }, [appointmentDoctor]);
 
   // Update selected doctor data when selection changes
   useEffect(() => {
@@ -1212,14 +1231,9 @@ const Prescription = () => {
               isSearchable
               isClearable={false}
               isDisabled={true}
-              value={
-                appointmentDoctor
-                  ? {
-                    label: appointmentDoctor.name,
-                    value: appointmentDoctor.id,
-                  }
-                  : null
-              }
+              value={doctorOptions.find(
+                (opt) => opt.value === formData.selectedDoctor
+              )}
             />
           </FormGroup>
           <SidebarSection>
