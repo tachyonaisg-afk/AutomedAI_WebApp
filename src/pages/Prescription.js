@@ -601,6 +601,7 @@ const Prescription = () => {
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [sending, setSending] = useState(false);
   const [doctorLocked, setDoctorLocked] = useState(false);
+  const [appointments, setAppointments] = useState([]);
   const [formData, setFormData] = useState({
     selectedDoctor: "",
     selectedClinic: "",
@@ -751,7 +752,7 @@ const Prescription = () => {
         const passedDoctor = location.state?.selectedDoctor;
 
         // =========================
-        // ✅ PRIORITY 1: Appointment ID
+        // ✅ PRIORITY 1: Use passed appointmentId
         // =========================
         if (passedAppointmentId) {
           console.log("Using passed appointmentId");
@@ -766,26 +767,26 @@ const Prescription = () => {
             setAppointmentId(appointment.name);
             setCompany(appointment.company);
 
-            setAppointmentDoctor({
+            const doctor = {
               id: appointment.practitioner,
               name: appointment.practitioner_name,
-            });
+            };
+
+            setAppointmentDoctor(doctor);
 
             setFormData((prev) => ({
               ...prev,
-              selectedDoctor: appointment.practitioner,
+              selectedDoctor: doctor.id,
               selectedClinic: appointment.company,
               selectedDate: appointment.appointment_date,
             }));
-
-            setDoctorLocked(true); // 🔥 LOCK
           }
-
-          return;
+          setDoctorLocked(true);
+          return; // 🚀 STOP EVERYTHING
         }
 
         // =========================
-        // ✅ PRIORITY 2: Doctor from Billing
+        // ✅ PRIORITY 2: Use passed doctor (NO FETCH)
         // =========================
         if (passedDoctor) {
           console.log("Using doctor from billing");
@@ -799,64 +800,75 @@ const Prescription = () => {
             ...prev,
             selectedDoctor: passedDoctor.id,
           }));
-
-          setDoctorLocked(true); // 🔥 LOCK
-
-          return; // ✅ STOP HERE (VERY IMPORTANT)
+          setDoctorLocked(true);
+          return; // 🚀 STOP FALLBACK
         }
 
         // =========================
-        // ❌ DO NOT OVERRIDE if locked
+        // 🚫 PREVENT OVERRIDE
         // =========================
-        if (doctorLocked) return;
+        if (doctorLocked) {
+          console.log("Doctor locked, skipping fallback");
+          return;
+        }
 
         // =========================
-        // ✅ FALLBACK (ONLY IF NOTHING PASSED)
+        // ✅ FALLBACK: FETCH TODAY'S LATEST APPOINTMENT
         // =========================
-        console.log("Fallback: fetching latest appointment");
+        console.log("Fetching today's latest appointment");
 
-        const appointmentRes = await api.get("/resource/Patient Appointment", {
-          filters: JSON.stringify([["patient", "=", patientData.name]]),
-          fields: JSON.stringify(["name"]),
-          limit_page_length: 1,
-        });
+        const today = new Date().toISOString().split("T")[0];
 
-        const appointment =
-          appointmentRes.data?.data?.length > 0
-            ? appointmentRes.data.data[0]
-            : null;
-
-        if (!appointment) return;
-
-        const detailRes = await api.get(
-          `/resource/Patient Appointment/${appointment.name}`
+        const appointmentRes = await api.get(
+          `/resource/Patient Appointment`,
+          {
+            filters: JSON.stringify([
+              ["patient", "=", patientData.name],
+              // ["appointment_date", "=", today],
+            ]),
+            fields: JSON.stringify([
+              "name",
+              "practitioner",
+              "practitioner_name",
+              "appointment_date",
+              "creation"
+            ]),
+            order_by: "creation desc",
+            limit_page_length: 1,
+          }
         );
 
-        const fullAppointment = detailRes.data?.data;
+        const fetchedAppointments = appointmentRes.data?.data || [];
 
-        if (fullAppointment?.practitioner) {
-          setAppointmentId(fullAppointment.name);
-          setCompany(fullAppointment.company);
+        setAppointments(fetchedAppointments);
 
-          setAppointmentDoctor({
-            id: fullAppointment.practitioner,
-            name: fullAppointment.practitioner_name,
-          });
+        if (appointments.length === 0) return;
 
-          setFormData((prev) => ({
-            ...prev,
-            selectedDoctor: fullAppointment.practitioner,
-            selectedClinic: fullAppointment.company,
-            selectedDate: fullAppointment.appointment_date,
-          }));
-        }
+        // ✅ Latest
+        const latest = appointments[0];
+
+        setAppointmentId(latest.name);
+
+        const doctor = {
+          id: latest.practitioner,
+          name: latest.practitioner_name,
+        };
+
+        setAppointmentDoctor(doctor);
+
+        setFormData((prev) => ({
+          ...prev,
+          selectedDoctor: doctor.id,
+          selectedDate: latest.appointment_date,
+        }));
+
       } catch (err) {
         console.error("Error fetching appointment:", err);
       }
     };
 
     fetchAppointmentAndDoctor();
-  }, [patientData, location.state]);
+  }, [patientData]);
 
   useEffect(() => {
     const fetchPatientAddress = async () => {
@@ -963,10 +975,27 @@ const Prescription = () => {
     fetchPractitioners();
   }, []);
 
-  const doctorOptions = practitioners.map((p) => ({
-    value: p.name,
-    label: p.practitioner_name,
-  }));
+  const doctorOptions = Array.from(
+    new Map(
+      (appointments || []).map((a) => [
+        a.practitioner,
+        {
+          value: a.practitioner,
+          label: a.practitioner_name,
+        },
+      ])
+    ).values()
+  );
+
+  if (
+    appointmentDoctor &&
+    !doctorOptions.some((d) => d.value === appointmentDoctor.id)
+  ) {
+    doctorOptions.unshift({
+      value: appointmentDoctor.id,
+      label: appointmentDoctor.name,
+    });
+  }
 
   const clinicDropdownOptions = companyOptions.map((c) => ({
     value: c.name,
@@ -1079,7 +1108,13 @@ const Prescription = () => {
         handlePrint();
 
         // Remove state so refresh doesn't re-trigger
-        navigate(location.pathname, { replace: true });
+        navigate(location.pathname, {
+          replace: true,
+          state: {
+            selectedDoctor: appointmentDoctor,
+            appointmentId: appointmentId,
+          },
+        });
       }, 800);
     }
   }, [location.state, patientData, loading]);
@@ -1231,9 +1266,14 @@ const Prescription = () => {
               isSearchable
               isClearable={false}
               isDisabled={true}
-              value={doctorOptions.find(
-                (opt) => opt.value === formData.selectedDoctor
-              )}
+              value={
+                appointmentDoctor
+                  ? {
+                    label: appointmentDoctor.name,
+                    value: appointmentDoctor.id,
+                  }
+                  : null
+              }
             />
           </FormGroup>
           <SidebarSection>
