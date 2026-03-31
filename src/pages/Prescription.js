@@ -7,6 +7,8 @@ import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 import Select from "react-select";
 import { MessageCircle } from "lucide-react";
+import rkmsHeader from "../assets/rkma_ltrhd_hdr.jpg";
+import alfaHeader from "../assets/alfa_hdr.jpg.jpeg";
 
 const Container = styled.div`
   display: flex;
@@ -1244,6 +1246,51 @@ const Prescription = () => {
     );
   }
 
+  // const companyAddressMap = {
+  //   "Ramakrishna Mission Sargachi": {
+  //     heading: "RAMAKRISHNA MISSION SARGACHI",
+  //     subHeading: "Charitable Dispensary & Diagnostic Centre",
+  //     area: "P.O - Sargachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India",
+  //     iso: "( ISO 9001:2008 Certified, LIC No.:S/PC/27 )",
+  //     state: "West Bengal, India - 742134",
+  //     phone: "9775831847",
+  //     email: "rkm.sargachi@gmail.com",
+  //   },
+  //   "ALFA DIAGNOSTIC CENTRE & POLYCLINIC": {
+  //     heading: "ALFA DIAGNOSTIC CENTRE & POLYCLINIC",
+  //     subHeading: "VILL-BAHARAN, P.O-BARUIPARA, P.S-HARIHARPARA, DIST-MURSHIDABAD",
+  //     area: "CONTACT NO: +91-9475353302  EMAIL: alfadiagnosticcentrebaharan@gmail.com",
+  //     iso: "WEST BENGAL, PIN-742165",
+  //     state: "West Bengal, India - 742165",
+  //     phone: "+91-9475353302",
+  //     email: "alfadiagnosticcentrebaharan@gmail.com",
+  //   },
+  // };
+  // const companyDetails = companyAddressMap[company] || {
+  //   heading: "",
+  //   subHeading: "",
+  //   iso: "",
+  //   area: "",
+  //   state: "",
+  //   phone: "",
+  //   email: "",
+  // };
+
+  const getLetterhead = () => {
+    if (!company) return null;
+
+    const name = company.toLowerCase();
+
+    if (name.includes("ramakrishna mission sargachi")) {
+      return rkmsHeader;
+    }
+
+    if (name.includes("alfa diagnostic centre")) {
+      return alfaHeader;
+    }
+
+    return null;
+  };
 
   return (
     <Container>
@@ -1377,13 +1424,33 @@ const Prescription = () => {
           </PreviewHeader>
 
           <PrescriptionPreview data-pdf-content paperSize={paperSize}>
-            <PrescriptionHeader>
+            {/* <PrescriptionHeader>
               <HeaderTitle paperSize={paperSize}>Ramakrishna Mission Ashrama Sargachi</HeaderTitle>
               <HeaderSubtitle paperSize={paperSize}>Charitable Dispensary & Diagnostic Centre ( ISO 9001:2008 Certified, LIC No.:S/PC/27 )</HeaderSubtitle>
               <HeaderAddress paperSize={paperSize}>
                 P.O - Sargachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India, Mobile : 9775831847
               </HeaderAddress>
-            </PrescriptionHeader>
+            </PrescriptionHeader> */}
+            <div
+              style={{
+                width: "100%",
+                height: paperSize === "a5" ? "90px" : "120px",
+                marginBottom: "6px",
+              }}
+            >
+              {getLetterhead() && (
+                <img
+                  src={getLetterhead()}
+                  alt="Letterhead"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
+                />
+              )}
+            </div>
 
             <TopRow>
               <DoctorInfo paperSize={paperSize}>
