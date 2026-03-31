@@ -997,30 +997,35 @@ const AddBilling = () => {
     const applyDoctorFee = async () => {
       const doctorId = billingData.ref_practitioner?.id;
       if (!doctorId) return;
-      if (items.length === 0) return;
+
+      // ✅ Only proceed if consultation item exists
+      const hasConsultationItem = items.some(
+        (item) => item.item === "STO-ITEM-2025-00539"
+      );
+
+      if (!hasConsultationItem) return;
 
       const fee = await fetchDoctorFee(billingData.company, doctorId);
       if (!fee) return;
 
       setItems((prevItems) => {
-        const updated = [...prevItems];
+        return prevItems.map((item) => {
+          if (item.item === "STO-ITEM-2025-00539") {
+            const qty = parseFloat(item.qty) || 1;
 
-        if (updated[0]) {
-          const qty = parseFloat(updated[0].qty) || 1;
-
-          updated[0] = {
-            ...updated[0],
-            rate: fee,
-            amount: fee * qty,
-          };
-        }
-
-        return updated;
+            return {
+              ...item,
+              rate: fee,
+              amount: fee * qty,
+            };
+          }
+          return item;
+        });
       });
     };
 
     applyDoctorFee();
-  }, [billingData.ref_practitioner?.id, billingData.company]);
+  }, [billingData.ref_practitioner?.id, billingData.company, items]);
 
   //   useEffect(() => {
   //   const loadDefaultItem = async () => {
@@ -1870,7 +1875,7 @@ const AddBilling = () => {
                       value={doctorSearch}
                       onChange={(e) => setDoctorSearch(e.target.value)}
                       onFocus={() =>
-                        doctorSearch.length >= 2 && setShowDoctorResults(true)
+                        setShowDoctorResults(true)
                       }
                       onBlur={() => setTimeout(() => setShowDoctorResults(false), 200)}
                     />

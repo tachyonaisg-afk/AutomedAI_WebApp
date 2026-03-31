@@ -971,17 +971,21 @@ const AddPathLabBilling = () => {
       if (!fee) return;
 
       setItems((prevItems) => {
-        const updated = [...prevItems];
+        const updated = prevItems.map((item) => {
+          // ✅ Apply fee ONLY for consultation item
+          if (item.item === "STO-ITEM-2025-00539") {
+            const qty = parseFloat(item.qty) || 1;
 
-        if (updated[0]) {
-          const qty = parseFloat(updated[0].qty) || 1;
+            return {
+              ...item,
+              rate: fee,
+              amount: fee * qty,
+            };
+          }
 
-          updated[0] = {
-            ...updated[0],
-            rate: fee,
-            amount: fee * qty,
-          };
-        }
+          // ❌ Do NOT touch other items
+          return item;
+        });
 
         return updated;
       });
