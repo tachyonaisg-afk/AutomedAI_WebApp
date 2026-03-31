@@ -642,7 +642,6 @@ const Prescription = () => {
   const [companyOptions, setCompanyOptions] = useState([]);
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [company, setCompany] = useState(null);
-
   useEffect(() => {
     try {
       const userData = localStorage.getItem("user");
@@ -658,6 +657,34 @@ const Prescription = () => {
     } catch (error) {
       console.error("Error reading user from localStorage:", error);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get("https://hms.automedai.in/api/resource/Company");
+        const companyList = res.data?.data || [];
+
+        if (companyList.length > 0) {
+          const defaultCompany = companyList[0].name;
+
+          setCompany(defaultCompany); // ✅ THIS is key
+          setSelectedClinic({
+            value: defaultCompany,
+            label: defaultCompany,
+          });
+
+          setFormData(prev => ({
+            ...prev,
+            selectedClinic: defaultCompany,
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching companies", err);
+      }
+    };
+
+    fetchCompanies();
   }, []);
 
   useEffect(() => {
@@ -1358,6 +1385,8 @@ const Prescription = () => {
                 isDisabled={true}
                 onChange={(selected) => {
                   setSelectedClinic(selected);
+
+                  setCompany(selected.value);
 
                   setFormData(prev => ({
                     ...prev,
