@@ -1301,6 +1301,10 @@ const AddBilling = () => {
   //   });
   // }, [showPHCOnly]);
 
+  const requiresAppointment = items.some(
+    (item) => item.item === "STO-ITEM-2025-00539"
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -1394,7 +1398,7 @@ const AddBilling = () => {
       // ============ Step 2.5: Create Appointment ============
       let appointmentId = null;
 
-      if (billingData.ref_practitioner?.id) {
+      if (requiresAppointment && billingData.ref_practitioner?.id) {
         try {
           console.log("Step 2.5: Creating Patient Appointment...");
 
@@ -1426,9 +1430,8 @@ const AddBilling = () => {
         }
       }
 
-
       // ============ Step 2.6: Create Queue ============
-      if (appointmentId && billingData.ref_practitioner?.id) {
+      if (requiresAppointment && appointmentId && billingData.ref_practitioner?.id) {
         try {
           console.log("Step 2.6: Creating Queue Number...");
 
@@ -1614,7 +1617,7 @@ const AddBilling = () => {
         state: {
           autoPrint: true,
           selectedDoctor: billingData.ref_practitioner,
-          appointmentId: appointmentId, 
+          appointmentId: appointmentId,
         }
       });
 
