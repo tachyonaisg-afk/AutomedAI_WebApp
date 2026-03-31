@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import styled from "styled-components";
@@ -834,7 +834,7 @@ const Prescription = () => {
               "creation"
             ]),
             order_by: "creation desc",
-            limit_page_length: 1,
+            limit_page_length: 20,
           }
         );
 
@@ -842,10 +842,9 @@ const Prescription = () => {
 
         setAppointments(fetchedAppointments);
 
-        if (appointments.length === 0) return;
+        if (fetchedAppointments.length === 0) return;
 
-        // ✅ Latest
-        const latest = appointments[0];
+        const latest = fetchedAppointments[0];
 
         setAppointmentId(latest.name);
 
@@ -975,27 +974,27 @@ const Prescription = () => {
     fetchPractitioners();
   }, []);
 
-  const doctorOptions = Array.from(
-    new Map(
-      (appointments || []).map((a) => [
-        a.practitioner,
-        {
+  const doctorOptions = useMemo(() => {
+    const unique = new Map();
+
+    (appointments || []).forEach((a) => {
+      if (a.practitioner) {
+        unique.set(a.practitioner, {
           value: a.practitioner,
           label: a.practitioner_name,
-        },
-      ])
-    ).values()
-  );
-
-  if (
-    appointmentDoctor &&
-    !doctorOptions.some((d) => d.value === appointmentDoctor.id)
-  ) {
-    doctorOptions.unshift({
-      value: appointmentDoctor.id,
-      label: appointmentDoctor.name,
+        });
+      }
     });
-  }
+
+    if (appointmentDoctor && !unique.has(appointmentDoctor.id)) {
+      unique.set(appointmentDoctor.id, {
+        value: appointmentDoctor.id,
+        label: appointmentDoctor.name,
+      });
+    }
+
+    return Array.from(unique.values());
+  }, [appointments, appointmentDoctor]);
 
   const clinicDropdownOptions = companyOptions.map((c) => ({
     value: c.name,
@@ -1265,15 +1264,21 @@ const Prescription = () => {
               placeholder="Choose a doctor"
               isSearchable
               isClearable={false}
+              onChange={(selected) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  selectedDoctor: selected.value,
+                }));
+
+                setAppointmentDoctor({
+                  id: selected.value,
+                  name: selected.label,
+                });
+              }}
               // isDisabled={true}
-              value={
-                appointmentDoctor
-                  ? {
-                    label: appointmentDoctor.name,
-                    value: appointmentDoctor.id,
-                  }
-                  : null
-              }
+              value={doctorOptions.find(
+                (doc) => doc.value === formData.selectedDoctor
+              )}
             />
           </FormGroup>
           <SidebarSection>
