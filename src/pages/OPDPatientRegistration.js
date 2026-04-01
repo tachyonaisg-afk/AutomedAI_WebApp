@@ -1971,6 +1971,23 @@ const OPDPatientRegistration = () => {
         resultRefs.current = [];
     }, [itemResults]);
 
+    const doctorOptions = requiresAppointment
+        ? filteredDoctors.map((doc) => ({
+            label: `${doc.doctor_name} (${doc.room_name}) ${doc.from_time.slice(0, 5)} - ${doc.to_time.slice(0, 5)}`,
+            value: doc.doctor_id,
+        }))
+        : practitioners.map((doc) => ({
+            label: doc.practitioner_name,
+            value: doc.name,
+        }));
+
+    useEffect(() => {
+        setBillingData((prev) => ({
+            ...prev,
+            referringPractitioner: "",
+        }));
+    }, [requiresAppointment]);
+
     return (
         <Layout>
             {isSubmitting && (
@@ -2556,18 +2573,21 @@ const OPDPatientRegistration = () => {
                                         </FormLabel>
 
                                         <Select
-                                            options={filteredDoctors.map((doc) => ({
-                                                label: `${doc.doctor_name} (${doc.room_name}) ${doc.from_time.slice(0, 5)} - ${doc.to_time.slice(0, 5)}`,
-                                                value: doc.doctor_id,
-                                            }))}
+                                            options={doctorOptions}
+
+                                            // value={
+                                            //     filteredDoctors
+                                            //         .map((doc) => ({
+                                            //             label: `${doc.doctor_name} (${doc.room_name}) ${doc.from_time.slice(0, 5)} - ${doc.to_time.slice(0, 5)}`,
+                                            //             value: doc.doctor_id,
+                                            //         }))
+                                            //         .find((opt) => opt.value === billingData.referringPractitioner) || null
+                                            // }
 
                                             value={
-                                                filteredDoctors
-                                                    .map((doc) => ({
-                                                        label: `${doc.doctor_name} (${doc.room_name}) ${doc.from_time.slice(0, 5)} - ${doc.to_time.slice(0, 5)}`,
-                                                        value: doc.doctor_id,
-                                                    }))
-                                                    .find((opt) => opt.value === billingData.referringPractitioner) || null
+                                                doctorOptions.find(
+                                                    (opt) => opt.value === billingData.referringPractitioner
+                                                ) || null
                                             }
 
                                             onChange={async (selected) => {
@@ -2600,12 +2620,24 @@ const OPDPatientRegistration = () => {
                                                 );
                                             }}
 
+                                            // placeholder={
+                                            //     loadingDoctors
+                                            //         ? "Loading available doctors..."
+                                            //         : filteredDoctors.length === 0
+                                            //             ? "No doctors available for selected date"
+                                            //             : "Select available doctor..."
+                                            // }
+
                                             placeholder={
-                                                loadingDoctors
-                                                    ? "Loading available doctors..."
-                                                    : filteredDoctors.length === 0
-                                                        ? "No doctors available for selected date"
-                                                        : "Select available doctor..."
+                                                requiresAppointment
+                                                    ? loadingDoctors
+                                                        ? "Loading available doctors..."
+                                                        : doctorOptions.length === 0
+                                                            ? "No doctors available for selected date"
+                                                            : "Select available doctor..."
+                                                    : doctorOptions.length === 0
+                                                        ? "No doctors found"
+                                                        : "Select doctor..."
                                             }
 
                                             isSearchable

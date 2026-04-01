@@ -739,7 +739,6 @@ const ResultPrint = () => {
     return false;
   };
 
-
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
 
@@ -761,6 +760,22 @@ const ResultPrint = () => {
     return formatted.replace(/\b(am|pm)\b/, (match) => match.toUpperCase());
   };
 
+  const cleanWorksheetHTML = (html) => {
+    if (!html) return "";
+
+    return html
+      .replace(/class="ql-editor read-mode"/g, "") // remove editor class
+      .replace(/<div[^>]*>/i, "") // remove opening div
+      .replace(/<\/div>\s*$/i, ""); // remove closing div
+  };
+
+  const worksheetInstructions = [
+    ...new Set(
+      selectedTestDetails
+        .map(t => t.worksheet_instructions)
+        .filter(Boolean)
+    )
+  ];
 
   // Helper function to format age (extract years only)
   const formatAge = (ageString) => {
@@ -937,7 +952,7 @@ const ResultPrint = () => {
       const element = document.querySelector("[data-pdf-content]");
 
       const opt = {
-        margin: [0, 0, 0, 0],
+        margin: [0, 0, 10, 0],
         image: { type: "jpeg", quality: 1 },
         html2canvas: {
           scale: 2,
@@ -1491,6 +1506,24 @@ const ResultPrint = () => {
                   })}
                 </tbody>
               </ResultsTable>
+
+              {worksheetInstructions.length > 0 && (
+                <div style={{ marginTop: "20px" }}>
+                  {worksheetInstructions.map((html, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        fontSize: "13px",
+                        lineHeight: "1.6",
+                        color: "#000",
+                      }}
+                      dangerouslySetInnerHTML={{
+                        __html: cleanWorksheetHTML(html),
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
 
               <EndOfReport>*** END OF REPORT ***</EndOfReport>
               <ReportFooter>
