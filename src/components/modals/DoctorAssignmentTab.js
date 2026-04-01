@@ -312,6 +312,31 @@ const SaveButton = styled.button`
   cursor: pointer;
 `;
 
+const FormInput = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+
+  &::placeholder {
+    color: #999999;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #d0d0d0;
+  }
+`;
+
 const DoctorAssignmentTab = () => {
 
     const [practitioners, setPractitioners] = useState([]);
@@ -842,7 +867,7 @@ const DoctorAssignmentTab = () => {
 
                     <label>Date<RequiredAsterisk>*</RequiredAsterisk></label>
 
-                    <input
+                    <FormInput
                         type="date"
                         name="available_date"
                         onChange={handleChange}
@@ -1050,7 +1075,7 @@ const DoctorAssignmentTab = () => {
                 </DropField>
                 <Field>
                     <label>Select Date</label>
-                    <input
+                    <FormInput
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
@@ -1224,7 +1249,7 @@ const DoctorAssignmentTab = () => {
 
                             <Field>
                                 <label>Date</label>
-                                <input
+                                <FormInput
                                     type="date"
                                     name="schedule_date"
                                     value={editData.schedule_date}
