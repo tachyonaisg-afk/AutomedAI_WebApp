@@ -396,7 +396,7 @@ const TicketInfo = styled.div`
 const PatientInfoRow = styled.div`
   display: grid;
   grid-template-columns: auto auto auto auto;
-  gap: 12px;
+  gap: 5px;
   padding: 3px;
   border: 1px solid #000;
   border-top: none;
@@ -1309,11 +1309,16 @@ const Prescription = () => {
     const name = company.toLowerCase();
 
     if (name.includes("ramakrishna mission sargachi")) {
-      return rkmsHeader;
+      return {
+        type: "text",
+      };
     }
 
     if (name.includes("alfa diagnostic centre")) {
-      return alfaHeader;
+      return {
+        type: "image",
+        value: alfaHeader,
+      };
     }
 
     return null;
@@ -1455,33 +1460,39 @@ const Prescription = () => {
           </PreviewHeader>
 
           <PrescriptionPreview data-pdf-content paperSize={paperSize}>
-            {/* <PrescriptionHeader>
-              <HeaderTitle paperSize={paperSize}>Ramakrishna Mission Ashrama Sargachi</HeaderTitle>
-              <HeaderSubtitle paperSize={paperSize}>Charitable Dispensary & Diagnostic Centre ( ISO 9001:2008 Certified, LIC No.:S/PC/27 )</HeaderSubtitle>
-              <HeaderAddress paperSize={paperSize}>
-                P.O - Sargachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India, Mobile : 9775831847
-              </HeaderAddress>
-            </PrescriptionHeader> */}
-            <div
-              style={{
-                width: "100%",
-                height: paperSize === "a5" ? "120px" : "120px",
-                marginBottom: "2px",
-              }}
-            >
-              {letterhead && (
-                <img
-                  src={letterhead}
-                  alt="Letterhead"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    display: "block",
-                  }}
-                />
-              )}
-            </div>
+            
+            {letterhead?.type === "text" && (
+              <PrescriptionHeader>
+                <HeaderTitle paperSize={paperSize}>Ramakrishna Mission Ashrama Sargachi</HeaderTitle>
+                <HeaderSubtitle paperSize={paperSize}>Charitable Dispensary & Diagnostic Centre ( ISO 9001:2008 Certified, LIC No.:S/PC/27 )</HeaderSubtitle>
+                <HeaderAddress paperSize={paperSize}>
+                  P.O - Sargachi Ashrama, Dist- Murshidabad, Pin-742408, West Bengal, India, Mobile : 9775831847
+                </HeaderAddress>
+              </PrescriptionHeader>
+            )}
+
+            {letterhead?.type === "image" && (
+              <div
+                style={{
+                  width: "100%",
+                  height: paperSize === "a5" ? "120px" : "120px",
+                  marginBottom: "2px",
+                }}
+              >
+                {letterhead && (
+                  <img
+                    src={letterhead}
+                    alt="Letterhead"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      display: "block",
+                    }}
+                  />
+                )}
+              </div>
+            )}
 
             <TopRow>
               <DoctorInfo paperSize={paperSize}>

@@ -385,6 +385,7 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
     const [isEmpanelled, setIsEmpanelled] = useState(false);
     const [originalFee, setOriginalFee] = useState(null);
     const [originalName, setOriginalName] = useState("");
+    const [departments, setDepartments] = useState([]);
     const [formData, setFormData] = useState({
         first_name: "",
         middle_name: "",
@@ -417,6 +418,31 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
             });
         }
     }, [doctor]);
+
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const res = await api.get(
+                    "https://hms.automedai.in/api/resource/Medical Department?limit_start=0&limit_page_length=1500"
+                );
+
+                const deptList = (res.data?.data || []).map((d) => ({
+                    ...d,
+                    name:
+                        d.name === "General Medicien"
+                            ? "General Medicine"
+                            : d.name
+                }));
+
+                setDepartments(deptList);
+
+            } catch (err) {
+                console.error("Error fetching departments", err);
+            }
+        };
+
+        fetchDepartments();
+    }, []);
 
     // ✅ Fetch Current User
     useEffect(() => {
@@ -758,14 +784,14 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
                                         value={formData.department}
                                         onChange={handleChange}
                                     >
+
                                         <option value="">Select Department</option>
-                                        <option value="Cardiology">Cardiology</option>
-                                        <option value="Neurology">Neurology</option>
-                                        <option value="Dermatology">Dermatology</option>
-                                        <option value="Paediatrics">Paediatrics</option>
-                                        <option value="Dental">Dental</option>
-                                        <option value="General Medicine">General Medicine</option>
-                                        <option value="Orthopaedics">Orthopaedics</option>
+
+                                        {departments.map((dept) => (
+                                            <option key={dept.name} value={dept.name}>
+                                                {dept.name}
+                                            </option>
+                                        ))}
                                     </FormSelect>
                                 </InputGroup>
                                 <InputGroup>
