@@ -1520,7 +1520,7 @@ const Prescription = () => {
               >
                 {letterhead && (
                   <img
-                    src={letterhead}
+                    src={letterhead.value}
                     alt="Letterhead"
                     style={{
                       width: "100%",
