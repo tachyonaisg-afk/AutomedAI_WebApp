@@ -293,7 +293,7 @@ const ReportPreview = styled.div`
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  min-height: 1100px;
+  min-height: 1085px;
   display: flex;
   flex-direction: column;
 `;
@@ -334,7 +334,7 @@ const ReportHeader = styled.div`
 const PatientInfoSection = styled.div`
   border: 2px solid #000;
   padding: 5px 15px;
-  margin-bottom: 10px;
+  // margin-bottom: 10px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 20px;
