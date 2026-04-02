@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { ArrowLeft } from "lucide-react";
 import api from "../services/api";
 import AsyncSelect from "react-select/async";
+import WorksheetEditor from "../utils/WorksheetEditor";
 // ================= STYLES =================
 
 const PageWrapper = styled.div`
@@ -278,6 +279,7 @@ function AddNewTest() {
         sample: "",
         gst_hsn_code: "999312",
         lab_test_template_type: "Single",
+        worksheet_instructions: "",
     });
 
     const [itemGroups, setItemGroups] = useState([]);
@@ -519,6 +521,7 @@ function AddNewTest() {
                 sample: form.sample,
                 sample_qty: 1,
                 custom_company: company,
+                worksheet_instructions: form.worksheet_instructions,
 
                 // ✅ only include if grouped
                 ...(form.lab_test_template_type === "Grouped" && {
@@ -863,6 +866,20 @@ function AddNewTest() {
                                             name="normal_range"
                                             value={form.normal_range}
                                             onChange={handleChange}
+                                        />
+                                    </InputGroup>
+                                    
+                                    <InputGroup className="col-span-2">
+                                        <InputLabel>Worksheet Instructions</InputLabel>
+
+                                        <WorksheetEditor
+                                            value={form.worksheet_instructions}
+                                            onChange={(value) =>
+                                                setForm((prev) => ({
+                                                    ...prev,
+                                                    worksheet_instructions: value,
+                                                }))
+                                            }
                                         />
                                     </InputGroup>
                                 </GridLayout2Col>

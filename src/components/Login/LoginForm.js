@@ -217,6 +217,7 @@ const LoginForm = () => {
 
       const role = data?.data?.[0]?.role_profile_name;
 
+      console.log("ROLE:", role);
       // // Store role for sidebar usage
       // const userData = JSON.parse(localStorage.getItem("user")) || {};
       // userData.role = role;
@@ -224,25 +225,21 @@ const LoginForm = () => {
 
       // Role based redirect
       if (
-        role === null ||
         role === "Admin_OPD" ||
         role === "Front_Desk_OPD_LAB" ||
-        role === "Front_Desk_OPD"
+        role === "Front_Desk_OPD" ||
+        role === "Admin_OPD_LAB"
       ) {
         navigate("/opd");
       }
       else if (
-        role === null ||
         role === "Admin_LAB" ||
         role === "Front_Desk_LAB"
       ) {
         navigate("/pathlab");
       }
-      else if (role === null || role === "Admin_OPD_LAB") {
-        navigate("/opd");
-      }
       else {
-        navigate("/opd"); 
+        navigate("/opd"); // fallback
       }
 
       // navigate("/opd");
