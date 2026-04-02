@@ -212,15 +212,15 @@ function LabTestManage() {
     return (
         <Layout>
             <PageWrapper>
-                <div style={{display:"flex", gap:"20px"}}>
+                <div style={{ display: "flex", gap: "20px" }}>
                     <SearchButton onClick={() => window.history.back()}>
-                    <ArrowLeft size={16} />
-                    Back
-                </SearchButton>
+                        <ArrowLeft size={16} />
+                        Back
+                    </SearchButton>
 
-                <Heading>Lab Test Management</Heading>
+                    <Heading>Lab Test Management</Heading>
                 </div>
-                
+
 
                 {/* Search */}
                 <SearchWrapper>
@@ -265,7 +265,11 @@ function LabTestManage() {
                                         <Td>{test.department}</Td>
                                         <Td>
                                             <ActionButtons>
-                                                <EditButton>
+                                                <EditButton
+                                                    onClick={() =>
+                                                        navigate(`/pathlab/admin/test-manage/edit/${test.lab_test_name}`)
+                                                    }
+                                                >
                                                     <Edit size={14} />
                                                 </EditButton>
                                                 <DeleteButton>

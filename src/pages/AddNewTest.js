@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import api from "../services/api";
 import AsyncSelect from "react-select/async";
 import WorksheetEditor from "../utils/WorksheetEditor";
+import { useParams } from "react-router-dom";
 // ================= STYLES =================
 
 const PageWrapper = styled.div`
@@ -260,6 +261,9 @@ const SubmitButton = styled.button`
 // ================= COMPONENT =================
 
 function AddNewTest() {
+    const { id } = useParams();
+    const isEditMode = Boolean(id);
+
     const [groupRows, setGroupRows] = useState([]);
     const [searchOptions, setSearchOptions] = useState([]);
     const [loadingSearch, setLoadingSearch] = useState(false);
@@ -428,6 +432,58 @@ function AddNewTest() {
 
     // ================= SUBMIT =================
 
+    const fetchTestDetails = async () => {
+        try {
+            const res = await api.get(`/resource/Lab Test Template/${id}`);
+            const data = res.data.data;
+
+            // ===== SET FORM =====
+            setForm({
+                lab_test_name: data.lab_test_name || "",
+                custom_display_name: data.custom_display_name || "",
+                lab_test_code: data.lab_test_code || "",
+                department: data.department || "",
+                item_group: data.lab_test_group || "",
+                lab_test_uom: data.lab_test_uom || "",
+                lab_test_rate: data.lab_test_rate || "",
+                description: data.lab_test_description || "",
+                normal_range: data.lab_test_normal_range || "",
+                sample: data.sample || "",
+                gst_hsn_code: "999312",
+                lab_test_template_type: data.lab_test_template_type || "Single",
+                worksheet_instructions: data.worksheet_instructions || "",
+            });
+
+            // ===== HANDLE GROUPED =====
+            if (data.lab_test_template_type === "Grouped") {
+                const rows = data.lab_test_groups.map((g) => ({
+                    type: g.template_or_new_line === "Add Test" ? "test" : "event",
+                    lab_test_template:
+                        g.template_or_new_line === "Add Test"
+                            ? { label: g.lab_test_template, value: g.lab_test_template }
+                            : null,
+                    description: g.lab_test_description || "",
+                    event:
+                        g.template_or_new_line === "Add New Line"
+                            ? g.group_event || ""
+                            : "",
+                    allow_blank: g.allow_blank || 0,
+                }));
+
+                setGroupRows(rows);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to load test data");
+        }
+    };
+
+    useEffect(() => {
+        if (isEditMode) {
+            fetchTestDetails();
+        }
+    }, [id]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -447,23 +503,25 @@ function AddNewTest() {
             }
 
             // ================= STEP 1: CREATE ITEM =================
+            let createdItem = form.item;
+            if (!isEditMode) {
+                const itemRes = await api.post("/resource/Item", {
+                    item_name: form.lab_test_name,
+                    item_group: form.item_group,
+                    stock_uom: "Nos",
+                    gst_hsn_code: form.gst_hsn_code || "999312",
+                    maintain_stock: 0,
+                    is_stock_item: 0,
+                    item_defaults: [
+                        {
+                            company: company,
+                            default_price_list: "Standard Selling",
+                        },
+                    ],
+                });
 
-            const itemRes = await api.post("/resource/Item", {
-                item_name: form.lab_test_name,
-                item_group: form.item_group,
-                stock_uom: "Nos",
-                gst_hsn_code: form.gst_hsn_code || "999312",
-                maintain_stock: 0,
-                is_stock_item: 0,
-                item_defaults: [
-                    {
-                        company: company,
-                        default_price_list: "Standard Selling",
-                    },
-                ],
-            });
-
-            const createdItem = itemRes?.data?.data?.name;
+                createdItem = itemRes?.data?.data?.name;
+            }
 
             if (!createdItem) {
                 throw new Error("Item creation failed");
@@ -529,7 +587,13 @@ function AddNewTest() {
                 }),
             };
 
-            const labRes = await api.post("/resource/Lab Test Template", payload);
+            let labRes;
+
+            if (isEditMode) {
+                labRes = await api.put(`/resource/Lab Test Template/${id}`, payload);
+            } else {
+                labRes = await api.post("/resource/Lab Test Template", payload);
+            }
 
             const labData = labRes?.data;
 
@@ -570,7 +634,7 @@ function AddNewTest() {
                             <BackButton onClick={() => window.history.back()}>
                                 <ArrowLeft size={16} /> Back
                             </BackButton>
-                            <ModalTitle>Add Lab Test</ModalTitle>
+                            <ModalTitle> {isEditMode ? "Edit Lab Test" : "Add Lab Test"} </ModalTitle>
                             <ModalSubtitle>
                                 Create a new lab test template for your system
                             </ModalSubtitle>
@@ -868,7 +932,7 @@ function AddNewTest() {
                                             onChange={handleChange}
                                         />
                                     </InputGroup>
-                                    
+
                                     <InputGroup className="col-span-2">
                                         <InputLabel>Worksheet Instructions</InputLabel>
 
@@ -885,8 +949,6 @@ function AddNewTest() {
                                 </GridLayout2Col>
                             </Section>
 
-
-
                         </FormContent>
                     </ModalBody>
 
@@ -897,7 +959,7 @@ function AddNewTest() {
                         </CancelButton>
 
                         <SubmitButton type="submit" form="labTestForm">
-                            Create Lab Test
+                            {isEditMode ? "Update Lab Test" : "Create Lab Test"}
                         </SubmitButton>
                     </ModalFooter>
                 </ModalContainer>
