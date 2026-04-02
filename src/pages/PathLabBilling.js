@@ -503,6 +503,51 @@ const PathLabBilling = () => {
     return data.reduce((sum, item) => sum + Number(item.net_total || 0), 0);
   };
 
+  const fetchPathlabRevenueToday = async (company) => {
+    if (!company) return 0;
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      const payload = {
+        doctype: "Sales Invoice",
+        fields: ["name", "net_total"],
+        filters: [
+          ["status", "!=", "Cancelled"],
+          ["company", "=", company],
+          ["posting_date", "=", today],
+          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
+        ],
+        limit_page_length: 5000,
+      };
+
+      const res = await api.post(
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
+        payload,
+        { withCredentials: true }
+      );
+
+      const rows = res.data?.message || [];
+
+      // ✅ Remove duplicates (VERY IMPORTANT)
+      const uniqueInvoices = {};
+      rows.forEach((row) => {
+        if (!uniqueInvoices[row.name]) {
+          uniqueInvoices[row.name] = row;
+        }
+      });
+
+      return Object.values(uniqueInvoices).reduce((sum, row) => {
+        const val = parseFloat(row.net_total);
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+
+    } catch (error) {
+      console.error("PathLab revenue error:", error);
+      return 0;
+    }
+  };
+
   const fetchSummaryData = useCallback(async () => {
     if (!selectedCompany) return;
 
@@ -534,20 +579,11 @@ const PathLabBilling = () => {
         limit_page_length: 1000,
       };
 
-      const [overdueRes, revenueRes, pendingRes, monthRes] = await Promise.all([
+      const [overdueRes, pendingRes, monthRes, pathlabRevenue] = await Promise.all([
         api.get("/resource/Sales Invoice", {
           ...baseParams,
           filters: JSON.stringify([
             ["status", "=", "Overdue"],
-            ["posting_date", "=", today],
-            ["company", "=", selectedCompany],
-          ]),
-        }),
-
-        api.get("/resource/Sales Invoice", {
-          ...baseParams,
-          filters: JSON.stringify([
-            ["status", "=", "Paid"],
             ["posting_date", "=", today],
             ["company", "=", selectedCompany],
           ]),
@@ -571,15 +607,16 @@ const PathLabBilling = () => {
             ["company", "=", selectedCompany],
           ]),
         }),
+
+        fetchPathlabRevenueToday(selectedCompany),
       ]);
 
       const overdueTotal = sumNetTotal(overdueRes.data?.data);
-      const revenueTotal = sumNetTotal(revenueRes.data?.data);
       const pendingTotal = sumNetTotal(pendingRes.data?.data);
       const monthTotal = sumNetTotal(monthRes.data?.data);
 
       setSummary({
-        revenueToday: revenueTotal,
+        revenueToday: pathlabRevenue,
         pendingToday: pendingTotal,
         paidThisMonth: monthTotal,
         overdueToday: overdueTotal,
@@ -595,7 +632,7 @@ const PathLabBilling = () => {
 
   const summaryData = [
     {
-      label: "Total Revenue Today",
+      label: "Total Revenue Today (PathLab)",
       value: `₹${summary.revenueToday.toLocaleString()}`,
       // change: "+12.5%",
       positive: true,

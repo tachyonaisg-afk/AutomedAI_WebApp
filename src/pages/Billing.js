@@ -451,23 +451,23 @@ const Billing = () => {
   const [selectedCompany, setSelectedCompany] = useState("");
   const [companies, setCompanies] = useState([]);
   useEffect(() => {
-      const fetchCompanies = async () => {
-        try {
-          const res = await api.get("https://hms.automedai.in/api/resource/Company");
-          const companyList = res.data?.data || [];
-  
-          setCompanies(companyList);
-  
-          if (companyList.length > 0) {
-            setSelectedCompany(companyList[0].name); // ✅ default first company
-          }
-        } catch (err) {
-          console.error("Error fetching companies", err);
+    const fetchCompanies = async () => {
+      try {
+        const res = await api.get("https://hms.automedai.in/api/resource/Company");
+        const companyList = res.data?.data || [];
+
+        setCompanies(companyList);
+
+        if (companyList.length > 0) {
+          setSelectedCompany(companyList[0].name); // ✅ default first company
         }
-      };
-  
-      fetchCompanies();
-    }, []);
+      } catch (err) {
+        console.error("Error fetching companies", err);
+      }
+    };
+
+    fetchCompanies();
+  }, []);
 
   const [summary, setSummary] = useState({
     revenueToday: 0,
@@ -510,7 +510,7 @@ const Billing = () => {
         limit_page_length: 1000,
       };
 
-      const [overdueRes, revenueRes, pendingRes, monthRes] = await Promise.all([
+      const [overdueRes, pathlabTotal, totalFees, pendingRes, monthRes] = await Promise.all([
         api.get("/resource/Sales Invoice", {
           ...baseParams,
           filters: JSON.stringify([
@@ -520,14 +520,18 @@ const Billing = () => {
           ]),
         }),
 
-        api.get("/resource/Sales Invoice", {
-          ...baseParams,
-          filters: JSON.stringify([
-            ["status", "=", "Paid"],
-            ["posting_date", "=", today],
-            ["company", "=", selectedCompany],
-          ]),
-        }),
+        fetchPathlabSalesToday(selectedCompany),
+
+        fetchTotalFeesToday(selectedCompany),
+
+        // api.get("/resource/Sales Invoice", {
+        //   ...baseParams,
+        //   filters: JSON.stringify([
+        //     ["status", "=", "Paid"],
+        //     ["posting_date", "=", today],
+        //     ["company", "=", selectedCompany],
+        //   ]),
+        // }),
 
         api.get("/resource/Sales Invoice", {
           ...baseParams,
@@ -550,12 +554,12 @@ const Billing = () => {
       ]);
 
       const overdueTotal = sumNetTotal(overdueRes.data?.data);
-      const revenueTotal = sumNetTotal(revenueRes.data?.data);
       const pendingTotal = sumNetTotal(pendingRes.data?.data);
       const monthTotal = sumNetTotal(monthRes.data?.data);
+      const opdRevenue = Math.max(0, totalFees - pathlabTotal);
 
       setSummary({
-        revenueToday: revenueTotal,
+        revenueToday: opdRevenue,
         pendingToday: pendingTotal,
         paidThisMonth: monthTotal,
         overdueToday: overdueTotal,
@@ -566,15 +570,101 @@ const Billing = () => {
   }, [selectedCompany]);
 
   useEffect(() => {
-  fetchSummaryData();
-}, [fetchSummaryData]);
+    fetchSummaryData();
+  }, [fetchSummaryData]);
+
+  const fetchPathlabSalesToday = async (company) => {
+    if (!company) return 0;
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      const payload = {
+        doctype: "Sales Invoice",
+        fields: ["name", "net_total"],
+        filters: [
+          ["status", "!=", "Cancelled"],
+          ["company", "=", company],
+          ["posting_date", "=", today],
+          ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
+        ],
+        limit_page_length: 10000,
+      };
+
+      const res = await api.post(
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
+        payload,
+        { withCredentials: true }
+      );
+
+      const rows = res.data?.message || [];
+
+      const uniqueInvoices = {};
+      rows.forEach((row) => {
+        if (!uniqueInvoices[row.name]) {
+          uniqueInvoices[row.name] = row;
+        }
+      });
+
+      return Object.values(uniqueInvoices).reduce((sum, row) => {
+        const val = parseFloat(row.net_total);
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+    } catch (error) {
+      console.error("PathLab sales error:", error);
+      return 0;
+    }
+  };
+  const fetchTotalFeesToday = async (company) => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      let accountName = "";
+
+      if (company === "Ramakrishna Mission Sargachi") {
+        accountName = "Sales - RKMS";
+      } else if (company === "ALFA DIAGNOSTIC CENTRE & POLYCLINIC") {
+        accountName = "Sales - ADC&P";
+      } else {
+        return 0;
+      }
+
+      const filters = {
+        company,
+        from_date: today,
+        to_date: today,
+        account: [accountName],
+        include_dimensions: 1,
+      };
+
+      const encodedFilters = encodeURIComponent(JSON.stringify(filters));
+
+      const res = await fetch(
+        `https://hms.automedai.in/api/method/frappe.desk.query_report.run?report_name=General+Ledger&filters=${encodedFilters}`,
+        { credentials: "include" }
+      );
+
+      const data = await res.json();
+      const result = data?.message?.result || [];
+
+      return result
+        .filter((row) => row.gl_entry)
+        .reduce((sum, row) => {
+          const credit = parseFloat(row.credit);
+          return sum + (isNaN(credit) ? 0 : credit);
+        }, 0);
+    } catch (err) {
+      console.error(err);
+      return 0;
+    }
+  };
 
   // Determine base path for navigation (handles both /billing and /opd/billing)
   const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
 
   const summaryData = [
     {
-      label: "Total Revenue Today",
+      label: "Total Revenue Today (OPD)",
       value: `₹${summary.revenueToday.toLocaleString()}`,
       // change: "+12.5%",
       positive: true,
