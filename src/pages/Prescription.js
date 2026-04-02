@@ -57,7 +57,7 @@ const BackButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 20px;
+  padding: 10px 8px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
@@ -642,6 +642,7 @@ const Prescription = () => {
   const [companyOptions, setCompanyOptions] = useState([]);
   const [selectedClinic, setSelectedClinic] = useState(null);
   const [company, setCompany] = useState(null);
+
   useEffect(() => {
     try {
       const userData = localStorage.getItem("user");
@@ -1326,13 +1327,51 @@ const Prescription = () => {
 
   const letterhead = getLetterhead();
 
+  const handleAddBilling = async (patientId) => {
+    try {
+      const response = await api.get(
+        API_ENDPOINTS.PATIENTS.DETAIL(patientId)
+      );
+
+      const patientData = response.data?.data;
+
+      if (!patientData) {
+        console.error("Patient data not available");
+        return;
+      }
+
+      navigate("/opd/billing/add", {
+        state: {
+          preselectedPatient: {
+            name: patientData.name,
+            patient_name:
+              patientData.patient_name ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+            customer_name:
+              patientData.customer ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+          },
+          defaultItemCode: "STO-ITEM-2025-00539",
+        },
+      });
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+    }
+  };
+
   return (
     <Container>
       <Sidebar>
-        <BackButton onClick={() => window.history.back()}>
+        <div>
+          <BackButton onClick={() => window.history.back()}>
           <ArrowLeft />
           Back
         </BackButton>
+        <BackButton onClick={() => handleAddBilling(patientData?.name)}>
+          Add Another Bill
+        </BackButton>
+        </div>
+        
 
         <Title style={{ fontSize: '18px', marginTop: '16px' }}>Prescription</Title>
         <Subtitle>Fill in the details for the prescription</Subtitle>
@@ -1460,7 +1499,7 @@ const Prescription = () => {
           </PreviewHeader>
 
           <PrescriptionPreview data-pdf-content paperSize={paperSize}>
-            
+
             {letterhead?.type === "text" && (
               <PrescriptionHeader>
                 <HeaderTitle paperSize={paperSize}>Ramakrishna Mission Ashrama Sargachi</HeaderTitle>
