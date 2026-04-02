@@ -5,7 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import api from "../services/api";
 import AsyncSelect from "react-select/async";
 import WorksheetEditor from "../utils/WorksheetEditor";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 // ================= STYLES =================
 
 const PageWrapper = styled.div`
@@ -262,6 +262,7 @@ const SubmitButton = styled.button`
 
 function AddNewTest() {
     const { id } = useParams();
+    const decodedId = decodeURIComponent(id);
     const isEditMode = Boolean(id);
 
     const [groupRows, setGroupRows] = useState([]);
@@ -290,6 +291,8 @@ function AddNewTest() {
     const [uoms, setUoms] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [company, setCompany] = useState("");
+
+    const navigate = useNavigate();
 
     // ================= FETCH DROPDOWNS =================
 
@@ -434,7 +437,7 @@ function AddNewTest() {
 
     const fetchTestDetails = async () => {
         try {
-            const res = await api.get(`/resource/Lab Test Template/${id}`);
+            const res = await api.get(`/resource/Lab Test Template/${decodedId}`);
             const data = res.data.data;
 
             // ===== SET FORM =====
@@ -444,7 +447,7 @@ function AddNewTest() {
                 lab_test_code: data.lab_test_code || "",
                 department: data.department || "",
                 item_group: data.lab_test_group || "",
-                lab_test_uom: data.lab_test_uom || "",
+                lab_test_uom: data.lab_test_uom || data.sample_uom || "",
                 lab_test_rate: data.lab_test_rate || "",
                 description: data.lab_test_description || "",
                 normal_range: data.lab_test_normal_range || "",
@@ -452,6 +455,7 @@ function AddNewTest() {
                 gst_hsn_code: "999312",
                 lab_test_template_type: data.lab_test_template_type || "Single",
                 worksheet_instructions: data.worksheet_instructions || "",
+                item: data.item || "",
             });
 
             // ===== HANDLE GROUPED =====
@@ -465,7 +469,7 @@ function AddNewTest() {
                     description: g.lab_test_description || "",
                     event:
                         g.template_or_new_line === "Add New Line"
-                            ? g.group_event || ""
+                            ? g.group_event || g.lab_test_description || ""
                             : "",
                     allow_blank: g.allow_blank || 0,
                 }));
@@ -590,7 +594,7 @@ function AddNewTest() {
             let labRes;
 
             if (isEditMode) {
-                labRes = await api.put(`/resource/Lab Test Template/${id}`, payload);
+                labRes = await api.put(`/resource/Lab Test Template/${decodedId}`, payload);
             } else {
                 labRes = await api.post("/resource/Lab Test Template", payload);
             }
@@ -603,8 +607,14 @@ function AddNewTest() {
 
             // ================= SUCCESS =================
 
-            alert("Lab Test Created Successfully ✅");
-            window.history.back();
+            alert(
+                isEditMode
+                    ? "Lab Test Updated Successfully ✅"
+                    : "Lab Test Created Successfully ✅"
+            );
+            navigate("/pathlab/admin/test-manage", {
+                state: { refresh: true },
+            });
 
         } catch (err) {
             console.error(err);

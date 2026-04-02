@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Search, Edit, Trash, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import { useLocation } from "react-router-dom";
 
 // ================= STYLES =================
 
@@ -164,7 +165,7 @@ function LabTestManage() {
     const [tests, setTests] = useState([]);
     const [filteredTests, setFilteredTests] = useState([]);
     const [search, setSearch] = useState("");
-
+    const location = useLocation();
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 10;
@@ -172,7 +173,7 @@ function LabTestManage() {
 
     useEffect(() => {
         fetchTests();
-    }, []);
+    }, [location.state?.refresh]);
 
     useEffect(() => {
         handleSearch();
@@ -267,7 +268,11 @@ function LabTestManage() {
                                             <ActionButtons>
                                                 <EditButton
                                                     onClick={() =>
-                                                        navigate(`/pathlab/admin/test-manage/edit/${test.lab_test_name}`)
+                                                        navigate(
+                                                            `/pathlab/admin/test-manage/edit/${encodeURIComponent(
+                                                                test.lab_test_name
+                                                            )}`
+                                                        )
                                                     }
                                                 >
                                                     <Edit size={14} />
@@ -305,7 +310,7 @@ function LabTestManage() {
                     </PaginationWrapper>
                 )}
             </PageWrapper>
-        </Layout>
+        </Layout >
     );
 }
 
