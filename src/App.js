@@ -285,6 +285,14 @@ function App() {
             }
           />
           <Route
+            path="/pathlab/admin/test-manage/edit/:id"
+            element={
+              <ProtectedRoute>
+                <AddNewTest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/pathlab/admin/government-project-incentives"
             element={
               <ProtectedRoute>
