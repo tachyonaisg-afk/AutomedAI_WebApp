@@ -1467,10 +1467,14 @@ const OPDPatientRegistration = () => {
 
             if (data.success && data.data) {
                 const d = data.data;
-
+                const addressLine1 = [d.sublocality, d.city]
+                    .map(v => v?.trim())
+                    .filter(v => v)
+                    .join(", ");
+                    
                 setFormData((prev) => ({
                     ...prev,
-                    address_line1: `${d.sublocality || ""}${d.city ? ", " + d.city : ""}`,
+                    address_line1: addressLine1,
                     address_line2: d.division || "",
                     city: d.district || "",
                     state: d.state || "",
