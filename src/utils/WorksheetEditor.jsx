@@ -1,6 +1,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import styled from "styled-components";
+import { useEffect } from "react";
 
 // ===== STYLED COMPONENTS (MATCH YOUR UI) =====
 
@@ -42,15 +43,15 @@ const ToolButton = styled.button`
 `;
 
 const StyledEditorContent = styled(EditorContent)`
-  padding: 12px;
-  min-height: 120px;
-  font-size: 14px;
+  padding: 2px 12px;
+  min-height: 40px;
+  font-size: 16px;
   color: #0f172a;
   outline: none;        /* ✅ FIX */
   border: none;         /* ✅ FIX */
 
   p {
-    margin: 0 0 6px;
+    margin: 0 0 2px;
   }
 
   ul, ol {
@@ -83,10 +84,18 @@ const WorksheetEditor = ({ value, onChange }) => {
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML()); // ✅ HTML output
     },
-    onSelectionUpdate: ({ editor }) => {
-      editor.view.dispatch(editor.state.tr); // ✅ forces UI refresh
-    },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+
+    const currentHTML = editor.getHTML();
+    const incomingHTML = value || "";
+
+    if (currentHTML !== incomingHTML) {
+      editor.commands.setContent(incomingHTML, false);
+    }
+  }, [value, editor]);
 
   if (!editor) return null;
 
