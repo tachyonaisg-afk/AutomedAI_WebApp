@@ -157,6 +157,11 @@ const PageButton = styled.button`
   background: ${(props) => (props.active ? "#4a90e2" : "white")};
   color: ${(props) => (props.active ? "white" : "black")};
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 // ================= COMPONENT =================
@@ -203,6 +208,38 @@ function LabTestManage() {
 
         setFilteredTests(filtered);
         setCurrentPage(1);
+    };
+
+    const getPaginationRange = () => {
+        const delta = 2; // pages before & after current
+        const range = [];
+        const rangeWithDots = [];
+
+        let l;
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (
+                i === 1 ||
+                i === totalPages ||
+                (i >= currentPage - delta && i <= currentPage + delta)
+            ) {
+                range.push(i);
+            }
+        }
+
+        for (let i of range) {
+            if (l) {
+                if (i - l === 2) {
+                    rangeWithDots.push(l + 1);
+                } else if (i - l > 2) {
+                    rangeWithDots.push("...");
+                }
+            }
+            rangeWithDots.push(i);
+            l = i;
+        }
+
+        return rangeWithDots;
     };
 
     // Pagination logic
@@ -298,15 +335,38 @@ function LabTestManage() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <PaginationWrapper>
-                        {[...Array(totalPages)].map((_, i) => (
-                            <PageButton
-                                key={i}
-                                active={currentPage === i + 1}
-                                onClick={() => setCurrentPage(i + 1)}
-                            >
-                                {i + 1}
-                            </PageButton>
-                        ))}
+                        {/* PREV */}
+                        <PageButton
+                            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Prev
+                        </PageButton>
+
+                        {/* PAGE NUMBERS */}
+                        {getPaginationRange().map((page, index) =>
+                            page === "..." ? (
+                                <span key={index} style={{ padding: "6px 10px" }}>...</span>
+                            ) : (
+                                <PageButton
+                                    key={index}
+                                    active={currentPage === page}
+                                    onClick={() => setCurrentPage(page)}
+                                >
+                                    {page}
+                                </PageButton>
+                            )
+                        )}
+
+                        {/* NEXT */}
+                        <PageButton
+                            onClick={() =>
+                                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                            }
+                            disabled={currentPage === totalPages}
+                        >
+                            Next
+                        </PageButton>
                     </PaginationWrapper>
                 )}
             </PageWrapper>
