@@ -1202,7 +1202,7 @@ const OPDPatientRegistration = () => {
         if (addressLine2) fieldsToDisable.address_line2 = true;
         if (data.district) fieldsToDisable.city = true;
         if (data.state) fieldsToDisable.state = true;
-        if (data.pincode) fieldsToDisable.pincode = true;
+        if (data.pincode) fieldsToDisable.pincode = false;
         if (data.state) fieldsToDisable.country = true;
 
         setDisabledFields(fieldsToDisable);
@@ -1475,7 +1475,7 @@ const OPDPatientRegistration = () => {
                     city: d.district || "",
                     state: d.state || "",
                     country: d.country || "",
-                    pincode: d.postal_code || "",
+                    pincode: String(d.postal_code || ""),
                 }));
             }
         } catch (err) {
@@ -2345,8 +2345,9 @@ const OPDPatientRegistration = () => {
                                             Address Line 1{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}
                                         </FormLabel>
 
-                                        <div style={{ position: "relative" }}>
+                                        <div style={{ position: "relative", display: "block", width: "100%" }}>
                                             <FormInput
+                                                style={{ width: "100%" }}
                                                 type="text"
                                                 name="address_line1"
                                                 value={formData.address_line1}

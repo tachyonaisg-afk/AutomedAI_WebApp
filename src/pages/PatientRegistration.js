@@ -768,6 +768,15 @@ const PatientRegistration = () => {
     status: "Active",
   });
   const [creatingDoctor, setCreatingDoctor] = useState(false);
+
+  //search location
+  const [addressSearch, setAddressSearch] = useState("");
+  const [addressResults, setAddressResults] = useState([]);
+  const [showAddressResults, setShowAddressResults] = useState(false);
+  const [searchingAddress, setSearchingAddress] = useState(false);
+  const [activeAddressIndex, setActiveAddressIndex] = useState(-1);
+  const addressRefs = useRef([]);
+
   const mobileInputRef = useRef(null);
   const occupationInputRef = useRef(null);
   const getCurrentTimeHHMM = () => {
@@ -1267,7 +1276,7 @@ const PatientRegistration = () => {
     if (addressLine2) fieldsToDisable.address_line2 = true;
     if (data.district) fieldsToDisable.city = true;
     if (data.state) fieldsToDisable.state = true;
-    if (data.pincode) fieldsToDisable.pincode = true;
+    if (data.pincode) fieldsToDisable.pincode = false;
     if (data.state) fieldsToDisable.country = true;
 
     setDisabledFields(fieldsToDisable);
@@ -1610,6 +1619,83 @@ const PatientRegistration = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  //autofill Address
+  const searchAddress = useCallback(async (query) => {
+    if (!query || query.length < 3) {
+      setAddressResults([]);
+      setShowAddressResults(false);
+      return;
+    }
+
+    setSearchingAddress(true);
+
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/location/autocomplete?input=${encodeURIComponent(query)}`
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setAddressResults(data.data || []);
+        setShowAddressResults(true);
+      }
+    } catch (err) {
+      console.error("Address search error:", err);
+    } finally {
+      setSearchingAddress(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchAddress(addressSearch);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [addressSearch, searchAddress]);
+
+  useEffect(() => {
+    if (
+      activeAddressIndex >= 0 &&
+      addressRefs.current[activeAddressIndex]
+    ) {
+      addressRefs.current[activeAddressIndex].scrollIntoView({
+        block: "nearest",
+      });
+    }
+  }, [activeAddressIndex]);
+
+  const handleAddressSelect = async (place, index) => {
+    try {
+      const res = await fetch(
+        `https://midl.automedai.in/location/details?place_id=${place.place_id}`
+      );
+
+      const data = await res.json();
+
+      if (data.success && data.data) {
+        const d = data.data;
+
+        setFormData((prev) => ({
+          ...prev,
+          address_line1: `${d.sublocality || ""}${d.city ? ", " + d.city : ""}`,
+          address_line2: d.division || "",
+          city: d.district || "",
+          state: d.state || "",
+          country: d.country || "",
+          pincode: String(d.postal_code || ""),
+        }));
+      }
+    } catch (err) {
+      console.error("Error fetching address details:", err);
+    }
+
+    setShowAddressResults(false);
+    setAddressSearch("");
+    setActiveAddressIndex(-1);
   };
 
   const paidToMapping = {
@@ -2267,7 +2353,7 @@ const PatientRegistration = () => {
                     </FormSelect>
                   </FormGroup>
 
-                  <FormGroup>
+                  {/* <FormGroup>
                     <FormLabel>Address Line 1{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}</FormLabel>
                     <FormInput
                       type="text"
@@ -2278,6 +2364,99 @@ const PatientRegistration = () => {
                       disabled={disabledFields.address_line1}
                       required={hasAnyAddressValue}
                     />
+                  </FormGroup> */}
+
+                  <FormGroup>
+                    <FormLabel>
+                      Address Line 1{hasAnyAddressValue && <RequiredAsterisk>*</RequiredAsterisk>}
+                    </FormLabel>
+
+                    <div style={{ position: "relative", display: "block", width: "100%" }}>
+                      <FormInput
+                        style={{ width: "100%" }}
+                        type="text"
+                        name="address_line1"
+                        value={formData.address_line1}
+                        onChange={(e) => {
+                          handleInputChange(e);
+                          setAddressSearch(e.target.value);
+                          setActiveAddressIndex(-1);
+                        }}
+                        onKeyDown={(e) => {
+                          if (!showAddressResults) return;
+
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setActiveAddressIndex((prev) =>
+                              prev < addressResults.length - 1 ? prev + 1 : 0
+                            );
+                          }
+
+                          if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setActiveAddressIndex((prev) =>
+                              prev > 0 ? prev - 1 : addressResults.length - 1
+                            );
+                          }
+
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (activeAddressIndex >= 0) {
+                              handleAddressSelect(addressResults[activeAddressIndex]);
+                            }
+                          }
+                        }}
+                        onFocus={() => {
+                          if (addressSearch.length >= 3) {
+                            setShowAddressResults(true);
+                          }
+                        }}
+                        onBlur={() => setTimeout(() => setShowAddressResults(false), 200)}
+                        placeholder="Start typing address..."
+                        disabled={disabledFields.address_line1}
+                        required={hasAnyAddressValue}
+                      />
+
+                      {/* DROPDOWN */}
+                      {showAddressResults && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "100%",
+                            left: 0,
+                            right: 0,
+                            background: "#fff",
+                            border: "1px solid #ddd",
+                            borderRadius: "6px",
+                            maxHeight: "200px",
+                            overflowY: "auto",
+                            zIndex: 1000,
+                          }}
+                        >
+                          {addressResults.length > 0 ? (
+                            addressResults.map((item, idx) => (
+                              <div
+                                key={idx}
+                                ref={(el) => (addressRefs.current[idx] = el)}
+                                onMouseDown={() => handleAddressSelect(item)}
+                                style={{
+                                  padding: "10px",
+                                  cursor: "pointer",
+                                  background:
+                                    activeAddressIndex === idx ? "#eee" : "#fff",
+                                }}
+                              >
+                                {item.description}
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ padding: "10px" }}>
+                              {searchingAddress ? "Searching..." : "No results"}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </FormGroup>
 
                   <FormGroup>
