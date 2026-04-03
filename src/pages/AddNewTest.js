@@ -694,11 +694,12 @@ function AddNewTest() {
                                     </InputGroup>
 
                                     <InputGroup>
-                                        <InputLabel>Display Name</InputLabel>
+                                        <InputLabel>Display Name <span>*</span></InputLabel>
                                         <FormControl
                                             name="custom_display_name"
                                             value={form.custom_display_name}
                                             onChange={handleChange}
+                                            required
                                         />
                                     </InputGroup>
                                 </GridLayout2Col>

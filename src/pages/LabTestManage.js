@@ -182,7 +182,7 @@ function LabTestManage() {
     const fetchTests = async () => {
         try {
             const res = await api.get(
-                `/resource/Lab Test?fields=["name","lab_test_name","department"]&limit_page_length=2000`
+                `/resource/Lab Test Template?limit_start=0&limit_page_length=2500&fields=["name","lab_test_name","department"]`
             );
 
             const data = res.data;
