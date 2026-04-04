@@ -293,6 +293,7 @@ function AddNewTest() {
     const [departments, setDepartments] = useState([]);
     const [company, setCompany] = useState("");
     const [compoundRows, setCompoundRows] = useState([]);
+    const [descriptiveRows, setDescriptiveRows] = useState([]);
 
     const navigate = useNavigate();
 
@@ -357,6 +358,26 @@ function AddNewTest() {
         setCompoundRows(prev => prev.filter((_, i) => i !== index));
     };
 
+    //Descriptive Row manage
+    const addDescriptiveRow = () => {
+        setDescriptiveRows(prev => [
+            ...prev,
+            {
+                particulars: "",
+                allow_blank: 0
+            }
+        ]);
+    };
+
+    const deleteDescriptiveRow = (index) => {
+        setDescriptiveRows(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleDescriptiveChange = (index, field, value) => {
+        const updated = [...descriptiveRows];
+        updated[index][field] = value;
+        setDescriptiveRows(updated);
+    };
     // ================= HANDLE CHANGE =================
 
     const loadOptions = async (inputValue) => {
@@ -466,12 +487,20 @@ function AddNewTest() {
     useEffect(() => {
         if (form.lab_test_template_type === "Compound") {
             if (compoundRows.length === 0) addCompoundRow();
-            setGroupRows([]); // 🔥 clear grouped
+            setGroupRows([]);
+            setDescriptiveRows([]);
         }
 
         if (form.lab_test_template_type === "Grouped") {
             if (groupRows.length === 0) addRow();
-            setCompoundRows([]); // 🔥 clear compound
+            setCompoundRows([]);
+            setDescriptiveRows([]);
+        }
+
+        if (form.lab_test_template_type === "Descriptive") {
+            if (descriptiveRows.length === 0) addDescriptiveRow();
+            setGroupRows([]);
+            setCompoundRows([]);
         }
     }, [form.lab_test_template_type]);
 
@@ -499,6 +528,16 @@ function AddNewTest() {
                 worksheet_instructions: data.worksheet_instructions || "",
                 item: data.item || "",
             });
+
+            // ===== HANDLE DESCRIPTION =====
+            if (data.lab_test_template_type === "Descriptive") {
+                const rows = data.descriptive_test_templates.map((r) => ({
+                    particulars: r.particulars || "",
+                    allow_blank: r.allow_blank || 0,
+                }));
+
+                setDescriptiveRows(rows);
+            }
 
             // ===== HANDLE COMPOUND =====
             if (data.lab_test_template_type === "Compound") {
@@ -583,6 +622,29 @@ function AddNewTest() {
 
             if (!createdItem) {
                 throw new Error("Item creation failed");
+            }
+
+            // ================= Build Descriptive DATA =================
+
+            let descriptive_test_templates = [];
+
+            if (form.lab_test_template_type === "Descriptive") {
+                if (descriptiveRows.length === 0) {
+                    alert("Please add at least one descriptive row");
+                    return;
+                }
+
+                descriptive_test_templates = descriptiveRows
+                    .filter(row => row.particulars)
+                    .map(row => ({
+                        particulars: row.particulars,
+                        allow_blank: row.allow_blank
+                    }));
+
+                if (descriptive_test_templates.length === 0) {
+                    alert("Invalid descriptive rows");
+                    return;
+                }
             }
 
             // ================= BUILD Compound DATA =================
@@ -672,6 +734,10 @@ function AddNewTest() {
                 // ✅ only include if grouped
                 ...(form.lab_test_template_type === "Grouped" && {
                     lab_test_groups,
+                }),
+
+                ...(form.lab_test_template_type === "Descriptive" && {
+                    descriptive_test_templates,
                 }),
             };
 
@@ -1070,6 +1136,83 @@ function AddNewTest() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => deleteCompoundRow(index)}
+                                                                style={{
+                                                                    color: "#ff0000",
+                                                                    border: "none",
+                                                                    fontSize: "20px",
+                                                                    cursor: "pointer",
+                                                                }}
+                                                            >
+                                                                X
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </Section>
+                            )}
+
+                            {form.lab_test_template_type === "Descriptive" && (
+                                <Section>
+                                    <SectionHeader style={{ justifyContent: "space-between" }}>
+                                        <SectionTitle>Descriptive Tests</SectionTitle>
+                                        <SubmitButton type="button" onClick={addDescriptiveRow}>
+                                            + Add Row
+                                        </SubmitButton>
+                                    </SectionHeader>
+
+                                    <div style={{ overflowX: "auto", minHeight: "200px" }}>
+                                        <table
+                                            style={{
+                                                width: "100%",
+                                                borderCollapse: "separate",
+                                                borderSpacing: "10px 10px",
+                                            }}
+                                        >
+                                            <thead style={{ background: "#bbd9f8", height: "40px" }}>
+                                                <tr>
+                                                    <th>No.</th>
+                                                    <th>Result Component</th>
+                                                    <th>Allow Blank</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {descriptiveRows.map((row, index) => (
+                                                    <tr key={index}>
+                                                        <td style={{ textAlign: "center" }}>{index + 1}</td>
+
+                                                        <td>
+                                                            <FormControl
+                                                                value={row.particulars}
+                                                                onChange={(e) =>
+                                                                    handleDescriptiveChange(index, "particulars", e.target.value)
+                                                                }
+                                                            />
+                                                        </td>
+
+                                                        <td style={{ textAlign: "center" }}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={row.allow_blank === 1}
+                                                                onChange={(e) =>
+                                                                    handleDescriptiveChange(
+                                                                        index,
+                                                                        "allow_blank",
+                                                                        e.target.checked ? 1 : 0
+                                                                    )
+                                                                }
+                                                                style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                                                            />
+                                                        </td>
+
+                                                        <td style={{ textAlign: "center" }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => deleteDescriptiveRow(index)}
                                                                 style={{
                                                                     color: "#ff0000",
                                                                     border: "none",
