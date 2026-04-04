@@ -262,7 +262,7 @@ const SubmitButton = styled.button`
 
 function AddNewTest() {
     const { id } = useParams();
-    const decodedId = decodeURIComponent(id);
+    const decodedId = id ? decodeURIComponent(id) : null;
     const isEditMode = Boolean(id);
 
     const [groupRows, setGroupRows] = useState([]);
@@ -286,11 +286,13 @@ function AddNewTest() {
         lab_test_template_type: "Single",
         worksheet_instructions: "",
     });
+    const isSingle = form.lab_test_template_type === "Single";
 
     const [itemGroups, setItemGroups] = useState([]);
     const [uoms, setUoms] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [company, setCompany] = useState("");
+    const [compoundRows, setCompoundRows] = useState([]);
 
     const navigate = useNavigate();
 
@@ -336,6 +338,23 @@ function AddNewTest() {
 
     const deleteRow = (index) => {
         setGroupRows(prev => prev.filter((_, i) => i !== index));
+    };
+
+    //Compound Row manage
+    const addCompoundRow = () => {
+        setCompoundRows(prev => [
+            ...prev,
+            {
+                lab_test_event: "",
+                lab_test_uom: "",
+                normal_range: "",
+                allow_blank: 0
+            }
+        ]);
+    };
+
+    const deleteCompoundRow = (index) => {
+        setCompoundRows(prev => prev.filter((_, i) => i !== index));
     };
 
     // ================= HANDLE CHANGE =================
@@ -418,6 +437,13 @@ function AddNewTest() {
         setGroupRows(updated);
     };
 
+    //Handle Compound Change
+    const handleCompoundChange = (index, field, value) => {
+        const updated = [...compoundRows];
+        updated[index][field] = value;
+        setCompoundRows(updated);
+    };
+
     const templateTypes = [
         "Single",
         "Compound",
@@ -428,8 +454,24 @@ function AddNewTest() {
     ];
 
     useEffect(() => {
-        if (form.lab_test_template_type === "Grouped" && groupRows.length === 0) {
-            addRow();
+        if (!isSingle) {
+            setForm(prev => ({
+                ...prev,
+                lab_test_uom: "",
+                normal_range: ""
+            }));
+        }
+    }, [form.lab_test_template_type]);
+
+    useEffect(() => {
+        if (form.lab_test_template_type === "Compound") {
+            if (compoundRows.length === 0) addCompoundRow();
+            setGroupRows([]); // 🔥 clear grouped
+        }
+
+        if (form.lab_test_template_type === "Grouped") {
+            if (groupRows.length === 0) addRow();
+            setCompoundRows([]); // 🔥 clear compound
         }
     }, [form.lab_test_template_type]);
 
@@ -457,6 +499,18 @@ function AddNewTest() {
                 worksheet_instructions: data.worksheet_instructions || "",
                 item: data.item || "",
             });
+
+            // ===== HANDLE COMPOUND =====
+            if (data.lab_test_template_type === "Compound") {
+                const rows = data.normal_test_templates.map((r) => ({
+                    lab_test_event: r.lab_test_event || "",
+                    lab_test_uom: r.lab_test_uom || "",
+                    normal_range: r.normal_range || "",
+                    allow_blank: r.allow_blank || 0,
+                }));
+
+                setCompoundRows(rows);
+            }
 
             // ===== HANDLE GROUPED =====
             if (data.lab_test_template_type === "Grouped") {
@@ -531,6 +585,31 @@ function AddNewTest() {
                 throw new Error("Item creation failed");
             }
 
+            // ================= BUILD Compound DATA =================
+
+            let normal_test_templates = [];
+
+            if (form.lab_test_template_type === "Compound") {
+                if (compoundRows.length === 0) {
+                    alert("Please add at least one row in compound test");
+                    return;
+                }
+
+                normal_test_templates = compoundRows
+                    .filter(row => row.lab_test_event)
+                    .map(row => ({
+                        lab_test_event: row.lab_test_event,
+                        lab_test_uom: row.lab_test_uom,
+                        normal_range: row.normal_range,
+                        allow_blank: 0
+                    }));
+
+                if (normal_test_templates.length === 0) {
+                    alert("Invalid compound rows");
+                    return;
+                }
+            }
+
             // ================= BUILD GROUP DATA =================
 
             let lab_test_groups = [];
@@ -584,6 +663,11 @@ function AddNewTest() {
                 sample_qty: 1,
                 custom_company: company,
                 worksheet_instructions: form.worksheet_instructions,
+
+                // ✅ only include if compound
+                ...(form.lab_test_template_type === "Compound" && {
+                    normal_test_templates,
+                }),
 
                 // ✅ only include if grouped
                 ...(form.lab_test_template_type === "Grouped" && {
@@ -715,6 +799,19 @@ function AddNewTest() {
 
                                 <GridLayout2Col>
                                     <InputGroup>
+                                        <InputLabel>Template Type</InputLabel>
+                                        <FormSelect
+                                            name="lab_test_template_type"
+                                            value={form.lab_test_template_type}
+                                            onChange={handleChange}
+                                        >
+                                            {templateTypes.map((type) => (
+                                                <option key={type}>{type}</option>
+                                            ))}
+                                        </FormSelect>
+                                    </InputGroup>
+
+                                    <InputGroup>
                                         <InputLabel>Item Group <span>*</span></InputLabel>
                                         <FormSelect
                                             name="item_group"
@@ -745,21 +842,6 @@ function AddNewTest() {
                                     </InputGroup>
 
                                     <InputGroup>
-                                        <InputLabel>UOM <span>*</span></InputLabel>
-                                        <FormSelect
-                                            name="lab_test_uom"
-                                            value={form.lab_test_uom}
-                                            onChange={handleChange}
-                                            required
-                                        >
-                                            <option value="">Select UOM</option>
-                                            {uoms.map((u) => (
-                                                <option key={u.name}>{u.name}</option>
-                                            ))}
-                                        </FormSelect>
-                                    </InputGroup>
-
-                                    <InputGroup>
                                         <InputLabel>Sample <span>*</span></InputLabel>
                                         <FormSelect
                                             name="sample"
@@ -776,18 +858,23 @@ function AddNewTest() {
                                         </FormSelect>
                                     </InputGroup>
 
-                                    <InputGroup>
-                                        <InputLabel>Template Type</InputLabel>
-                                        <FormSelect
-                                            name="lab_test_template_type"
-                                            value={form.lab_test_template_type}
-                                            onChange={handleChange}
-                                        >
-                                            {templateTypes.map((type) => (
-                                                <option key={type}>{type}</option>
-                                            ))}
-                                        </FormSelect>
-                                    </InputGroup>
+                                    {isSingle && (
+                                        <InputGroup>
+                                            <InputLabel>UOM <span>*</span></InputLabel>
+                                            <FormSelect
+                                                name="lab_test_uom"
+                                                value={form.lab_test_uom}
+                                                onChange={handleChange}
+                                                required={isSingle}
+                                            >
+                                                <option value="">Select UOM</option>
+                                                {uoms.map((u) => (
+                                                    <option key={u.name}>{u.name}</option>
+                                                ))}
+                                            </FormSelect>
+                                        </InputGroup>
+                                    )}
+
                                 </GridLayout2Col>
                             </Section>
 
@@ -915,6 +1002,92 @@ function AddNewTest() {
                                 </Section>
                             )}
 
+                            {form.lab_test_template_type === "Compound" && (
+                                <Section>
+                                    <SectionHeader style={{ justifyContent: "space-between" }}>
+                                        <SectionTitle>Compound Tests</SectionTitle>
+                                        <SubmitButton type="button" onClick={addCompoundRow}>
+                                            + Add Row
+                                        </SubmitButton>
+                                    </SectionHeader>
+
+                                    <div style={{ overflowX: "auto", minHeight: "200px" }}>
+                                        <table
+                                            style={{
+                                                width: "100%",
+                                                borderCollapse: "separate",
+                                                borderSpacing: "10px 10px",
+                                            }}
+                                        >
+                                            <thead style={{ background: "#bbd9f8", height: "40px" }}>
+                                                <tr>
+                                                    <th>No.</th>
+                                                    <th>Event</th>
+                                                    <th>UOM</th>
+                                                    <th>Normal Range</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {compoundRows.map((row, index) => (
+                                                    <tr key={index}>
+                                                        <td style={{ textAlign: "center" }}>{index + 1}</td>
+
+                                                        <td>
+                                                            <FormControl
+                                                                value={row.lab_test_event}
+                                                                onChange={(e) =>
+                                                                    handleCompoundChange(index, "lab_test_event", e.target.value)
+                                                                }
+                                                            />
+                                                        </td>
+
+                                                        <td>
+                                                            <FormSelect
+                                                                value={row.lab_test_uom}
+                                                                onChange={(e) =>
+                                                                    handleCompoundChange(index, "lab_test_uom", e.target.value)
+                                                                }
+                                                            >
+                                                                <option value="">Select</option>
+                                                                {uoms.map((u) => (
+                                                                    <option key={u.name}>{u.name}</option>
+                                                                ))}
+                                                            </FormSelect>
+                                                        </td>
+
+                                                        <td>
+                                                            <FormControl
+                                                                value={row.normal_range}
+                                                                onChange={(e) =>
+                                                                    handleCompoundChange(index, "normal_range", e.target.value)
+                                                                }
+                                                            />
+                                                        </td>
+
+                                                        <td style={{ textAlign: "center" }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => deleteCompoundRow(index)}
+                                                                style={{
+                                                                    color: "#ff0000",
+                                                                    border: "none",
+                                                                    fontSize: "20px",
+                                                                    cursor: "pointer",
+                                                                }}
+                                                            >
+                                                                X
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </Section>
+                            )}
+
                             <Divider />
 
                             {/* DETAILS */}
@@ -934,15 +1107,17 @@ function AddNewTest() {
                                         />
                                     </InputGroup>
 
-                                    <InputGroup className="col-span-2">
-                                        <InputLabel>Normal Range</InputLabel>
-                                        <FormControl
-                                            as="textarea"
-                                            name="normal_range"
-                                            value={form.normal_range}
-                                            onChange={handleChange}
-                                        />
-                                    </InputGroup>
+                                    {isSingle && (
+                                        <InputGroup className="col-span-2">
+                                            <InputLabel>Normal Range</InputLabel>
+                                            <FormControl
+                                                as="textarea"
+                                                name="normal_range"
+                                                value={form.normal_range}
+                                                onChange={handleChange}
+                                            />
+                                        </InputGroup>
+                                    )}
 
                                     <InputGroup className="col-span-2">
                                         <InputLabel>Worksheet Instructions</InputLabel>
