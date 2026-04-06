@@ -590,7 +590,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await api.get("https://hms.automedai.in/api/resource/Company");
+        const res = await api.get("/resource/Company");
         const companyList = res.data?.data || [];
 
         setCompanies(companyList);
@@ -640,7 +640,7 @@ const Dashboard = () => {
 
       // 2. Send it as standard JSON. Axios handles the Content-Type automatically.
       const res = await api.post(
-        "https://hms.automedai.in/api/method/frappe.client.get_list",
+        "/method/frappe.client.get_list",
         payload,
         {
           withCredentials: true,
@@ -708,14 +708,11 @@ const Dashboard = () => {
       const encodedFilters = encodeURIComponent(JSON.stringify(filters));
 
       const url =
-        `https://hms.automedai.in/api/method/frappe.desk.query_report.run` +
+        `/method/frappe.desk.query_report.run` +
         `?report_name=General+Ledger&filters=${encodedFilters}` +
         `&ignore_prepared_report=false&are_default_filters=true`;
 
-      const res = await fetch(url, {
-        method: "GET",
-        credentials: "include",
-      });
+      const res = await api.get(url);
 
       if (!res.ok) {
         throw new Error(`HTTP error! Status: ${res.status}`);
@@ -780,7 +777,7 @@ const Dashboard = () => {
   const fetchDoctorName = async (doctorId) => {
     try {
       const res = await fetch(
-        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
+        `/resource/Healthcare Practitioner/${doctorId}`,
         { credentials: "include" }
       );
 

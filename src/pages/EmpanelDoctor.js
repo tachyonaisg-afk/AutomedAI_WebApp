@@ -180,7 +180,7 @@ function EmpanelDoctor() {
     const fetchCompanies = async () => {
       try {
         const res = await api.get(
-          "https://hms.automedai.in/api/resource/Company"
+          "/resource/Company"
         );
 
         const companyList = res.data?.data || [];
@@ -255,7 +255,7 @@ function EmpanelDoctor() {
       );
 
       const base =
-        "https://hms.automedai.in/api/resource/Healthcare Practitioner";
+        "/resource/Healthcare Practitioner";
 
       const [nameRes, regRes, mobileRes] = await Promise.all([
         api.get(`${base}?fields=${fields}&filters=${nameFilter}`),
@@ -368,9 +368,8 @@ function EmpanelDoctor() {
   };
   const fetchDoctorName = async (doctorId) => {
     try {
-      const res = await fetch(
-        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
-        { credentials: "include" }
+      const res = await api.get(
+        `/resource/Healthcare Practitioner/${doctorId}`
       );
 
       const data = await res.json();

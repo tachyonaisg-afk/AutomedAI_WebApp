@@ -663,7 +663,7 @@ const Prescription = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await api.get("https://hms.automedai.in/api/resource/Company");
+        const res = await api.get("/resource/Company");
         const companyList = res.data?.data || [];
 
         if (companyList.length > 0) {
@@ -691,14 +691,8 @@ const Prescription = () => {
   useEffect(() => {
     const fetchCompanyOptions = async () => {
       try {
-        const response = await fetch(
-          "https://hms.automedai.in/api/resource/Company",
-          {
-            headers: {
-              Accept: "application/json",
-            },
-            credentials: "include",
-          }
+        const response = await api.get(
+          "/resource/Company"
         );
 
         const data = await response.json();
@@ -907,7 +901,7 @@ const Prescription = () => {
         if (!patientData?.name) return;
 
         const response = await api.get(
-          `https://hms.automedai.in/api/resource/Address`,
+          `/resource/Address`,
           {
             filters: JSON.stringify([
               ["address_title", "=", patientData.name]
@@ -943,7 +937,7 @@ const Prescription = () => {
     const fetchDoctorDetails = async () => {
       if (formData.selectedDoctor) {
         try {
-          const response = await api.get(`https://hms.automedai.in/api/resource/Healthcare Practitioner/${formData.selectedDoctor}`);
+          const response = await api.get(`/resource/Healthcare Practitioner/${formData.selectedDoctor}`);
           console.log("Doctor Details Response:", response.data);
           setSelectedDoctorData(response.data?.data);
         } catch (err) {
@@ -993,7 +987,7 @@ const Prescription = () => {
   useEffect(() => {
     const fetchPractitioners = async () => {
       try {
-        const response = await api.get("https://hms.automedai.in/api/resource/Healthcare Practitioner", {
+        const response = await api.get("/resource/Healthcare Practitioner", {
           fields: '["name", "practitioner_name", "department", "designation"]',
           limit_page_length: 1500,
         });

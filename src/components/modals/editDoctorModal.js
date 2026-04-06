@@ -423,7 +423,7 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
         const fetchDepartments = async () => {
             try {
                 const res = await api.get(
-                    "https://hms.automedai.in/api/resource/Medical Department?limit_start=0&limit_page_length=1500"
+                    "/resource/Medical Department?limit_start=0&limit_page_length=1500"
                 );
 
                 const deptList = (res.data?.data || []).map((d) => ({
@@ -478,7 +478,7 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
         const fetchCompanies = async () => {
             try {
                 const res = await api.get(
-                    "https://hms.automedai.in/api/resource/Company"
+                    "/resource/Company"
                 );
 
                 const companyList = res.data?.data || [];
@@ -549,7 +549,7 @@ function EditDoctorModal({ onClose, doctor, autoEmpanel, empanelDoctor }) {
 
             // 🔹 Update Practitioner
             const res = await api.put(
-                `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctor.name}`,
+                `/resource/Healthcare Practitioner/${doctor.name}`,
                 payload
             );
 

@@ -341,7 +341,7 @@ const LabTest = () => {
 
       // 1️⃣ Fetch company list
       const companyResponse = await api.get(
-        "https://hms.automedai.in/api/resource/Company"
+        "/resource/Company"
       );
 
       const companies =

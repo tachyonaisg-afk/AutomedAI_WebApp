@@ -10,6 +10,7 @@ import API_ENDPOINTS from "../services/api/endpoints";
 import Select from "react-select";
 import paymentQR from "../assets/paymentupi.jpeg";
 import AadhaarOCRScanner from "../components/shared/AadhaarOCRScanner";
+import api from "../services/api";
 
 const RegistrationContainer = styled.div`
   display: flex;
@@ -1043,12 +1044,7 @@ const PatientRegistration = () => {
   useEffect(() => {
     const fetchGenderOptions = async () => {
       try {
-        const response = await fetch("https://hms.automedai.in/api/resource/Gender", {
-          headers: {
-            Accept: "application/json",
-          },
-          credentials: "include",
-        });
+        const response = await apiService.get("/resource/Gender");
         const data = await response.json();
         if (data && data.data) {
           console.log("Gender options loaded:", data.data);
@@ -1061,12 +1057,7 @@ const PatientRegistration = () => {
 
     const fetchCompanyOptions = async () => {
       try {
-        const response = await fetch("https://hms.automedai.in/api/resource/Company", {
-          headers: {
-            Accept: "application/json",
-          },
-          credentials: "include",
-        });
+        const response = await apiService.get("/resource/Company");
         const data = await response.json();
         if (data && data.data) {
           setCompanyOptions(data.data);
@@ -1132,15 +1123,9 @@ const PatientRegistration = () => {
     setCreatingDoctor(true);
 
     try {
-      const response = await fetch(
-        "https://hms.automedai.in/api/resource/Healthcare Practitioner",
+      const response = await apiService.post(
+        "/resource/Healthcare Practitioner",
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          credentials: "include",
           body: JSON.stringify({
             doctype: "Healthcare Practitioner",
             ...newDoctorData,
@@ -1758,13 +1743,7 @@ const PatientRegistration = () => {
 
       console.log("Creating patient with payload:", payload);
 
-      const response = await fetch("https://hms.automedai.in/api/resource/Patient", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        credentials: "include",
+      const response = await apiService.post("/resource/Patient", {
         body: JSON.stringify(payload),
       });
 
@@ -1798,15 +1777,9 @@ const PatientRegistration = () => {
 
             console.log("Creating appointment:", appointmentPayload);
 
-            const appointmentResponse = await fetch(
-              "https://hms.automedai.in/api/resource/Patient Appointment",
+            const appointmentResponse = await apiService.post(
+              "/resource/Patient Appointment",
               {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Accept: "application/json",
-                },
-                credentials: "include",
                 body: JSON.stringify(appointmentPayload),
               }
             );
@@ -1925,13 +1898,7 @@ const PatientRegistration = () => {
 
             console.log("Sales Invoice payload:", invoicePayload);
 
-            const invoiceResponse = await fetch("https://hms.automedai.in/api/resource/Sales%20Invoice", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Accept: "application/json",
-              },
-              credentials: "include",
+            const invoiceResponse = await apiService.post("/resource/Sales%20Invoice", {
               body: JSON.stringify(invoicePayload),
             });
 
@@ -1978,13 +1945,7 @@ const PatientRegistration = () => {
                     ]
                   };
 
-                  const paymentResponse = await fetch("https://hms.automedai.in/api/resource/Payment%20Entry", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Accept: "application/json",
-                    },
-                    credentials: "include",
+                  const paymentResponse = await apiService.post("/resource/Payment%20Entry", {
                     body: JSON.stringify(paymentPayload),
                   });
 

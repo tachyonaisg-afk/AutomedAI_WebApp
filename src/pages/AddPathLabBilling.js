@@ -849,7 +849,7 @@ const AddPathLabBilling = () => {
       );
 
       const base =
-        "https://hms.automedai.in/api/resource/Healthcare Practitioner";
+        "/resource/Healthcare Practitioner";
 
       const [nameRes, regRes, mobileRes] = await Promise.all([
         apiService.get(`${base}?fields=${fields}&filters=${nameFilter}`),

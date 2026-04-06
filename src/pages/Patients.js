@@ -289,7 +289,7 @@ const Patients = () => {
 
       // 1️⃣ Fetch company list
       const companyResponse = await api.get(
-        "https://hms.automedai.in/api/resource/Company"
+        "/resource/Company"
       );
 
       const companies =
@@ -416,7 +416,7 @@ const Patients = () => {
               }
 
               const res = await api.get(
-                `https://hms.automedai.in/api/resource/Patient/${patientId}`
+                `/resource/Patient/${patientId}`
               );
 
               const patientData = res.data?.data || {};

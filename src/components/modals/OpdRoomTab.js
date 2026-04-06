@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Select from "react-select";
 import { Pencil, Trash2 } from "lucide-react";
+import api from "../../services/api";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -239,12 +240,8 @@ const OpdRoomTab = () => {
     // ✅ Fetch Company List
     const fetchCompanyOptions = async () => {
         try {
-            const response = await fetch(
-                "https://hms.automedai.in/api/resource/Company",
-                {
-                    headers: { Accept: "application/json" },
-                    credentials: "include",
-                }
+            const response = await api.get(
+                "/resource/Company"
             );
 
             const data = await response.json();

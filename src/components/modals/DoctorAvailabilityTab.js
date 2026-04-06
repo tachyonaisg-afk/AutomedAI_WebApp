@@ -3,6 +3,7 @@ import styled from "styled-components";
 import apiService from "../../services/api/apiService";
 import API_ENDPOINTS from "../../services/api/endpoints";
 import Select from "react-select";
+import api from "../../services/api";
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -227,9 +228,8 @@ const DoctorAvailabilityTab = () => {
   // ✅ Fetch Companies
   const fetchCompanies = async () => {
     try {
-      const res = await fetch(
-        "https://hms.automedai.in/api/resource/Company",
-        { credentials: "include" }
+      const res = await api.get(
+        "/resource/Company"
       );
 
       const data = await res.json();
@@ -283,9 +283,8 @@ const DoctorAvailabilityTab = () => {
 
   const fetchDoctorName = async (doctorId) => {
     try {
-      const res = await fetch(
-        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
-        { credentials: "include" }
+      const res = await api.get(
+        `/resource/Healthcare Practitioner/${doctorId}`
       );
 
       const data = await res.json();

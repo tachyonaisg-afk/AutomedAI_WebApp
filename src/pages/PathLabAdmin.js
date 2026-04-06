@@ -312,7 +312,7 @@ const OpdAdmin = () => {
     const fetchCompany = async () => {
       try {
         const res = await api.get(
-          "https://hms.automedai.in/api/resource/Company"
+          "/resource/Company"
         );
 
         if (res.data?.data?.length > 0) {

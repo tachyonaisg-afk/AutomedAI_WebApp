@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import styled from "styled-components";
 import { Eye, EyeOff } from "lucide-react";
 import usePageTitle from "../../hooks/usePageTitle";
+import { api } from './../../services/api/index';
 
 const LoginContainer = styled.div`
   display: flex;
@@ -209,13 +210,17 @@ const LoginForm = () => {
       }
 
       // Fetch role after login
-      const res = await fetch(
-        `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${email}"]]`
+      const res = await api.get(
+        `/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${email}"]]`
       );
+
+      // const res = await fetch(
+      //   `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${email}"]]`
+      // );
 
       const data = await res.json();
 
-      const role = data?.data?.[0]?.role_profile_name;
+      const role = data?.data?.[0]?.role_profile_name || "";
 
       console.log("ROLE:", role);
       // // Store role for sidebar usage
