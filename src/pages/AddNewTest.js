@@ -285,6 +285,7 @@ function AddNewTest() {
         gst_hsn_code: "999312",
         lab_test_template_type: "Single",
         worksheet_instructions: "",
+        descriptive_result: "",
     });
     const isSingle = form.lab_test_template_type === "Single";
 
@@ -504,6 +505,15 @@ function AddNewTest() {
         }
     }, [form.lab_test_template_type]);
 
+    useEffect(() => {
+        if (form.lab_test_template_type !== "Imaging") {
+            setForm(prev => ({
+                ...prev,
+                descriptive_result: ""
+            }));
+        }
+    }, [form.lab_test_template_type]);
+
     // ================= SUBMIT =================
 
     const fetchTestDetails = async () => {
@@ -526,6 +536,7 @@ function AddNewTest() {
                 gst_hsn_code: "999312",
                 lab_test_template_type: data.lab_test_template_type || "Single",
                 worksheet_instructions: data.worksheet_instructions || "",
+                descriptive_result: data.descriptive_result || "",
                 item: data.item || "",
             });
 
@@ -738,6 +749,10 @@ function AddNewTest() {
 
                 ...(form.lab_test_template_type === "Descriptive" && {
                     descriptive_test_templates,
+                }),
+
+                ...(form.lab_test_template_type === "Imaging" && {
+                    descriptive_result: form.descriptive_result,
                 }),
             };
 
@@ -1229,6 +1244,22 @@ function AddNewTest() {
                                         </table>
                                     </div>
                                 </Section>
+                            )}
+
+                            {form.lab_test_template_type === "Imaging" && (
+                                <InputGroup className="col-span-2">
+                                    <InputLabel>Descriptive Result</InputLabel>
+
+                                    <WorksheetEditor
+                                        value={form.descriptive_result}
+                                        onChange={(value) =>
+                                            setForm((prev) => ({
+                                                ...prev,
+                                                descriptive_result: value,
+                                            }))
+                                        }
+                                    />
+                                </InputGroup>
                             )}
 
                             <Divider />
