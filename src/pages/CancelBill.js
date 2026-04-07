@@ -180,7 +180,7 @@ function CancelBill() {
     const fetchCompanies = async () => {
       try {
         const res = await api.get(
-          "/resource/Company"
+          "https://hms.automedai.in/api/resource/Company"
         );
 
         const companyList = res.data?.data || [];
@@ -255,7 +255,7 @@ function CancelBill() {
       );
 
       const base =
-        "/resource/Healthcare Practitioner";
+        "https://hms.automedai.in/api/resource/Healthcare Practitioner";
 
       const [nameRes, regRes, mobileRes] = await Promise.all([
         api.get(`${base}?fields=${fields}&filters=${nameFilter}`),
@@ -369,7 +369,7 @@ function CancelBill() {
   const fetchDoctorName = async (doctorId) => {
     try {
       const res = await fetch(
-        `/resource/Healthcare Practitioner/${doctorId}`,
+        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
         { credentials: "include" }
       );
 

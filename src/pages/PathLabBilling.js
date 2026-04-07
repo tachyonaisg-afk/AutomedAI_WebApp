@@ -473,7 +473,7 @@ const PathLabBilling = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await api.get("/resource/Company");
+        const res = await api.get("https://hms.automedai.in/api/resource/Company");
         const companyList = res.data?.data || [];
 
         setCompanies(companyList);
@@ -522,7 +522,7 @@ const PathLabBilling = () => {
       };
 
       const res = await api.post(
-        "/method/frappe.client.get_list",
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
         payload,
         { withCredentials: true }
       );

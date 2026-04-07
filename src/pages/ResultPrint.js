@@ -808,7 +808,7 @@ const ResultPrint = () => {
 
       try {
         setLoading(true);
-        const response = await api.get("/resource/Lab Test", {
+        const response = await api.get("https://hms.automedai.in/api/resource/Lab Test", {
           fields: '["name","patient_name","result_date","lab_test_name","department"]',
           filters: JSON.stringify([["Lab Test", "patient", "=", patientId], ["Lab Test", "status", "=", "Completed"]]),
           order_by: "department asc"
@@ -851,7 +851,7 @@ const ResultPrint = () => {
 
       try {
         const detailsPromises = selectedTestIds.map(testId =>
-          api.get(`/resource/Lab Test/${testId}`)
+          api.get(`https://hms.automedai.in/api/resource/Lab Test/${testId}`)
         );
 
         const responses = await Promise.all(detailsPromises);
@@ -877,7 +877,7 @@ const ResultPrint = () => {
       try {
         // 1️⃣ Fetch sample details
         const sampleResponse = await api.get(
-          `/resource/Sample Collection/${sampleId}`
+          `https://hms.automedai.in/api/resource/Sample Collection/${sampleId}`
         );
 
         const sampleDetails = sampleResponse.data?.data;

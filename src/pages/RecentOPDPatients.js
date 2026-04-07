@@ -199,7 +199,7 @@ const RecentOPDPatients = () => {
 
   //         // 1️⃣ Fetch company list
   //         const companyResponse = await api.get(
-  //             "/resource/Company"
+  //             "https://hms.automedai.in/api/resource/Company"
   //         );
 
   //         const companies =

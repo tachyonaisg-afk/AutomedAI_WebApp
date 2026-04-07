@@ -590,7 +590,7 @@ const PathLabDashboard = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const res = await api.get("/resource/Company");
+        const res = await api.get("https://hms.automedai.in/api/resource/Company");
         const companyList = res.data?.data || [];
 
         setCompanies(companyList);
@@ -622,9 +622,9 @@ const PathLabDashboard = () => {
 
       const encodedFilters = encodeURIComponent(JSON.stringify(filters));
 
-      const url = `/method/frappe.client.get_count?doctype=Lab%20Test&filters=${encodedFilters}`;
+      const url = `https://hms.automedai.in/api/method/frappe.client.get_count?doctype=Lab%20Test&filters=${encodedFilters}`;
 
-      const res = await api.get(url);
+      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
 
       setTotalTestsToday(data?.message || 0);
@@ -651,9 +651,9 @@ const PathLabDashboard = () => {
 
       const encodedFilters = encodeURIComponent(JSON.stringify(filters));
 
-      const url = `/method/frappe.client.get_count?doctype=Lab%20Test&filters=${encodedFilters}`;
+      const url = `https://hms.automedai.in/api/method/frappe.client.get_count?doctype=Lab%20Test&filters=${encodedFilters}`;
 
-      const res = await api.get(url);
+      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
 
       setTotalPendingTestsToday(data?.message || 0);
@@ -674,9 +674,9 @@ const PathLabDashboard = () => {
 
       const encodedFilters = encodeURIComponent(JSON.stringify(filters));
 
-      const url = `/method/frappe.client.get_count?doctype=Sample%20Collection&filters=${encodedFilters}`;
+      const url = `https://hms.automedai.in/api/method/frappe.client.get_count?doctype=Sample%20Collection&filters=${encodedFilters}`;
 
-      const res = await api.get(url);
+      const res = await fetch(url, { credentials: "include" });
       const data = await res.json();
 
       setPendingSamples(data?.message || 0);
@@ -720,7 +720,7 @@ const PathLabDashboard = () => {
 
       // 2. Send it as standard JSON. Axios handles the Content-Type automatically.
       const res = await api.post(
-        "/method/frappe.client.get_list",
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
         payload,
         {
           withCredentials: true,
@@ -760,8 +760,9 @@ const PathLabDashboard = () => {
 
   const fetchDoctorName = async (doctorId) => {
     try {
-      const res = await api.get(
-        `/resource/Healthcare Practitioner/${doctorId}`
+      const res = await fetch(
+        `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
+        { credentials: "include" }
       );
 
       const data = await res.json();

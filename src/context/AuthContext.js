@@ -1,5 +1,4 @@
 import React, { createContext, useState, useContext } from 'react';
-import api from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -34,22 +33,15 @@ export const AuthProvider = ({ children }) => {
       formData.append('usr', username);
       formData.append('pwd', password);
 
-      // const response = await api.post(`/method/login`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/x-www-form-urlencoded',
-      //     'Accept': 'application/json',
-      //   },
-      //   credentials: 'include', // Include cookies in request and save cookies from response
-      //   body: formData,
-      // });
-      const response = await api.post(
-        `/method/login`,
-        formData,
-        {
-          "Content-Type": "application/x-www-form-urlencoded",
-        }
-      );
+      const response = await fetch(`https://hms.automedai.in/api/method/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        credentials: 'include', // Include cookies in request and save cookies from response
+        body: formData,
+      });
 
       // Get response text first to check what we're receiving
       const responseText = await response.text();
@@ -74,11 +66,11 @@ export const AuthProvider = ({ children }) => {
 
         try {
           // Fetch role from ERPNext
-          const roleRes = await api.get(
-            `/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${username}"]]`,
+          const roleRes = await fetch(
+            `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${username}"]]`,
             {
-              // method: "GET",
-              credentials: "include",
+              method: "GET",
+              credentials: "include", // VERY IMPORTANT
             }
           );
 
@@ -117,12 +109,12 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // Call ERPNext logout endpoint to clear server-side session
-      await api.post(`/method/logout`, {
-        // method: 'POST',
+      await fetch(`https://hms.automedai.in/api/method/logout`, {
+        method: 'POST',
         credentials: 'include', // Include cookies to clear the session
-        // headers: {
-        //   'Content-Type': 'application/json',
-        // },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
     } catch (error) {
       console.error('Logout error:', error);

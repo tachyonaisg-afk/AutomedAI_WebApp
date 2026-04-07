@@ -413,7 +413,7 @@ const AdminResultEdit = () => {
                 setLoading(true);
 
                 const res = await api.get(
-                    `/resource/Lab Test/${id}`
+                    `https://hms.automedai.in/api/resource/Lab Test/${id}`
                 );
 
                 const data = res.data?.data;
@@ -521,7 +521,7 @@ const AdminResultEdit = () => {
         const fetchPatient = async () => {
             try {
                 const res = await api.get(
-                    `/resource/Patient/${labTestData.patient}`
+                    `https://hms.automedai.in/api/resource/Patient/${labTestData.patient}`
                 );
 
                 setPatientData(res.data?.data);
@@ -545,7 +545,7 @@ const AdminResultEdit = () => {
     useEffect(() => {
         const fetchPractitioners = async () => {
             try {
-                const response = await api.get("/resource/Healthcare Practitioner", {
+                const response = await api.get("https://hms.automedai.in/api/resource/Healthcare Practitioner", {
                     fields: '["name", "practitioner_name"]',
                     limit_page_length: 100,
                 });
@@ -736,7 +736,7 @@ const AdminResultEdit = () => {
 
             // Call the API to update the lab test
             const response = await api.put(
-                `/resource/Lab Test/${id}`,
+                `https://hms.automedai.in/api/resource/Lab Test/${id}`,
                 requestBody
             );
 
@@ -746,7 +746,7 @@ const AdminResultEdit = () => {
                 // After successful publish, submit the document (docstatus = 1)
                 console.log("Submitting Lab Test document...");
                 const submitResponse = await api.put(
-                    `/resource/Lab Test/${id}`,
+                    `https://hms.automedai.in/api/resource/Lab Test/${id}`,
                     { docstatus: 1 }
                 );
 

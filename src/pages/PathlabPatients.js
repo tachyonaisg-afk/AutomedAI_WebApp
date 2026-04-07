@@ -289,7 +289,7 @@ const PathlabPatients = () => {
 
       // 1️⃣ Fetch company list
       const companyResponse = await api.get(
-        "/resource/Company"
+        "https://hms.automedai.in/api/resource/Company"
       );
 
       const companies =
@@ -416,7 +416,7 @@ const PathlabPatients = () => {
               }
 
               const res = await api.get(
-                `/resource/Patient/${patientId}`
+                `https://hms.automedai.in/api/resource/Patient/${patientId}`
               );
 
               const patientData = res.data?.data || {};
@@ -565,7 +565,7 @@ const PathlabPatients = () => {
   const handleTestResult = async (id) => {
     try {
       const res = await api.get(
-        `/resource/Lab%20Test?limit_start=0&limit_page_length=2000&fields=["name","patient","patient_name","status","sample"]&filters=[["patient","=","${id}"]]&order_by=department asc`
+        `https://hms.automedai.in/api/resource/Lab%20Test?limit_start=0&limit_page_length=2000&fields=["name","patient","patient_name","status","sample"]&filters=[["patient","=","${id}"]]&order_by=department asc`
       );
 
       const data = await res.json();

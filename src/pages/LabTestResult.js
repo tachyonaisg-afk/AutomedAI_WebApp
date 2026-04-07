@@ -424,7 +424,7 @@ const LabTestResult = () => {
         setLoading(true);
 
         // Fetch patient details
-        const patientResponse = await api.get(`/resource/Patient/${patientId}`);
+        const patientResponse = await api.get(`https://hms.automedai.in/api/resource/Patient/${patientId}`);
         console.log("Patient API Response:", patientResponse);
 
         if (patientResponse.data && patientResponse.data.data) {
@@ -432,7 +432,7 @@ const LabTestResult = () => {
         }
 
         // Fetch lab test details
-        const labTestResponse = await api.get(`/resource/Lab Test/${id}`);
+        const labTestResponse = await api.get(`https://hms.automedai.in/api/resource/Lab Test/${id}`);
         console.log("Lab Test API Response:", labTestResponse);
 
         if (labTestResponse.data && labTestResponse.data.data) {
@@ -531,7 +531,7 @@ const LabTestResult = () => {
   useEffect(() => {
     const fetchPractitioners = async () => {
       try {
-        const response = await api.get("/resource/Healthcare Practitioner", {
+        const response = await api.get("https://hms.automedai.in/api/resource/Healthcare Practitioner", {
           fields: '["name", "practitioner_name"]',
           limit_page_length: 100,
         });
@@ -722,7 +722,7 @@ const LabTestResult = () => {
 
       // Call the API to update the lab test
       const response = await api.put(
-        `/resource/Lab Test/${id}`,
+        `https://hms.automedai.in/api/resource/Lab Test/${id}`,
         requestBody
       );
 
@@ -732,7 +732,7 @@ const LabTestResult = () => {
         // After successful publish, submit the document (docstatus = 1)
         console.log("Submitting Lab Test document...");
         const submitResponse = await api.put(
-          `/resource/Lab Test/${id}`,
+          `https://hms.automedai.in/api/resource/Lab Test/${id}`,
           { docstatus: 1 }
         );
 

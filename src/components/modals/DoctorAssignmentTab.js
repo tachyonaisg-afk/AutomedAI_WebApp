@@ -4,7 +4,6 @@ import apiService from "../../services/api/apiService";
 import API_ENDPOINTS from "../../services/api/endpoints";
 import Select from "react-select";
 import { Pencil, Trash2 } from "lucide-react";
-import { api } from './../../services/api/index';
 
 const SectionWrapper = styled.div`
   background: #ffffff;
@@ -418,8 +417,9 @@ const DoctorAssignmentTab = () => {
     // ✅ Fetch Companies
     const fetchCompanies = async () => {
         try {
-            const res = await api.get(
-                "/resource/Company"
+            const res = await fetch(
+                "https://hms.automedai.in/api/resource/Company",
+                { credentials: "include" }
             );
 
             const data = await res.json();
@@ -446,8 +446,9 @@ const DoctorAssignmentTab = () => {
     // ✅ Fetch Doctors
     const fetchPractitioners = async () => {
         try {
-            const res = await api.get(
-                `/resource/Healthcare Practitioner?limit_page_length=5000&filters=[["practitioner_type","=","Internal"]]&fields=["name","practitioner_name","department"]`
+            const res = await fetch(
+                `https://hms.automedai.in/api/resource/Healthcare Practitioner?limit_page_length=5000&filters=[["practitioner_type","=","Internal"]]&fields=["name","practitioner_name","department"]`,
+                { credentials: "include" }
             );
 
             const data = await res.json();
@@ -463,8 +464,9 @@ const DoctorAssignmentTab = () => {
 
     const fetchDoctorName = async (doctorId) => {
         try {
-            const res = await api.get(
-                `/resource/Healthcare Practitioner/${doctorId}`
+            const res = await fetch(
+                `https://hms.automedai.in/api/resource/Healthcare Practitioner/${doctorId}`,
+                { credentials: "include" }
             );
 
             const data = await res.json();
