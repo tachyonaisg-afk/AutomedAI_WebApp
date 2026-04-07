@@ -44,28 +44,28 @@ export const AuthProvider = ({ children }) => {
       //   body: formData,
       // });
 
-      // const response = await fetch('https://hms.automedai.in/api/method/login', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/x-www-form-urlencoded',
-      //     'Accept': 'application/json',
-      //   },
-      //   credentials: 'include', // Include cookies in request and save cookies from response
-      //   body: formData,
-      // });
-      const response = await api.post(
-        "/method/login",
-        new URLSearchParams({
-          usr: username,
-          pwd: password,
-        }),
-        {
-          "Content-Type": "application/x-www-form-urlencoded",
+      const response = await fetch('https://hms.automedai.in/api/method/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
         },
-        {
-          credentials: "include",
-        }
-      );
+        credentials: 'include', // Include cookies in request and save cookies from response
+        body: formData,
+      });
+      // const response = await api.post(
+      //   "/method/login",
+      //   new URLSearchParams({
+      //     usr: username,
+      //     pwd: password,
+      //   }),
+      //   {
+      //     "Content-Type": "application/x-www-form-urlencoded",
+      //   },
+      //   {
+      //     credentials: "include",
+      //   }
+      // );
 
       // Get response text first to check what we're receiving
       const responseText = await response.text();
