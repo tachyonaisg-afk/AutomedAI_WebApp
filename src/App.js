@@ -39,6 +39,7 @@ import AdminResultEdit from './pages/AdminResultEdit';
 import LabTestManage from './pages/LabTestManage';
 import AddNewTest from './pages/AddNewTest';
 import GovernmentProjectIncentives from './pages/GovernmentProjectIncentives';
+import TodayCollection from './pages/TodayCollection';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -305,6 +306,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Collection />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/collection-today"
+            element={
+              <ProtectedRoute>
+                <TodayCollection />
               </ProtectedRoute>
             }
           />
