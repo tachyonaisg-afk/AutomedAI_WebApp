@@ -76,6 +76,34 @@ const getBaseSampleName = (sample) => {
     return sample.split("(")[0].trim().toLowerCase();
 };
 
+// const groupCollections = (data) => {
+//     const grouped = {};
+
+//     data.forEach((item) => {
+//         const baseSample = getBaseSampleName(item.sample);
+//         const key = `${item.patient_id}_${baseSample}`;
+
+//         if (!grouped[key]) {
+//             grouped[key] = {
+//                 patient_id: item.patient_id,
+//                 patient_name: item.patient_name,
+//                 base_sample: baseSample,
+//                 uom: item.quantity_uom?.split(" ")[1] || "",
+//                 total_qty: 0,
+//                 items: [],
+//                 collected_by: item.collected_by,
+//             };
+//         }
+
+//         const qty = parseFloat(item.quantity_uom?.split(" ")[0]) || 0;
+
+//         grouped[key].total_qty += qty;
+//         grouped[key].items.push(item);
+//     });
+
+//     return Object.values(grouped);
+// };
+
 const groupCollections = (data) => {
     const grouped = {};
 
@@ -92,16 +120,62 @@ const groupCollections = (data) => {
                 total_qty: 0,
                 items: [],
                 collected_by: item.collected_by,
+
+                // sorting helpers
+                hasPending: false,
+                oldestPending: null,
+                newestCollected: null,
             };
         }
 
         const qty = parseFloat(item.quantity_uom?.split(" ")[0]) || 0;
-
         grouped[key].total_qty += qty;
         grouped[key].items.push(item);
+
+        // Track pending
+        if (item.docstatus === 0) {
+            grouped[key].hasPending = true;
+
+            const creation = new Date(item.date);
+            if (
+                !grouped[key].oldestPending ||
+                creation < grouped[key].oldestPending
+            ) {
+                grouped[key].oldestPending = creation;
+            }
+        }
+
+        // Track collected
+        if (item.docstatus === 1 && item.collection_datetime !== "-") {
+            const collected = new Date(item.collection_datetime);
+
+            if (
+                !grouped[key].newestCollected ||
+                collected > grouped[key].newestCollected
+            ) {
+                grouped[key].newestCollected = collected;
+            }
+        }
     });
 
-    return Object.values(grouped);
+    const groups = Object.values(grouped);
+
+    // FINAL SORT
+    groups.sort((a, b) => {
+        // pending first
+        if (a.hasPending && !b.hasPending) return -1;
+        if (!a.hasPending && b.hasPending) return 1;
+
+        // both pending → oldest first
+        if (a.hasPending && b.hasPending) {
+            return a.oldestPending - b.oldestPending;
+        }
+
+        // both collected → newest first
+        return b.newestCollected - a.newestCollected;
+    });
+
+    return groups;
 };
 
 const getCollectedByName = (email) => {
@@ -113,7 +187,11 @@ const CollectionDataTable = ({ data, renderActions }) => {
     const [expandedRows, setExpandedRows] = useState({});
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const groupedData = useMemo(() => groupCollections(data), [data]);
+    // const groupedData = useMemo(() => groupCollections(data), [data]);
+    const groupedData = useMemo(() => {
+        const pendingOnly = data.filter(item => item.docstatus === 0);
+        return groupCollections(pendingOnly);
+    }, [data]);
 
     const totalRecords = groupedData.length;
     const totalPages = Math.ceil(totalRecords / rowsPerPage);

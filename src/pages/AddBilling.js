@@ -1102,7 +1102,7 @@ const AddBilling = () => {
 
       let results = response.data?.results || response.data?.message || [];
 
-      // ✅ FILTER: Exclude LAB, PHC, PLB
+      // FILTER: Exclude LAB, PHC, PLB
       results = results.filter((item) => {
         const desc = item.description?.toUpperCase() || "";
 

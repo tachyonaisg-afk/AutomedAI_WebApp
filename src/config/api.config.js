@@ -5,7 +5,7 @@
 
 const API_CONFIG = {
   // Base URL - can be overridden by environment variable
-  BASE_URL: process.env.REACT_APP_API_BASE_URL || 'https://hms.automedai.in/api',
+  BASE_URL: process.env.REACT_APP_API_BASE_URL || 'https://stg.automedai.in/api',
 
   // API Keys - loaded from environment variables
   API_KEY: process.env.REACT_APP_API_KEY || '',

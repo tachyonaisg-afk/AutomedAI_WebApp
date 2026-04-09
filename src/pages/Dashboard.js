@@ -534,9 +534,20 @@ const Dashboard = () => {
   const [pathlabSalesToday, setPathlabSalesToday] = useState(0);
   const [doctorPatientCountMap, setDoctorPatientCountMap] = useState({});
 
+  const handleTotalPatientsClick = () => {
+    navigate("/patients", {
+      state: {
+        dashboardFilter: true,
+        date: selectedDate,
+        company: selectedCompany
+      }
+    });
+  };
+
   const navItems = [
     { icon: UserPlus, label: "Patient Registration", bgColor: "#eff6ff", iconColor: "#3b82f6", borderColor: "#3b82f6", route: "/opd/patient-registration" },
-    { icon: Users, label: "Recent Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", route: "/opd/recent-opd-patients" },
+    // { icon: Users, label: "Recent Patients", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", route: "/opd/recent-opd-patients" },
+    { icon: Users, label: "Total Patients Today", bgColor: "#f0f9ff", iconColor: "#0ea5e9", borderColor: "#0ea5e9", onClick: handleTotalPatientsClick },
     { icon: CreditCard, label: "Billing", bgColor: "#f5f3ff", iconColor: "#8b5cf6", borderColor: "#8b5cf6", route: "/opd/billing" },
     { icon: ClipboardCheck, label: "Pre-Screening", bgColor: "#f0fdf4", iconColor: "#10b981", borderColor: "#10b981", route: null },
     { icon: Video, label: "Telemedicine", bgColor: "#fff7ed", iconColor: "#f59e0b", borderColor: "#f59e0b", route: null },
@@ -1031,15 +1042,7 @@ const Dashboard = () => {
     return parts.join(" ");
   };
 
-  const handleTotalPatientsClick = () => {
-    navigate("/patients", {
-      state: {
-        dashboardFilter: true,
-        date: selectedDate,
-        company: selectedCompany
-      }
-    });
-  };
+
   const handleFeesCollectedClick = () => {
     navigate("/reports", {
       state: {
@@ -1064,7 +1067,13 @@ const Dashboard = () => {
                   style={{ animationDelay: `${index * 0.05}s` }}
                   borderColor={item.borderColor}
                   hoverBgColor={item.bgColor}
-                  onClick={() => item.route && navigate(item.route)}
+                  onClick={() => {
+                    if (item.onClick) {
+                      item.onClick();       // ✅ custom function
+                    } else if (item.route) {
+                      navigate(item.route); // ✅ normal navigation
+                    }
+                  }}
                 >
                   <IconCircle bgColor={item.bgColor}>
                     <>
