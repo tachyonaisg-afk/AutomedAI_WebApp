@@ -136,7 +136,7 @@ const groupCollections = (data) => {
         if (item.docstatus === 0) {
             grouped[key].hasPending = true;
 
-            const creation = new Date(item.date);
+            const creation = new Date(item.creation);
             if (
                 !grouped[key].oldestPending ||
                 creation < grouped[key].oldestPending

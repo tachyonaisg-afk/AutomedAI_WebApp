@@ -1094,7 +1094,7 @@ const ResultPrint = () => {
       formData.append("item_id", selectedIds);
       formData.append("patient_name", patientName || "");
       formData.append("phone", mobile);
-      formData.append("company_name", company);
+      formData.append("company_name", sampleDetails?.company);
       formData.append("file_type", "report");
       formData.append("pdf", pdfBlob, `lab-report-${patientId}.pdf`);
 

@@ -450,7 +450,10 @@ const Collection = () => {
           gender: item.patient_sex || "-",
           age: item.patient_age || "-",
           referring_practitioner: item.referring_practitioner || "-",
-          date: item.creation ? new Date(item.creation).toLocaleDateString("en-IN") : "-",
+          date: item.creation
+            ? new Date(item.creation).toLocaleDateString("en-IN")
+            : "-",
+          creation: item.creation,
           status: item.docstatus === 0 ? "Not Collected" : item.docstatus === 1 ? "Collected" : "Not Collected",
           sample: item.sample || "-",
           quantity_uom: item.sample_qty && item.sample_uom
