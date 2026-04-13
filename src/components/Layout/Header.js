@@ -133,21 +133,29 @@ const AvatarIconWrapper = styled.div`
 
 const Header = () => {
   const location = useLocation();
-  const [logo, setLogo] = useState("");
+  const [logo, setLogo] = useState(
+    () => localStorage.getItem("company_logo") || ""
+  );
 
   useEffect(() => {
     const fetchCompanyLogo = async () => {
       try {
-        // Step 1: Get company name
+        // ✅ 1. Check cache first
+        const cachedLogo = localStorage.getItem("company_logo");
+        if (cachedLogo) {
+          setLogo(cachedLogo);
+          return; // 🚀 stop here (no API call)
+        }
+
+        // Step 2: Get company name
         const res = await api.get(
           "https://hms.automedai.in/api/resource/Company"
         );
 
         const companyName = res.data.data[0]?.name;
-
         if (!companyName) return;
 
-        // Step 2: Get company details
+        // Step 3: Get company details
         const companyRes = await api.get(
           `https://hms.automedai.in/api/resource/Company/${encodeURIComponent(
             companyName
@@ -157,7 +165,12 @@ const Header = () => {
         const logoPath = companyRes.data.data.company_logo;
 
         if (logoPath) {
-          setLogo(`https://hms.automedai.in${logoPath}`);
+          const fullLogo = `https://hms.automedai.in${logoPath}`;
+
+          // ✅ 2. Save in cache
+          localStorage.setItem("company_logo", fullLogo);
+
+          setLogo(fullLogo);
         }
       } catch (error) {
         console.error("Error fetching company logo:", error);

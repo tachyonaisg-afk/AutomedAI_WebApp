@@ -289,11 +289,11 @@ const BackButton = styled.button`
 `;
 
 const ReportPreview = styled.div`
-  padding: 10px 15px;
+  padding: 0px 15px;
   background-color: #ffffff;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
-  min-height: 1085px;
+  min-height: 1005px;
   display: flex;
   flex-direction: column;
 `;
@@ -436,7 +436,7 @@ const ReportFooter = styled.div`
   // margin-top: 60px;
   // margin-bottom: 100px;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 0px;
   border-top: 1px solid #e0e0e0;
 `;
 
@@ -1450,17 +1450,40 @@ const ResultPrint = () => {
 
                         {/* Parameters */}
                         {isDescriptive
-                          ? testDetail.descriptive_test_items.map((item, i) => (
-                            <TableRow key={i}>
-                              <TableCell>
-                                {removeTestPrefix(item.lab_test_particulars)}
-                              </TableCell>
+                          ? testDetail.descriptive_test_items.map((item, i) => {
+                            const name = (item.lab_test_particulars || "").trim();
+                            const isHtml = /<\/?[a-z][\s\S]*>/i.test(name);
 
-                              <TableCell style={{ textAlign: "right" }}>
-                                {item.result_value}
-                              </TableCell>
-                            </TableRow>
-                          ))
+                            // HTML-only row (like <hr>, <center>title</center>)
+                            if (isHtml && !item.result_value) {
+                              return (
+                                <TableRow key={i}>
+                                  <TableCell colSpan="4">
+                                    <div
+                                      dangerouslySetInnerHTML={{
+                                        __html: removeTestPrefix(name),
+                                      }}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }
+
+                            // Normal row
+                            return (
+                              <TableRow key={i}>
+                                <TableCell
+                                  dangerouslySetInnerHTML={{
+                                    __html: removeTestPrefix(name),
+                                  }}
+                                />
+
+                                <TableCell style={{ textAlign: "right" }}>
+                                  {item.result_value}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
                           : testDetail.normal_test_items.map((item, i) => {
                             const name = (item.lab_test_name || "").trim();
                             const isHtmlOnly = /<\/?[a-z][\s\S]*>/i.test(name);
@@ -1487,7 +1510,18 @@ const ResultPrint = () => {
                                   }}
                                 />
 
-                                <TableCell style={{ textAlign: "right" }}>
+                                <TableCell
+                                  style={{
+                                    textAlign: "right",
+                                    fontWeight: isOutOfRange(
+                                      item.result_value,
+                                      item.normal_range,
+                                      selectedTestDetails[0]?.patient_sex
+                                    )
+                                      ? "700"
+                                      : "400",
+                                  }}
+                                >
                                   {item.result_value}
                                 </TableCell>
 
