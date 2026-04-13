@@ -952,7 +952,7 @@ const ResultPrint = () => {
       const element = document.querySelector("[data-pdf-content]");
 
       const opt = {
-        margin: [0, 0, 10, 0],
+        margin: [10, 0, 15, 0],
         image: { type: "jpeg", quality: 1 },
         html2canvas: {
           scale: 2,

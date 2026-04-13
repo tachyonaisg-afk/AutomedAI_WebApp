@@ -43,7 +43,7 @@ const SectionTitle = styled.h2`
 
 const FormGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 
   @media (max-width: 1024px) {
@@ -56,6 +56,12 @@ const FormGrid = styled.div`
 `;
 
 const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const FormGroupD = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -705,6 +711,112 @@ const SearchButton = styled.button`
     background: #3c7edb;
   }
 `;
+const AddDoctorButton = styled.button`
+  width: 100%;
+  height: 42px;
+  margin-top: 24px; /* align with inputs */
+
+  background: none;
+  color: #4a90e2;
+  border: 1px solid #4a90e2;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 6px;
+
+  &:hover {
+    background-color: #4a90e2;
+    color: #fff;
+  }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 400px;
+`;
+
+const ModalHeader = styled.h3`
+  margin-bottom: 16px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+`;
+const ErrorText = styled.span`
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #e53935; /* soft red */
+  font-weight: 500;
+
+  /* subtle animation */
+  opacity: 0;
+  transform: translateY(-2px);
+  animation: fadeIn 0.2s ease-in forwards;
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #dc2626;
+  margin-left: 4px;
+`;
+
+const NextButton = styled.button`
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #357abd;
+  }
+`;
+
+const modalOverlayStyle = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  width: "100%",
+  height: "100%",
+  background: "rgba(0,0,0,0.5)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  zIndex: 9999,
+};
+
+const modalStyle = {
+  background: "#fff",
+  padding: "24px",
+  borderRadius: "8px",
+  width: "400px",
+  maxWidth: "90%",
+};
 
 const AddBilling = () => {
   usePageTitle("Add Billing");
@@ -762,6 +874,18 @@ const AddBilling = () => {
   const [searchingDoctor, setSearchingDoctor] = useState(false);
   const [availableDoctors, setAvailableDoctors] = useState([]);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
+  const [genderOptions, setGenderOptions] = useState([]);
+  const [newDoctorData, setNewDoctorData] = useState({
+    first_name: "",
+    last_name: "",
+    gender: "",
+    practitioner_type: "External",
+    custom_registration_number: "",
+    custom_specializedqualification: "",
+    status: "Active",
+  });
+  const [creatingDoctor, setCreatingDoctor] = useState(false);
 
   useEffect(() => {
     fetchAvailableDoctors(billingData.company, billingData.posting_date);
@@ -920,6 +1044,19 @@ const AddBilling = () => {
 
   const fetchDropdownOptions = async () => {
     try {
+
+      const fetchGenderOptions = await fetch("https://hms.automedai.in/api/resource/Gender", {
+        headers: {
+          Accept: "application/json",
+        },
+        credentials: "include",
+      });
+      const data = await fetchGenderOptions.json();
+      if (data && data.data) {
+        console.log("Gender options loaded:", data.data);
+        setGenderOptions(data.data);
+      }
+
       // Fetch practitioners
       const practitionerRes = await apiService.get(API_ENDPOINTS.PRACTITIONERS.LIST, {
         fields: '["name", "practitioner_name"]',
@@ -1684,6 +1821,80 @@ const AddBilling = () => {
     }
   };
 
+  const isEmpanelled = newDoctorData.practitioner_type === "Internal";
+
+  const createDoctor = async () => {
+    if (!newDoctorData.first_name) {
+      alert("Please fill all required fields.");
+      return;
+    }
+
+    if (isEmpanelled) {
+      if (
+        !newDoctorData.custom_specializedqualification ||
+        !newDoctorData.custom_registration_number
+      ) {
+        alert("Specialization and Registration Number are required for Empanelled doctors.");
+        return;
+      }
+    }
+    setCreatingDoctor(true);
+
+    try {
+      const response = await fetch(
+        "https://hms.automedai.in/api/resource/Healthcare Practitioner",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            doctype: "Healthcare Practitioner",
+            ...newDoctorData,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const createdDoctor = data.data;
+
+        // Refresh list
+        await fetchDropdownOptions();
+
+        // Auto-select new doctor
+        setBillingData((prev) => ({
+          ...prev,
+          referringPractitioner: createdDoctor.name,
+        }));
+
+        // Reset modal
+        setIsAddDoctorOpen(false);
+        setNewDoctorData({
+          first_name: "",
+          last_name: "",
+          gender: "",
+          practitioner_type: "External",
+          custom_registration_number: "",
+          custom_specializedqualification: "",
+          status: "Active",
+        });
+
+        alert("Doctor created successfully!");
+      } else {
+        alert(data.message || "Failed to create doctor.");
+      }
+    } catch (error) {
+      console.error("Error creating doctor:", error);
+      alert("Error creating doctor.");
+    } finally {
+      setCreatingDoctor(false);
+    }
+  };
+
   const practitionerOptions = practitioners.map((p) => ({
     value: p.name,
     label: p.practitioner_name || p.name,
@@ -1938,6 +2149,16 @@ const AddBilling = () => {
               </FormGroup>
 
               <FormGroup>
+                <AddDoctorButton
+                  type="button"
+                  onClick={() => setIsAddDoctorOpen(true)}
+                >
+                  + Add New Doctor
+                </AddDoctorButton>
+
+              </FormGroup>
+
+              <FormGroupD>
                 <FormLabel>Posting Date</FormLabel>
                 <FormInput
                   type="date"
@@ -1946,7 +2167,7 @@ const AddBilling = () => {
                   onChange={handleBillingChange}
                   disabled
                 />
-              </FormGroup>
+              </FormGroupD>
 
             </FormGrid>
 
@@ -2241,6 +2462,128 @@ const AddBilling = () => {
             </SubmitButton>
           </ActionButtons>
         </form>
+        {isAddDoctorOpen && (
+          <ModalOverlay>
+            <ModalContent>
+              <ModalHeader>Add New Doctor</ModalHeader>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>First Name <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Enter first name (Include Dr.)"
+                  value={newDoctorData.first_name}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      first_name: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>Last Name</FormLabel>
+                <FormInput
+                  type="text"
+                  value={newDoctorData.last_name}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      last_name: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>Gender</FormLabel>
+                <FormSelect
+                  value={newDoctorData.gender}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      gender: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Select</option>
+                  {genderOptions.map((option) => (
+                    <option key={option.name} value={option.name}>
+                      {option.name}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>Practitioner Type</FormLabel>
+                <FormSelect
+                  value={newDoctorData.practitioner_type}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      practitioner_type: e.target.value,
+                    })
+                  }
+                >
+                  <option value="External">External</option>
+                  <option value="Internal">Empanelled</option>
+                </FormSelect>
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "16px" }}>
+                <FormLabel>
+                  Specialization / Qualification
+                  {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                </FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Enter specialization or qualification"
+                  value={newDoctorData.custom_specializedqualification}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      custom_specializedqualification: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+
+              <FormGroup style={{ marginBottom: "20px" }}>
+                <FormLabel>
+                  Registration Number / MCI ID
+                  {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                </FormLabel>
+                <FormInput
+                  type="text"
+                  placeholder="Enter registration number"
+                  value={newDoctorData.custom_registration_number}
+                  onChange={(e) =>
+                    setNewDoctorData({
+                      ...newDoctorData,
+                      custom_registration_number: e.target.value,
+                    })
+                  }
+                />
+              </FormGroup>
+
+              <ModalActions>
+                <BackButton type="button" onClick={() => setIsAddDoctorOpen(false)}>
+                  Cancel
+                </BackButton>
+                <NextButton
+                  type="submit"
+                  onClick={createDoctor}
+                  disabled={creatingDoctor}
+                >
+                  {creatingDoctor ? "Creating..." : "Create Doctor"}
+                </NextButton>
+              </ModalActions>
+            </ModalContent>
+          </ModalOverlay>
+        )}
       </BillingContainer>
     </Layout >
   );

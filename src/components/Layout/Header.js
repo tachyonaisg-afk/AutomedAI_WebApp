@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { User, Bell } from "lucide-react";
+import api from "../../services/api";
 
 const HeaderContainer = styled.div`
   width: 100%;
@@ -28,6 +29,17 @@ const Breadcrumbs = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+`;
+
+const LogoWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    height: 40px;
+    object-fit: contain;
+  }
 `;
 
 const BreadcrumbHome = styled.span`
@@ -121,6 +133,39 @@ const AvatarIconWrapper = styled.div`
 
 const Header = () => {
   const location = useLocation();
+  const [logo, setLogo] = useState("");
+
+  useEffect(() => {
+    const fetchCompanyLogo = async () => {
+      try {
+        // Step 1: Get company name
+        const res = await api.get(
+          "https://hms.automedai.in/api/resource/Company"
+        );
+
+        const companyName = res.data.data[0]?.name;
+
+        if (!companyName) return;
+
+        // Step 2: Get company details
+        const companyRes = await api.get(
+          `https://hms.automedai.in/api/resource/Company/${encodeURIComponent(
+            companyName
+          )}`
+        );
+
+        const logoPath = companyRes.data.data.company_logo;
+
+        if (logoPath) {
+          setLogo(`https://hms.automedai.in${logoPath}`);
+        }
+      } catch (error) {
+        console.error("Error fetching company logo:", error);
+      }
+    };
+
+    fetchCompanyLogo();
+  }, []);
 
   const getBreadcrumbs = () => {
     const path = location.pathname;
@@ -174,6 +219,7 @@ const Header = () => {
   return (
     <HeaderContainer>
       <HeaderContent>
+        {/* LEFT - Breadcrumbs */}
         <Breadcrumbs>
           <BreadcrumbHome>Home</BreadcrumbHome>
           {breadcrumbs.pages.map((page, index) => (
@@ -183,6 +229,10 @@ const Header = () => {
             </React.Fragment>
           ))}
         </Breadcrumbs>
+        {/* CENTER - LOGO */}
+        <LogoWrapper>
+          {logo && <img src={logo} alt="Company Logo" />}
+        </LogoWrapper>
         <HeaderRight>
           <NotificationIcon onClick={() => console.log("Notifications clicked")}>
             <Bell />
