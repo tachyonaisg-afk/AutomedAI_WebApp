@@ -777,31 +777,54 @@ const Dashboard = () => {
   };
 
   const fetchSalesInvoiceTotal = async () => {
-    try {
-      const today = getTodayDate();
+  try {
+    const today = getTodayDate();
 
-      const url = `https://hms.automedai.in/api/resource/Sales%20Invoice?limit_page_length=200000&fields=["name","patient","patient_name","posting_date","posting_time","company","status","total_qty","net_total"]&order_by=posting_date&filters=[["Sales Invoice Item","item_code","=","STO-ITEM-2025-00539"],["posting_date","=","${today}"]]`;
+    const fields = JSON.stringify([
+      "name",
+      "patient",
+      "patient_name",
+      "posting_date",
+      "posting_time",
+      "company",
+      "status",
+      "total_qty",
+      "net_total"
+    ]);
 
-      const res = await api.get(url, {
-        withCredentials: true,
-      });
+    const params = {
+      fields,
+      limit_page_length: 200000,
+      order_by: "posting_date",
+      filters: JSON.stringify([
+        ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
+        ["posting_date", "=", today]
+      ])
+    };
 
-      const invoices = res.data?.data || [];
+    const response = await api.get(
+      "https://hms.automedai.in/api/resource/Sales Invoice",
+      params
+    );
 
-      const total = invoices
-        .filter(item => item.status === "Paid")
-        .reduce((sum, item) => {
-          const val = parseFloat(item.net_total);
-          return sum + (isNaN(val) ? 0 : val);
-        }, 0);
+    const invoices = Array.isArray(response.data?.data)
+      ? response.data.data
+      : [];
 
-      setFeesCollected(total);
+    const total = invoices
+      .filter(item => item.status === "Paid")
+      .reduce((sum, item) => {
+        const val = parseFloat(item.net_total);
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
 
-    } catch (error) {
-      console.error("Sales Invoice total error:", error);
-      setFeesCollected(0);
-    }
-  };
+    setFeesCollected(total);
+
+  } catch (error) {
+    console.error("Sales Invoice total error:", error);
+    setFeesCollected(0);
+  }
+};
 
   useEffect(() => {
     const loadData = async () => {
