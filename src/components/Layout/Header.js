@@ -264,6 +264,7 @@ const Header = () => {
         {/* CENTER - LOGO */}
         <LogoWrapper>
           {logo && <img src={logo} alt="Company Logo" />}
+          {companyName && <CompanyName>{companyName}</CompanyName>}
         </LogoWrapper>
         <HeaderRight>
           <NotificationIcon onClick={() => console.log("Notifications clicked")}>

@@ -1112,6 +1112,81 @@ const OPDPatientRegistration = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const isEmpanelled = newDoctorData.practitioner_type === "Internal";
+
+    // Function to create a new doctor
+    const createDoctor = async () => {
+        if (!newDoctorData.first_name) {
+            alert("Please fill all required fields.");
+            return;
+        }
+
+        if (isEmpanelled) {
+            if (
+                !newDoctorData.custom_specializedqualification ||
+                !newDoctorData.custom_registration_number
+            ) {
+                alert("Specialization and Registration Number are required for Empanelled doctors.");
+                return;
+            }
+        }
+        setCreatingDoctor(true);
+
+        try {
+            const response = await fetch(
+                "https://hms.automedai.in/api/resource/Healthcare Practitioner",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        doctype: "Healthcare Practitioner",
+                        ...newDoctorData,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const createdDoctor = data.data;
+
+                // Refresh list
+                await fetchPractitioners();
+
+                // Auto-select new doctor
+                setBillingData((prev) => ({
+                    ...prev,
+                    referringPractitioner: createdDoctor.name,
+                }));
+
+                // Reset modal
+                setIsAddDoctorOpen(false);
+                setNewDoctorData({
+                    first_name: "",
+                    last_name: "",
+                    gender: "",
+                    practitioner_type: "External",
+                    custom_registration_number: "",
+                    custom_specializedqualification: "",
+                    status: "Active",
+                });
+
+                alert("Doctor created successfully!");
+            } else {
+                alert(data.message || "Failed to create doctor.");
+            }
+        } catch (error) {
+            console.error("Error creating doctor:", error);
+            alert("Error creating doctor.");
+        } finally {
+            setCreatingDoctor(false);
+        }
+    };
+
     // Function to create a new doctor
 
     const handleInputChange = (e) => {
@@ -1467,7 +1542,7 @@ const OPDPatientRegistration = () => {
 
             if (data.success && data.data) {
                 const d = data.data;
-                    
+
                 setFormData((prev) => ({
                     ...prev,
                     address_line1: d.name || "",
@@ -2823,6 +2898,17 @@ const OPDPatientRegistration = () => {
                                         />
                                     </FormGroup>
 
+                                    {!requiresAppointment && (
+                                        <>
+                                            <AddDoctorButton
+                                                type="button"
+                                                onClick={() => setIsAddDoctorOpen(true)}
+                                            >
+                                                + Add New Doctor
+                                            </AddDoctorButton>
+                                        </>
+                                    )}
+
                                     {requiresAppointment && (
                                         <>
                                             <FormGroup>
@@ -3133,6 +3219,129 @@ const OPDPatientRegistration = () => {
                     onClose={() => setIsAadhaarOCRScannerOpen(false)}
                     onDataExtracted={handleAadhaarDataExtracted}
                 />
+
+                {isAddDoctorOpen && (
+                    <ModalOverlay>
+                        <ModalContent>
+                            <ModalHeader>Add New Doctor</ModalHeader>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>First Name <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                                <FormInput
+                                    type="text"
+                                    placeholder="Enter first name (Include Dr.)"
+                                    value={newDoctorData.first_name}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            first_name: e.target.value,
+                                        })
+                                    }
+                                    required
+                                />
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormInput
+                                    type="text"
+                                    value={newDoctorData.last_name}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            last_name: e.target.value,
+                                        })
+                                    }
+                                />
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>Gender</FormLabel>
+                                <FormSelect
+                                    value={newDoctorData.gender}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            gender: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <option value="">Select</option>
+                                    {genderOptions.map((option) => (
+                                        <option key={option.name} value={option.name}>
+                                            {option.name}
+                                        </option>
+                                    ))}
+                                </FormSelect>
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>Practitioner Type</FormLabel>
+                                <FormSelect
+                                    value={newDoctorData.practitioner_type}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            practitioner_type: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <option value="External">External</option>
+                                    <option value="Internal">Empanelled</option>
+                                </FormSelect>
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>
+                                    Specialization / Qualification
+                                    {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                                </FormLabel>
+                                <FormInput
+                                    type="text"
+                                    placeholder="Enter specialization or qualification"
+                                    value={newDoctorData.custom_specializedqualification}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            custom_specializedqualification: e.target.value,
+                                        })
+                                    }
+                                />
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "20px" }}>
+                                <FormLabel>
+                                    Registration Number / MCI ID
+                                    {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                                </FormLabel>
+                                <FormInput
+                                    type="text"
+                                    placeholder="Enter registration number"
+                                    value={newDoctorData.custom_registration_number}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            custom_registration_number: e.target.value,
+                                        })
+                                    }
+                                />
+                            </FormGroup>
+
+                            <ModalActions>
+                                <BackButton type="button" onClick={() => setIsAddDoctorOpen(false)}>
+                                    Cancel
+                                </BackButton>
+                                <NextButton
+                                    type="submit"
+                                    onClick={createDoctor}
+                                    disabled={creatingDoctor}
+                                >
+                                    {creatingDoctor ? "Creating..." : "Create Doctor"}
+                                </NextButton>
+                            </ModalActions>
+                        </ModalContent>
+                    </ModalOverlay>
+                )}
 
                 {showConfirmModal && (
                     <div style={modalOverlayStyle}>

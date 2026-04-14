@@ -776,12 +776,39 @@ const Dashboard = () => {
     }
   };
 
+  const fetchSalesInvoiceTotal = async () => {
+    try {
+      const today = getTodayDate();
+
+      const url = `https://hms.automedai.in/api/resource/Sales%20Invoice?limit_page_length=200000&fields=["name","patient","patient_name","posting_date","posting_time","company","status","total_qty","net_total"]&order_by=posting_date&filters=[["Sales Invoice Item","item_code","=","STO-ITEM-2025-00539"],["posting_date","=","${today}"]]`;
+
+      const res = await api.get(url, {
+        withCredentials: true,
+      });
+
+      const invoices = res.data?.data || [];
+
+      const total = invoices
+        .filter(item => item.status === "Paid")
+        .reduce((sum, item) => {
+          const val = parseFloat(item.net_total);
+          return sum + (isNaN(val) ? 0 : val);
+        }, 0);
+
+      setFeesCollected(total);
+
+    } catch (error) {
+      console.error("Sales Invoice total error:", error);
+      setFeesCollected(0);
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       if (!selectedCompany || !selectedDate) return;
-
-      const pathlabTotal = await fetchPathlabSalesToday(selectedCompany);
-      await fetchFeesCollected(selectedCompany, pathlabTotal);
+      await fetchSalesInvoiceTotal();
+      // const pathlabTotal = await fetchPathlabSalesToday(selectedCompany);
+      // await fetchFeesCollected(selectedCompany, pathlabTotal);
       await fetchTotalPatientsToday(selectedCompany, selectedDate);
     };
 

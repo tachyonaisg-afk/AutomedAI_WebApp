@@ -479,6 +479,56 @@ const Billing = () => {
     return data.reduce((sum, item) => sum + Number(item.net_total || 0), 0);
   };
 
+  const fetchOPDRevenueToday = async (company) => {
+    if (!company) return 0;
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+
+      const payload = {
+        doctype: "Sales Invoice",
+        fields: [
+          "name",
+          "net_total"
+        ],
+        filters: [
+          ["status", "!=", "Cancelled"],
+          ["company", "=", company],
+          ["posting_date", "=", today],
+          ["Sales Invoice Item", "item_group", "in", ["OPD-Group", "Imaging"]],
+        ],
+        limit_page_length: 100000000,
+        limit_start: 0,
+      };
+
+      const res = await api.post(
+        "/method/frappe.client.get_list",
+        payload,
+        { withCredentials: true }
+      );
+
+      const rows = res.data?.message || [];
+
+      // ✅ Remove duplicate invoices (important because of item join)
+      const uniqueInvoices = {};
+      rows.forEach((row) => {
+        if (!uniqueInvoices[row.name]) {
+          uniqueInvoices[row.name] = row;
+        }
+      });
+
+      // ✅ Sum net_total
+      return Object.values(uniqueInvoices).reduce((sum, row) => {
+        const val = parseFloat(row.net_total);
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+
+    } catch (error) {
+      console.error("OPD Revenue Fetch Error:", error);
+      return 0;
+    }
+  };
+
   const fetchSummaryData = useCallback(async () => {
     if (!selectedCompany) return;
 
@@ -510,7 +560,7 @@ const Billing = () => {
         limit_page_length: 1000,
       };
 
-      const [overdueRes, pathlabTotal, totalFees, pendingRes, monthRes] = await Promise.all([
+      const [overdueRes, opdRevenue, pendingRes, monthRes] = await Promise.all([
         api.get("/resource/Sales Invoice", {
           ...baseParams,
           filters: JSON.stringify([
@@ -520,18 +570,7 @@ const Billing = () => {
           ]),
         }),
 
-        fetchPathlabSalesToday(selectedCompany),
-
-        fetchTotalFeesToday(selectedCompany),
-
-        // api.get("/resource/Sales Invoice", {
-        //   ...baseParams,
-        //   filters: JSON.stringify([
-        //     ["status", "=", "Paid"],
-        //     ["posting_date", "=", today],
-        //     ["company", "=", selectedCompany],
-        //   ]),
-        // }),
+        fetchOPDRevenueToday(selectedCompany), // ✅ NEW
 
         api.get("/resource/Sales Invoice", {
           ...baseParams,
@@ -556,7 +595,7 @@ const Billing = () => {
       const overdueTotal = sumNetTotal(overdueRes.data?.data);
       const pendingTotal = sumNetTotal(pendingRes.data?.data);
       const monthTotal = sumNetTotal(monthRes.data?.data);
-      const opdRevenue = Math.max(0, totalFees - pathlabTotal);
+      // const opdRevenue = Math.max(0, totalFees - pathlabTotal);
 
       setSummary({
         revenueToday: opdRevenue,

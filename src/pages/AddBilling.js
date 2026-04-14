@@ -1481,6 +1481,8 @@ const AddBilling = () => {
     (item) => item.item === "STO-ITEM-2025-00539"
   );
 
+  // const showAddDoctorButton = items.length > 0 && !requiresAppointment;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -2147,16 +2149,20 @@ const AddBilling = () => {
                   </SearchInputWrapper>
                 )}
               </FormGroup>
+              
+              {!requiresAppointment && (
+                <>
+                  <FormGroup>
+                    <AddDoctorButton
+                      type="button"
+                      onClick={() => setIsAddDoctorOpen(true)}
+                    >
+                      + Add New Doctor
+                    </AddDoctorButton>
 
-              <FormGroup>
-                <AddDoctorButton
-                  type="button"
-                  onClick={() => setIsAddDoctorOpen(true)}
-                >
-                  + Add New Doctor
-                </AddDoctorButton>
-
-              </FormGroup>
+                  </FormGroup>
+                </>
+              )}
 
               <FormGroupD>
                 <FormLabel>Posting Date</FormLabel>

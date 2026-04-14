@@ -268,7 +268,7 @@ const Patients = () => {
         Bill
       </ViewButton>
 
-      {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && (
+      {/* {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && ( */}
         <ViewButton
           onClick={(e) => {
             e.stopPropagation();
@@ -278,7 +278,7 @@ const Patients = () => {
           <FileText />
           Prescription
         </ViewButton>
-      )}
+      {/* )} */}
     </>
   );
   /* ========= DATA FETCH ========= */
