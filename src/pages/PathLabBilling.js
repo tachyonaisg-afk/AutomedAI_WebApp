@@ -681,22 +681,12 @@ const PathLabBilling = () => {
         ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
       ];
 
-      // Date filter
       if (fromDate && toDate) {
-        filters.push([
-          "posting_date",
-          "between",
-          [fromDate, toDate],
-        ]);
+        filters.push(["posting_date", "between", [fromDate, toDate]]);
       }
 
-      // Patient filter
       if (searchCustomer) {
-        filters.push([
-          "patient",
-          "=",
-          searchCustomer,
-        ]);
+        filters.push(["patient", "=", searchCustomer]);
       }
 
       const payload = {
@@ -708,6 +698,7 @@ const PathLabBilling = () => {
           "posting_date",
           "company",
           "status",
+          "creation",
           "total_qty",
           "net_total",
           "`tabSales Invoice Item`.item_group",
@@ -725,9 +716,9 @@ const PathLabBilling = () => {
 
       const data = res.data?.message || [];
 
-      // newest first
+      // ✅ stable newest first
       const sorted = data.sort(
-        (a, b) => new Date(b.posting_date) - new Date(a.posting_date)
+        (a, b) => new Date(b.creation) - new Date(a.creation)
       );
 
       setInvoices(sorted);

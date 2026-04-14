@@ -827,6 +827,7 @@ const Billing = () => {
           "posting_date",
           "company",
           "status",
+          "creation",
           "total_qty",
           "net_total",
           "`tabSales Invoice Item`.item_group",
@@ -846,7 +847,7 @@ const Billing = () => {
 
       // ✅ sort latest first
       const sorted = data.sort(
-        (a, b) => new Date(b.posting_date) - new Date(a.posting_date)
+        (a, b) => new Date(b.creation) - new Date(a.creation)
       );
 
       setInvoices(sorted);
