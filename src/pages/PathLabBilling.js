@@ -673,8 +673,15 @@ const PathLabBilling = () => {
     try {
       setLoading(true);
 
-      let filters = [];
+      if (!selectedCompany) return;
 
+      let filters = [
+        ["status", "!=", "Cancelled"],
+        ["company", "=", selectedCompany],
+        ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
+      ];
+
+      // Date filter
       if (fromDate && toDate) {
         filters.push([
           "posting_date",
@@ -683,6 +690,7 @@ const PathLabBilling = () => {
         ]);
       }
 
+      // Patient filter
       if (searchCustomer) {
         filters.push([
           "patient",
@@ -691,8 +699,9 @@ const PathLabBilling = () => {
         ]);
       }
 
-      const params = {
-        fields: JSON.stringify([
+      const payload = {
+        doctype: "Sales Invoice",
+        fields: [
           "name",
           "patient",
           "patient_name",
@@ -701,20 +710,34 @@ const PathLabBilling = () => {
           "status",
           "total_qty",
           "net_total",
-        ]),
-        order_by: "posting_date desc",
-        filters: filters.length ? JSON.stringify(filters) : undefined,
-        limit_page_length: 10,
+          "`tabSales Invoice Item`.item_group",
+        ],
+        filters,
+        limit_page_length: 100000000,
+        limit_start: 0,
       };
 
-      const res = await api.get("/resource/Sales Invoice", params);
-      setInvoices(res.data?.data || []);
+      const res = await api.post(
+        "https://hms.automedai.in/api/method/frappe.client.get_list",
+        payload,
+        { withCredentials: true }
+      );
+
+      const data = res.data?.message || [];
+
+      // newest first
+      const sorted = data.sort(
+        (a, b) => new Date(b.posting_date) - new Date(a.posting_date)
+      );
+
+      setInvoices(sorted);
+
     } catch (err) {
       console.error("❌ Error fetching invoices:", err);
     } finally {
       setLoading(false);
     }
-  }, [fromDate, toDate, searchCustomer]);
+  }, [fromDate, toDate, searchCustomer, selectedCompany]);
 
   useEffect(() => {
     fetchInvoices();

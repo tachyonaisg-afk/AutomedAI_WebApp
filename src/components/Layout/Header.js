@@ -34,12 +34,19 @@ const Breadcrumbs = styled.div`
 const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 10px;
 
   img {
     height: 40px;
     object-fit: contain;
   }
+`;
+
+const CompanyName = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
 `;
 
 const BreadcrumbHome = styled.span`
@@ -137,47 +144,59 @@ const Header = () => {
     () => localStorage.getItem("company_logo") || ""
   );
 
+  const [companyName, setCompanyName] = useState(
+    () => localStorage.getItem("company_name") || ""
+  );
+
   useEffect(() => {
-    const fetchCompanyLogo = async () => {
+    const fetchCompanyData = async () => {
       try {
-        // ✅ 1. Check cache first
+        // ✅ Check cache first
         const cachedLogo = localStorage.getItem("company_logo");
-        if (cachedLogo) {
+        const cachedName = localStorage.getItem("company_name");
+
+        if (cachedLogo && cachedName) {
           setLogo(cachedLogo);
-          return; // 🚀 stop here (no API call)
+          setCompanyName(cachedName);
+          return;
         }
 
-        // Step 2: Get company name
+        // Step 1: Get company list
         const res = await api.get(
           "https://hms.automedai.in/api/resource/Company"
         );
 
-        const companyName = res.data.data[0]?.name;
-        if (!companyName) return;
+        const name = res.data.data[0]?.name;
+        if (!name) return;
 
-        // Step 3: Get company details
+        // Step 2: Get full details
         const companyRes = await api.get(
           `https://hms.automedai.in/api/resource/Company/${encodeURIComponent(
-            companyName
+            name
           )}`
         );
 
-        const logoPath = companyRes.data.data.company_logo;
+        const data = companyRes.data.data;
 
-        if (logoPath) {
-          const fullLogo = `https://hms.automedai.in${logoPath}`;
+        const logoPath = data.company_logo;
+        const fullLogo = logoPath
+          ? `https://hms.automedai.in${logoPath}`
+          : "";
 
-          // ✅ 2. Save in cache
-          localStorage.setItem("company_logo", fullLogo);
+        // ✅ Save to cache
+        if (fullLogo) localStorage.setItem("company_logo", fullLogo);
+        if (data.company_name)
+          localStorage.setItem("company_name", data.company_name);
 
-          setLogo(fullLogo);
-        }
+        // ✅ Update state
+        setLogo(fullLogo);
+        setCompanyName(data.company_name);
       } catch (error) {
-        console.error("Error fetching company logo:", error);
+        console.error("Error fetching company data:", error);
       }
     };
 
-    fetchCompanyLogo();
+    fetchCompanyData();
   }, []);
 
   const getBreadcrumbs = () => {

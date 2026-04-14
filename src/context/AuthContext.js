@@ -125,6 +125,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('user');
+      localStorage.removeItem('company_logo');
     }
   };
 

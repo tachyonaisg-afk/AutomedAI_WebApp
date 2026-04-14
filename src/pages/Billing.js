@@ -701,12 +701,67 @@ const Billing = () => {
     },
   ];
 
+  // const fetchInvoices = useCallback(async () => {
+  //   try {
+  //     setLoading(true);
+
+  //     let filters = [];
+
+  //     if (fromDate && toDate) {
+  //       filters.push([
+  //         "posting_date",
+  //         "between",
+  //         [fromDate, toDate],
+  //       ]);
+  //     }
+
+  //     if (searchCustomer) {
+  //       filters.push([
+  //         "patient",
+  //         "=",
+  //         searchCustomer,
+  //       ]);
+  //     }
+
+  //     const params = {
+  //       fields: JSON.stringify([
+  //         "name",
+  //         "patient",
+  //         "patient_name",
+  //         "posting_date",
+  //         "company",
+  //         "status",
+  //         "total_qty",
+  //         "net_total",
+  //         "`tabSales Invoice Item`.item_group"
+  //       ]),
+  //       order_by: "posting_date desc",
+  //       filters: filters.length ? JSON.stringify(filters) : undefined,
+  //       limit_page_length: 100000000,
+  //     };
+
+  //     const res = await api.get("/resource/Sales Invoice", params);
+  //     setInvoices(res.data?.data || []);
+  //   } catch (err) {
+  //     console.error("❌ Error fetching invoices:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, [fromDate, toDate, searchCustomer]);
+
   const fetchInvoices = useCallback(async () => {
     try {
       setLoading(true);
 
-      let filters = [];
+      if (!selectedCompany) return;
 
+      let filters = [
+        ["status", "!=", "Cancelled"],
+        ["company", "=", selectedCompany],
+        ["Sales Invoice Item", "item_group", "in", ["OPD-Group", "Imaging"]],
+      ];
+
+      // Date filter
       if (fromDate && toDate) {
         filters.push([
           "posting_date",
@@ -715,6 +770,7 @@ const Billing = () => {
         ]);
       }
 
+      // Patient filter
       if (searchCustomer) {
         filters.push([
           "patient",
@@ -723,8 +779,9 @@ const Billing = () => {
         ]);
       }
 
-      const params = {
-        fields: JSON.stringify([
+      const payload = {
+        doctype: "Sales Invoice",
+        fields: [
           "name",
           "patient",
           "patient_name",
@@ -733,20 +790,34 @@ const Billing = () => {
           "status",
           "total_qty",
           "net_total",
-        ]),
-        order_by: "posting_date desc",
-        filters: filters.length ? JSON.stringify(filters) : undefined,
-        limit_page_length: 10,
+          "`tabSales Invoice Item`.item_group",
+        ],
+        filters,
+        limit_page_length: 100000000,
+        limit_start: 0,
       };
 
-      const res = await api.get("/resource/Sales Invoice", params);
-      setInvoices(res.data?.data || []);
+      const res = await api.post(
+        "/method/frappe.client.get_list",
+        payload,
+        { withCredentials: true }
+      );
+
+      const data = res.data?.message || [];
+
+      // ✅ sort latest first
+      const sorted = data.sort(
+        (a, b) => new Date(b.posting_date) - new Date(a.posting_date)
+      );
+
+      setInvoices(sorted);
+
     } catch (err) {
       console.error("❌ Error fetching invoices:", err);
     } finally {
       setLoading(false);
     }
-  }, [fromDate, toDate, searchCustomer]);
+  }, [fromDate, toDate, searchCustomer, selectedCompany]);
 
   useEffect(() => {
     fetchInvoices();
@@ -1255,8 +1326,6 @@ const Billing = () => {
             />
           </DateContainer>
         </ToolbarSection>
-
-
 
         <BillingSection>
           <DataTable
