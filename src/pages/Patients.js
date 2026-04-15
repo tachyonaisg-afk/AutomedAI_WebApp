@@ -269,15 +269,15 @@ const Patients = () => {
       </ViewButton>
 
       {/* {row.custom_company?.toLowerCase() === "ramakrishna mission sargachi" && ( */}
-        <ViewButton
-          onClick={(e) => {
-            e.stopPropagation();
-            handlePrescription(row.name);
-          }}
-        >
-          <FileText />
-          Prescription
-        </ViewButton>
+      <ViewButton
+        onClick={(e) => {
+          e.stopPropagation();
+          handlePrescription(row.name);
+        }}
+      >
+        <FileText />
+        Prescription
+      </ViewButton>
       {/* )} */}
     </>
   );
@@ -485,8 +485,6 @@ const Patients = () => {
         ]);
       }
 
-      await fetchPatientCount();
-
       const response = await api.get(API_ENDPOINTS.PATIENTS.LIST, params);
 
       const rawData = Array.isArray(response.data?.data) ? response.data.data : [];
@@ -504,6 +502,14 @@ const Patients = () => {
       }));
 
       setPatientsData(normalizedData);
+
+      if (searchQuery || selectedPatientId || filterDate) {
+        // when filtered → use filtered count
+        setTotalCount(rawData.length);
+      } else {
+        // normal mode → full count
+        await fetchPatientCount();
+      }
 
     } catch (err) {
       console.error("❌ Error fetching patients:", err);
