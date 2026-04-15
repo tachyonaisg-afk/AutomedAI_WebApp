@@ -503,11 +503,49 @@ const Patients = () => {
 
       setPatientsData(normalizedData);
 
-      if (searchQuery || selectedPatientId || filterDate) {
-        // when filtered → use filtered count
-        setTotalCount(rawData.length);
+      const isSearching = searchQuery || selectedPatientId || filterDate;
+
+      if (isSearching) {
+        try {
+          const countParams = {
+            fields,
+            limit_start: 0,
+            limit_page_length: 1000, // large enough
+          };
+
+          if (patientId) {
+            countParams.filters = JSON.stringify([
+              ["Patient", "name", "=", patientId]
+            ]);
+          }
+
+          if (filterDate && !patientId) {
+            countParams.filters = JSON.stringify([
+              ["Patient", "creation", "like", `${filterDate}%`]
+            ]);
+          }
+
+          if (searchQuery && !patientId) {
+            countParams.or_filters = JSON.stringify([
+              ["Patient", "name", "like", `%${searchQuery}%`],
+              ["Patient", "patient_name", "like", `%${searchQuery}%`],
+              ["Patient", "mobile", "like", `%${searchQuery}%`],
+            ]);
+          }
+
+          const countRes = await api.get(API_ENDPOINTS.PATIENTS.LIST, countParams);
+
+          const fullData = Array.isArray(countRes.data?.data)
+            ? countRes.data.data
+            : [];
+
+          setTotalCount(fullData.length >= 1000 ? 1000 : fullData.length);
+
+        } catch (err) {
+          console.error("❌ Count fetch error:", err);
+          setTotalCount(0);
+        }
       } else {
-        // normal mode → full count
         await fetchPatientCount();
       }
 
