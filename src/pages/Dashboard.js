@@ -576,24 +576,24 @@ const Dashboard = () => {
       iconBg: "#f0fdf4",
       iconColor: "#10b981",
     },
-    {
-      title: "Pending Queue",
-      value: "-",
-      color: "orange",
-      icon: Clock,
-      accentColor: "#f59e0b",
-      iconBg: "#fffbeb",
-      iconColor: "#f59e0b",
-    },
-    {
-      title: "New Prescriptions",
-      value: "-",
-      color: "green",
-      icon: Pill,
-      accentColor: "#10b981",
-      iconBg: "#f0fdf4",
-      iconColor: "#10b981",
-    },
+    // {
+    //   title: "Pending Queue",
+    //   value: "-",
+    //   color: "orange",
+    //   icon: Clock,
+    //   accentColor: "#f59e0b",
+    //   iconBg: "#fffbeb",
+    //   iconColor: "#f59e0b",
+    // },
+    // {
+    //   title: "New Prescriptions",
+    //   value: "-",
+    //   color: "green",
+    //   icon: Pill,
+    //   accentColor: "#10b981",
+    //   iconBg: "#f0fdf4",
+    //   iconColor: "#10b981",
+    // },
   ];
   const [visibleSections, setVisibleSections] = useState({});
   const sectionRefs = useRef({});
