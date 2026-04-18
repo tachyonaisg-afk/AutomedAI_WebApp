@@ -389,14 +389,36 @@ const SalesReport = () => {
     toDate: dashboardFilters?.to_date || new Date().toISOString().split("T")[0],
     accountType: "Sales",
   });
-  const [customerMap, setCustomerMap] = useState({});
   const [companies, setCompanies] = useState([]);
   const [reportData, setReportData] = useState([]);
-  const [columns, setColumns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState("All");
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await apiService.get(
+        "/resource/Employee",
+        {
+          fields: '["name","user_id","employee_name"]',
+          filters: JSON.stringify([["designation", "=", "Phlebotomist"]]),
+        }
+      );
+
+      if (response.data?.data) {
+        setUsers(response.data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
 
   // Fetch companies on mount
   useEffect(() => {
@@ -423,6 +445,7 @@ const SalesReport = () => {
       console.error("Error fetching companies:", err);
     }
   };
+
   useEffect(() => {
     if (dashboardFilters?.dashboardFilter) {
       const autoFilters = {
@@ -440,9 +463,6 @@ const SalesReport = () => {
   // Determine the amount column based on account type
   const appliedAccountType = appliedFilters?.accountType;
 
-  const amountField = appliedAccountType === "Cash" ? "debit" : "credit";
-  const amountLabel = appliedAccountType === "Cash" ? "DEBIT" : "CREDIT";
-
   // Define the columns we want to display
   // const displayColumns = [
   //   { label: "POSTING DATE", fieldname: "posting_date" },
@@ -457,14 +477,16 @@ const SalesReport = () => {
     if (!appliedFilters) return [];
 
     return [
-      { label: "POSTING DATE", fieldname: "posting_date" },
-      { label: "ACCOUNT", fieldname: "account" },
-      { label: amountLabel, fieldname: amountField },
-      { label: "CUSTOMER", fieldname: "against" },
-      { label: "INVOICE NUMBER", fieldname: "gl_entry" },
-      { label: "VOUCHER NUMBER", fieldname: "voucher_no" },
+      { label: "SL NO", fieldname: "sl_no" },
+      { label: "INVOICE NUMBER", fieldname: "name" },
+      { label: "DATE", fieldname: "posting_date" },
+      { label: "USER", fieldname: "owner" },
+      { label: "PATIENT NAME", fieldname: "patient_name" },
+      { label: "TOTAL QTY", fieldname: "total_qty" },
+      { label: "DISCOUNT", fieldname: "discount_amount" },
+      { label: "TOTAL AMOUNT", fieldname: "net_total" },
     ];
-  }, [appliedFilters, amountField, amountLabel]);
+  }, [appliedFilters]);
 
 
   const getCellValue = (row, fieldname) => {
@@ -472,14 +494,10 @@ const SalesReport = () => {
   };
 
   const calculateTotals = () => {
-    if (!reportData || reportData.length === 0) return { amount: 0 };
-
     let totalAmount = 0;
 
     reportData.forEach(row => {
-      if (row[amountField]) {
-        totalAmount += parseFloat(row[amountField]) || 0;
-      }
+      totalAmount += parseFloat(row.net_total) || 0;
     });
 
     return { amount: totalAmount };
@@ -489,7 +507,12 @@ const SalesReport = () => {
   const totalRecords = reportData.length;
   const startRecord = totalRecords > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0;
   const endRecord = Math.min(currentPage * rowsPerPage, totalRecords);
-  const paginatedData = reportData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+  const paginatedData = reportData
+    .slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage)
+    .map((item, index) => ({
+      ...item,
+      sl_no: (currentPage - 1) * rowsPerPage + index + 1,
+    }));
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -497,90 +520,48 @@ const SalesReport = () => {
   };
 
   const fetchReport = async (activeFilters) => {
-
     setLoading(true);
     setError("");
 
     try {
-      // Prepare filters for the API
-      const selectedAccount = activeFilters.accountType === "Cash" ? (activeFilters.company === "Ramakrishna Mission Sargachi" ? "Cash - RKMS" : "Cash - ADC&P") : (activeFilters.company === "Ramakrishna Mission Sargachi" ? "Sales - RKMS" : "Sales - ADC&P");  //Todo make this dynamic and the accounts will be fetched from api
-      const apiFilters = {
-        company: activeFilters.company,
-        from_date: activeFilters.fromDate,
-        to_date: activeFilters.toDate,
-        account: [selectedAccount],
-        party: [],
-        categorize_by: "Categorize by Voucher (Consolidated)",
-        cost_center: [],
-        project: [],
-        include_dimensions: 1,
-        include_default_book_entries: 1,
-      };
+      const filtersArray = [
+        ["posting_date", ">=", activeFilters.fromDate],
+        ["posting_date", "<=", activeFilters.toDate],
+      ];
 
-      // Make the API call
-      const response = await apiService.get(API_ENDPOINTS.REPORTS.RUN_QUERY_REPORT, {
-        report_name: API_ENDPOINTS.REPORTS.GENERAL_LEDGER,
-        filters: JSON.stringify(apiFilters),
-        ignore_prepared_report: false,
-        are_default_filters: true,
-      });
+      // Apply user filter only if not "All"
+      if (selectedUser !== "All") {
+        filtersArray.push(["owner", "=", selectedUser]);
+      }
 
-      console.log("Report Response:", response.data);
+      const response = await apiService.get(
+        "/resource/Sales Invoice",
+        {
+          limit_page_length: 1000,
+          fields: JSON.stringify([
+            "name",
+            "posting_date",
+            "owner",
+            "patient_name",
+            "total_qty",
+            "discount_amount",
+            "net_total",
+          ]),
+          filters: JSON.stringify(filtersArray),
+        }
+      );
 
-      // Process the response
-      if (response.data?.message) {
-        const { result, columns } = response.data.message;
-        console.log("Columns from API:", columns);
-        console.log("Sample row data:", result?.[0]);
-
-        // Filter to only include rows with gl_entry field
-        const filteredResults = result ? result.filter(row => row.gl_entry) : [];
-        console.log("Filtered results with gl_entry:", filteredResults);
-
-        setReportData(filteredResults);
-        await fetchCustomerNames(filteredResults);
-        setColumns(columns || []);
-        setCurrentPage(1); // Reset to first page
+      if (response.data?.data) {
+        setReportData(response.data.data);
+        setCurrentPage(1);
       }
     } catch (err) {
       console.error("Error fetching report:", err);
-      setError(err.response?.data?.message || "Failed to fetch report data. Please try again.");
+      setError("Failed to fetch report");
     } finally {
       setLoading(false);
     }
   };
-  const fetchCustomerNames = async (rows) => {
-    try {
-      // Get unique customer IDs from "against"
-      const customerIds = [
-        ...new Set(
-          rows
-            .map(row => row.against)
-            .filter(id => id && id.startsWith("CUST"))
-        )
-      ];
-
-      if (customerIds.length === 0) return;
-
-      const customerPromises = customerIds.map(id =>
-        apiService.get(`/resource/Customer/${id}`)
-      );
-
-      const responses = await Promise.all(customerPromises);
-
-      const map = {};
-      responses.forEach(res => {
-        if (res.data?.data) {
-          map[res.data.data.name] = res.data.data.customer_name;
-        }
-      });
-
-      setCustomerMap(map);
-    } catch (err) {
-      console.error("Error fetching customer names:", err);
-    }
-  };
-
 
   const handleRunReport = () => {
     console.log("Running report with filters:", filters);
@@ -591,6 +572,13 @@ const SalesReport = () => {
   const handleRefresh = () => {
     if (!appliedFilters) return;
     fetchReport(appliedFilters);
+  };
+
+  const getExportData = () => {
+    return reportData.map((item, index) => ({
+      ...item,
+      sl_no: index + 1, // global SL NO (not paginated)
+    }));
   };
 
   const handleExportPDF = () => {
@@ -605,36 +593,44 @@ const SalesReport = () => {
     // Date range
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Period: ${(appliedFilters || filters).fromDate} to ${filters.toDate}`, 14, 28);
-    doc.text(`Company: ${(appliedFilters || filters).company}`, 14, 34);
+    const active = appliedFilters || filters;
+
+    doc.text(`Period: ${active.fromDate} to ${active.toDate}`, 14, 28);
+    doc.text(`Company: ${active.company}`, 14, 34);
 
     // Table headers and rows
     const headers = displayColumns.map((col) => col.label);
-    const rows = reportData.map((row) =>
+    const exportData = getExportData();
+
+    const rows = exportData.map((row) =>
       displayColumns.map((col) => {
         const val = row[col.fieldname] ?? "";
-        if(col.fieldname === "against" && val) {
-          return customerMap[val] || val;
-        }
-        if (col.fieldname === "posting_date" && val) {
+        if (col.fieldname === "posting_date") {
           const date = new Date(val);
           if (!isNaN(date.getTime())) {
-            const day = String(date.getDate()).padStart(2, "0");
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const year = date.getFullYear();
-            return `${day}/${month}/${year}`;
+            return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
           }
         }
-        if (col.fieldname === "debit" || col.fieldname === "credit") {
+
+        if (["discount_amount", "net_total"].includes(col.fieldname)) {
           const num = parseFloat(val);
-          return !isNaN(num) ? `Rs. ${num.toFixed(2)}` : "Rs. 0.00";
+          return !isNaN(num) ? `₹${num.toFixed(2)}` : "₹0.00";
         }
         return String(val);
       })
     );
 
     // Total row
-    rows.push(["Total", "", `Rs. ${totals.amount.toFixed(2)}`, "", "", ""]);
+    rows.push([
+      "Total",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      `₹${totals.amount.toFixed(2)}`
+    ]);
 
     autoTable(doc, {
       head: [headers],
@@ -664,19 +660,17 @@ const SalesReport = () => {
       setCurrentPage(currentPage + 1);
     }
   };
+
   const handleExportCSV = () => {
     if (reportData.length === 0) return;
 
     const headers = displayColumns.map(col => col.label);
 
-    const rows = reportData.map((row) =>
+    const exportData = getExportData();
+
+    const rows = exportData.map((row) =>
       displayColumns.map((col) => {
         let value = row[col.fieldname] ?? "";
-
-        // Replace customer ID with name
-        if (col.fieldname === "against" && value) {
-          value = customerMap[value] || value;
-        }
 
         // Format date
         if (col.fieldname === "posting_date" && value) {
@@ -688,12 +682,6 @@ const SalesReport = () => {
             value = `${day}/${month}/${year}`;
           }
         }
-        // Format amount
-        if (col.fieldname === "debit" || col.fieldname === "credit") {
-          const num = parseFloat(value);
-          value = !isNaN(num) ? num.toFixed(2) : "0.00";
-        }
-
         return `"${String(value).replace(/"/g, '""')}"`;
       })
     );
@@ -702,10 +690,12 @@ const SalesReport = () => {
     rows.push([
       `"Total"`,
       `""`,
-      `"${totals.amount.toFixed(2)}"`,
       `""`,
       `""`,
-      `""`
+      `""`,
+      `""`,
+      `""`,
+      `"₹${totals.amount.toFixed(2)}"`
     ]);
 
     const csvContent =
@@ -725,6 +715,14 @@ const SalesReport = () => {
     link.click();
     document.body.removeChild(link);
   };
+
+  const userMap = useMemo(() => {
+    const map = {};
+    users.forEach(u => {
+      map[u.user_id] = u.employee_name;
+    });
+    return map;
+  }, [users]);
 
   return (
     <Layout>
@@ -750,7 +748,8 @@ const SalesReport = () => {
 
         <FiltersCard>
           <FiltersGrid>
-            <FormGroup>
+
+            {/* <FormGroup>
               <FormLabel>Select Clinic</FormLabel>
               <FormSelect
                 name="company"
@@ -767,7 +766,7 @@ const SalesReport = () => {
                   ))
                 )}
               </FormSelect>
-            </FormGroup>
+            </FormGroup> */}
 
             <FormGroup>
               <FormLabel>From Date</FormLabel>
@@ -789,7 +788,7 @@ const SalesReport = () => {
               />
             </FormGroup>
 
-            <FormGroup>
+            {/* <FormGroup>
               <FormLabel>Account Type</FormLabel>
               <FormSelect
                 name="accountType"
@@ -798,6 +797,21 @@ const SalesReport = () => {
               >
                 <option value="Sales">Sales</option>
                 <option value="Cash">Cash</option>
+              </FormSelect>
+            </FormGroup> */}
+
+            <FormGroup>
+              <FormLabel>Select User</FormLabel>
+              <FormSelect
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+              >
+                <option value="All">All</option>
+                {users.map((user) => (
+                  <option key={user.name} value={user.user_id}>
+                    {user.employee_name}
+                  </option>
+                ))}
               </FormSelect>
             </FormGroup>
           </FiltersGrid>
@@ -862,31 +876,27 @@ const SalesReport = () => {
                             const cellValue = getCellValue(row, col.fieldname);
 
                             // Check if this is an invoice number column (make it a link)
-                            const isInvoiceLink = col.fieldname === "gl_entry";
+                            const isInvoiceLink = col.fieldname === "name";
 
                             // Format based on field type
                             let formattedValue = cellValue;
-                            if (col.fieldname === "against" && cellValue) {
-                              formattedValue = customerMap[cellValue] || cellValue;
-                            }
 
                             // Format date to dd/mm/yyyy
-                            if (col.fieldname === "posting_date" && cellValue) {
+                            if (col.fieldname === "posting_date") {
                               const date = new Date(cellValue);
-                              if (!isNaN(date.getTime())) {
-                                const day = String(date.getDate()).padStart(2, '0');
-                                const month = String(date.getMonth() + 1).padStart(2, '0');
-                                const year = date.getFullYear();
-                                formattedValue = `${day}/${month}/${year}`;
-                              }
+                              formattedValue = !isNaN(date)
+                                ? `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")
+                                }/${date.getFullYear()}`
+                                : "";
                             }
 
-                            // Format monetary values
-                            if ((col.fieldname === "debit" || col.fieldname === "credit") && cellValue !== null && cellValue !== undefined) {
-                              const numValue = parseFloat(cellValue);
-                              formattedValue = !isNaN(numValue) ? `₹${numValue.toFixed(2)}` : "₹0.00";
-                            } else if (col.fieldname === "debit" || col.fieldname === "credit") {
-                              formattedValue = "₹0.00";
+                            if (["discount_amount", "net_total"].includes(col.fieldname)) {
+                              const num = parseFloat(cellValue);
+                              formattedValue = !isNaN(num) ? `₹${num.toFixed(2)}` : "₹0.00";
+                            }
+
+                            if (col.fieldname === "owner") {
+                              formattedValue = userMap[cellValue] || cellValue;
                             }
 
                             return (
@@ -906,8 +916,12 @@ const SalesReport = () => {
                       <TotalRow>
                         <TableCell>Total</TableCell>
                         <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
                         <TableCell>₹{totals.amount.toFixed(2)}</TableCell>
-                        <TableCell colSpan={3}></TableCell>
                       </TotalRow>
                     )}
                   </TableBody>
