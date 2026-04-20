@@ -8,6 +8,7 @@ import autoTable from "jspdf-autotable";
 import usePageTitle from "../hooks/usePageTitle";
 import apiService from "../services/api/apiService";
 import API_ENDPOINTS from "../services/api/endpoints";
+import Select from "react-select";
 
 const ReportContainer = styled.div`
   display: flex;
@@ -627,11 +628,19 @@ const SalesReport = () => {
     const rows = exportData.map((row) =>
       displayColumns.map((col) => {
         const val = row[col.fieldname] ?? "";
+
         if (col.fieldname === "posting_date") {
           const date = new Date(val);
           if (!isNaN(date.getTime())) {
             return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
           }
+        }
+
+        // ✅ USER NAME FIX
+        if (col.fieldname === "owner") {
+          return (
+            users.find((u) => u.user_id === val)?.full_name || val
+          );
         }
 
         if (["discount_amount", "net_total"].includes(col.fieldname)) {
@@ -694,7 +703,7 @@ const SalesReport = () => {
       displayColumns.map((col) => {
         let value = row[col.fieldname] ?? "";
 
-        // Format date
+        // ✅ DATE
         if (col.fieldname === "posting_date" && value) {
           const date = new Date(value);
           if (!isNaN(date.getTime())) {
@@ -704,6 +713,19 @@ const SalesReport = () => {
             value = `${day}/${month}/${year}`;
           }
         }
+
+        // ✅ USER FULL NAME FIX (MISSING)
+        if (col.fieldname === "owner") {
+          value =
+            users.find((u) => u.user_id === value)?.full_name || value;
+        }
+
+        // ✅ AMOUNT FORMAT (OPTIONAL but better)
+        if (["discount_amount", "net_total"].includes(col.fieldname)) {
+          const num = parseFloat(value);
+          value = !isNaN(num) ? `Rs. ${num.toFixed(2)}` : "Rs. 0.00";
+        }
+
         return `"${String(value).replace(/"/g, '""')}"`;
       })
     );
@@ -816,17 +838,28 @@ const SalesReport = () => {
 
             <FormGroup>
               <FormLabel>Select User</FormLabel>
-              <FormSelect
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-              >
-                <option value="All">All</option>
-                {users.map((user) => (
-                  <option key={user.user_id} value={user.user_id}>
-                    {user.full_name || user.user_id}
-                  </option>
-                ))}
-              </FormSelect>
+              <Select
+                options={[
+                  { value: "All", label: "All" },
+                  ...users.map((user) => ({
+                    value: user.user_id,
+                    label: user.full_name || user.user_id,
+                  })),
+                ]}
+                value={
+                  selectedUser === "All"
+                    ? { value: "All", label: "All" }
+                    : users
+                      .map((u) => ({
+                        value: u.user_id,
+                        label: u.full_name || u.user_id,
+                      }))
+                      .find((opt) => opt.value === selectedUser)
+                }
+                onChange={(selected) => setSelectedUser(selected?.value || "All")}
+                placeholder="Search user..."
+                isSearchable
+              />
             </FormGroup>
           </FiltersGrid>
 
