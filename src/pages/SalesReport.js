@@ -399,22 +399,44 @@ const SalesReport = () => {
   const [selectedUser, setSelectedUser] = useState("All");
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (filters.company) {
+      fetchUsers(filters.company);
+    }
+  }, [filters.company]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (companyName) => {
     try {
-      const response = await apiService.get(
-        "/resource/Employee",
+      // Step 1: Get users from User Permission
+      const res = await apiService.get(
+        "/resource/User Permission",
         {
-          fields: '["name","user_id","employee_name"]',
-          filters: JSON.stringify([["designation", "=", "Phlebotomist"]]),
+          fields: JSON.stringify(["user", "for_value", "is_default"]),
+          filters: JSON.stringify([
+            ["allow", "=", "Company"],
+            ["for_value", "=", companyName],
+          ]),
+          limit_page_length: 10000,
         }
       );
 
-      if (response.data?.data) {
-        setUsers(response.data.data);
-      }
+      const usersList = res.data?.data || [];
+
+      // Step 2: Fetch full_name for each user
+      const userDetailsPromises = usersList.map((u) =>
+        apiService.get(`/resource/User/${encodeURIComponent(u.user)}`)
+      );
+
+      const userDetailsResponses = await Promise.all(userDetailsPromises);
+
+      // Step 3: Map final users
+      const formattedUsers = userDetailsResponses.map((res) => ({
+        user_id: res.data.data.name,
+        full_name:
+          res.data.data.full_name ||
+          `${res.data.data.first_name || ""} ${res.data.data.last_name || ""}`.trim(),
+      }));
+
+      setUsers(formattedUsers);
     } catch (err) {
       console.error("Error fetching users:", err);
     }
@@ -614,7 +636,7 @@ const SalesReport = () => {
 
         if (["discount_amount", "net_total"].includes(col.fieldname)) {
           const num = parseFloat(val);
-          return !isNaN(num) ? `₹${num.toFixed(2)}` : "₹0.00";
+          return !isNaN(num) ? `Rs. ${num.toFixed(2)}` : "Rs. 0.00";
         }
         return String(val);
       })
@@ -629,7 +651,7 @@ const SalesReport = () => {
       "",
       "",
       "",
-      `₹${totals.amount.toFixed(2)}`
+      `Rs. ${totals.amount.toFixed(2)}`
     ]);
 
     autoTable(doc, {
@@ -695,7 +717,7 @@ const SalesReport = () => {
       `""`,
       `""`,
       `""`,
-      `"₹${totals.amount.toFixed(2)}"`
+      `"Rs. ${totals.amount.toFixed(2)}"`
     ]);
 
     const csvContent =
@@ -715,14 +737,6 @@ const SalesReport = () => {
     link.click();
     document.body.removeChild(link);
   };
-
-  const userMap = useMemo(() => {
-    const map = {};
-    users.forEach(u => {
-      map[u.user_id] = u.employee_name;
-    });
-    return map;
-  }, [users]);
 
   return (
     <Layout>
@@ -808,8 +822,8 @@ const SalesReport = () => {
               >
                 <option value="All">All</option>
                 {users.map((user) => (
-                  <option key={user.name} value={user.user_id}>
-                    {user.employee_name}
+                  <option key={user.user_id} value={user.user_id}>
+                    {user.full_name || user.user_id}
                   </option>
                 ))}
               </FormSelect>
@@ -892,11 +906,12 @@ const SalesReport = () => {
 
                             if (["discount_amount", "net_total"].includes(col.fieldname)) {
                               const num = parseFloat(cellValue);
-                              formattedValue = !isNaN(num) ? `₹${num.toFixed(2)}` : "₹0.00";
+                              formattedValue = !isNaN(num) ? `Rs. ${num.toFixed(2)}` : "Rs. 0.00";
                             }
 
                             if (col.fieldname === "owner") {
-                              formattedValue = userMap[cellValue] || cellValue;
+                              formattedValue =
+                                users.find((u) => u.user_id === cellValue)?.full_name || cellValue;
                             }
 
                             return (
@@ -921,7 +936,7 @@ const SalesReport = () => {
                         <TableCell></TableCell>
                         <TableCell></TableCell>
                         <TableCell></TableCell>
-                        <TableCell>₹{totals.amount.toFixed(2)}</TableCell>
+                        <TableCell>Rs. {totals.amount.toFixed(2)}</TableCell>
                       </TotalRow>
                     )}
                   </TableBody>
