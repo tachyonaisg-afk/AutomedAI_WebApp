@@ -667,7 +667,7 @@ const SalesReport = () => {
   const handleExportPDF = () => {
     if (reportData.length === 0) return;
 
-    const doc = new jsPDF(displayColumns.length > 8 ? "landscape" : "portrait");
+    const doc = new jsPDF("landscape");
 
     // Title
     doc.setFontSize(16);
