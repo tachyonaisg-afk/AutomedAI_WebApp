@@ -504,13 +504,14 @@ const SalesReport = () => {
       { label: "INVOICE NUMBER", fieldname: "name" },
       { label: "DATE", fieldname: "posting_date" },
       { label: "USER", fieldname: "owner" },
+      { label: "REFERRED BY", fieldname: "referred_by" },
       { label: "PATIENT NAME", fieldname: "patient_name" },
+      { label: "ITEMS", fieldname: "items" },
       { label: "TOTAL QTY", fieldname: "total_qty" },
       { label: "DISCOUNT", fieldname: "discount_amount" },
       { label: "TOTAL AMOUNT", fieldname: "net_total" },
     ];
   }, [appliedFilters]);
-
 
   const getCellValue = (row, fieldname) => {
     return row[fieldname] ?? "";
@@ -541,6 +542,8 @@ const SalesReport = () => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
+
+  const practitionerCache = {};
 
   const fetchReport = async (activeFilters) => {
     setLoading(true);
@@ -575,7 +578,61 @@ const SalesReport = () => {
       );
 
       if (response.data?.data) {
-        setReportData(response.data.data);
+        const invoices = response.data.data;
+
+        const enrichedData = await Promise.all(
+          invoices.map(async (inv) => {
+            try {
+              // Step 1: Get full invoice
+              const invoiceRes = await apiService.get(
+                `/resource/Sales Invoice/${encodeURIComponent(inv.name)}`
+              );
+
+              const invoiceDetails = invoiceRes.data?.data;
+
+              // ✅ ITEMS (join names)
+              const items =
+                invoiceDetails?.items
+                  ?.map((item) => item.item_name)
+                  .join(", ") || "";
+
+              // ✅ PRACTITIONER NAME (with cache)
+              let practitionerName = "";
+
+              const practitionerId = invoiceDetails?.ref_practitioner;
+
+              if (practitionerId) {
+                if (practitionerCache[practitionerId]) {
+                  practitionerName = practitionerCache[practitionerId];
+                } else {
+                  const pracRes = await apiService.get(
+                    `/resource/Healthcare Practitioner/${encodeURIComponent(practitionerId)}`
+                  );
+
+                  practitionerName =
+                    pracRes.data?.data?.practitioner_name || "";
+
+                  practitionerCache[practitionerId] = practitionerName;
+                }
+              }
+
+              return {
+                ...inv,
+                items,
+                referred_by: practitionerName,
+              };
+            } catch (err) {
+              console.error("Error enriching invoice:", inv.name, err);
+              return {
+                ...inv,
+                items: "",
+                referred_by: "",
+              };
+            }
+          })
+        );
+
+        setReportData(enrichedData);
         setCurrentPage(1);
       }
     } catch (err) {
@@ -636,6 +693,14 @@ const SalesReport = () => {
           }
         }
 
+        if (col.fieldname === "items") {
+          return val || "";
+        }
+
+        if (col.fieldname === "referred_by") {
+          return val || "";
+        }
+
         // ✅ USER NAME FIX
         if (col.fieldname === "owner") {
           return (
@@ -653,14 +718,16 @@ const SalesReport = () => {
 
     // Total row
     rows.push([
-      "Total",
-      "",
-      "",
-      "",
-      "",
-      "",
-      "",
-      `Rs. ${totals.amount.toFixed(2)}`
+      "Total", // SL NO
+      "",      // Invoice
+      "",      // Date
+      "",      // User
+      "",      // Referred By
+      "",      // Patient
+      "",      // Items
+      "",      // Qty
+      "",      // Discount
+      `Rs. ${totals.amount.toFixed(2)}`, // Total Amount
     ]);
 
     autoTable(doc, {
@@ -669,6 +736,9 @@ const SalesReport = () => {
       startY: 40,
       styles: { fontSize: 9 },
       headStyles: { fillColor: [74, 144, 226] },
+      columnStyles: {
+        6: { cellWidth: 40 },
+      },
     });
 
     doc.save(`Sales_Report_${filters.fromDate}_to_${filters.toDate}.pdf`);
@@ -720,6 +790,16 @@ const SalesReport = () => {
             users.find((u) => u.user_id === value)?.full_name || value;
         }
 
+        // ✅ ITEMS
+        if (col.fieldname === "items") {
+          value = value || "";
+        }
+
+        // ✅ REFERRED BY
+        if (col.fieldname === "referred_by") {
+          value = value || "";
+        }
+
         // ✅ AMOUNT FORMAT (OPTIONAL but better)
         if (["discount_amount", "net_total"].includes(col.fieldname)) {
           const num = parseFloat(value);
@@ -732,14 +812,16 @@ const SalesReport = () => {
 
     // Add total row
     rows.push([
-      `"Total"`,
-      `""`,
-      `""`,
-      `""`,
-      `""`,
-      `""`,
-      `""`,
-      `"Rs. ${totals.amount.toFixed(2)}"`
+      `"Total"`, // SL NO
+      `""`,      // Invoice
+      `""`,      // Date
+      `""`,      // User
+      `""`,      // Referred By
+      `""`,      // Patient
+      `""`,      // Items
+      `""`,      // Qty
+      `""`,      // Discount
+      `"Rs. ${totals.amount.toFixed(2)}"` // Total Amount
     ]);
 
     const csvContent =
@@ -945,6 +1027,14 @@ const SalesReport = () => {
                             if (col.fieldname === "owner") {
                               formattedValue =
                                 users.find((u) => u.user_id === cellValue)?.full_name || cellValue;
+                            }
+
+                            if (col.fieldname === "items") {
+                              formattedValue = cellValue || "-";
+                            }
+
+                            if (col.fieldname === "referred_by") {
+                              formattedValue = cellValue || "-";
                             }
 
                             return (
