@@ -248,6 +248,9 @@ const TableCell = styled.td`
   font-size: 14px;
   color: #333333;
   white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const InvoiceLink = styled.a`
@@ -664,7 +667,7 @@ const SalesReport = () => {
   const handleExportPDF = () => {
     if (reportData.length === 0) return;
 
-    const doc = new jsPDF();
+    const doc = new jsPDF(displayColumns.length > 8 ? "landscape" : "portrait");
 
     // Title
     doc.setFontSize(16);
@@ -1038,7 +1041,19 @@ const SalesReport = () => {
                             }
 
                             return (
-                              <TableCell key={colIndex}>
+                              <TableCell key={colIndex}
+                                style={
+                                  col.fieldname === "items"
+                                    ? {
+                                      maxWidth: "250px",
+                                      whiteSpace: "normal",
+                                      wordBreak: "break-word",
+                                      fontSize: "12px",
+                                      fontWeight: "bold",
+                                    }
+                                    : {}
+                                }
+                              >
                                 {isInvoiceLink && cellValue ? (
                                   <InvoiceLink>{cellValue}</InvoiceLink>
                                 ) : (

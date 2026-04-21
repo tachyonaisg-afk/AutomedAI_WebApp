@@ -403,6 +403,7 @@ const ResultsTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
+  table-layout: fixed;
 `;
 
 const TableHeader = styled.th`
@@ -430,6 +431,9 @@ const TableCell = styled.td`
   padding: 4px;
   font-size: 12px;
   color: #000000;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 `;
 
 const ReportFooter = styled.div`
@@ -1403,6 +1407,12 @@ const ResultPrint = () => {
 
               </PatientInfoSection>
               <ResultsTable>
+                <colgroup>
+                  <col style={{ width: "35%" }} />  
+                  <col style={{ width: "15%" }} />  
+                  <col style={{ width: "15%" }} />  
+                  <col style={{ width: "35%" }} /> 
+                </colgroup>
                 <tbody>
                   {selectedTestDetails.map((testDetail, index) => {
                     const currentDept = testDetail.department || "Laboratory";
