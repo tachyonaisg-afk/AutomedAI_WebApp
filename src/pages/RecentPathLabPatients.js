@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
-import { Plus, Calendar, Eye } from "lucide-react";
+import { Plus, Calendar, Eye, ArrowLeft } from "lucide-react";
 import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 import OpdPatientDataTable from "../components/shared/OpdPatientDataTable";
@@ -159,6 +159,24 @@ const ClearFilterButton = styled.button`
 
   &:hover {
     color: #1565c0;
+  }
+`;
+
+const SearchButton = styled.button`
+  width: 80px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #4a90e2;
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+
+  &:hover {
+    background: #3c7edb;
   }
 `;
 
@@ -348,6 +366,10 @@ const RecentPathLabPatients = () => {
     return (
         <Layout>
             <PatientsContainer>
+              <SearchButton onClick={() => window.history.back()}>
+                          <ArrowLeft size={16} />
+                          Back
+                        </SearchButton>
                 {loading && <div>Loading patients...</div>}
                 {error && <div style={{ color: "red" }}>Error: {error}</div>}
 

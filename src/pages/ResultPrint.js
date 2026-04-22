@@ -1453,7 +1453,7 @@ const ResultPrint = () => {
                         <TableRow>
                           <TableCell colSpan="4">
                             <TestName>
-                              {removeTestPrefix(testDetail.lab_test_name)}
+                              {testDetail.custom_display_name || removeTestPrefix(testDetail.lab_test_name)}
                             </TestName>
                           </TableCell>
                         </TableRow>
