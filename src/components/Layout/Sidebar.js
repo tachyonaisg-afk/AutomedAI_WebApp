@@ -387,7 +387,7 @@ const Sidebar = () => {
     // { path: "/patients", label: "Patients", icon: Users },
     { path: "/pathlab/billing", label: "Billing", icon: FileText },
     // { path: "/pathlab/collection", label: "Sample Collection", icon: TestTubes },
-    { path: "/pathlab/collection-today", label: "Sample Collection", icon: TestTubes },
+    { path: "/pathlab/collection-by-date", label: "Sample Collection", icon: TestTubes },
     { path: "/pathlab/labtest", label: "Lab Tests", icon: ClipboardList },
     { path: "/pathlab/results", label: "Test Results", icon: FileCheck },
     { path: "/pathlab/admin", label: "Admin", icon: ShieldCheck },

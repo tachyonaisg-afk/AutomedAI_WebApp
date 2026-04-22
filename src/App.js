@@ -310,7 +310,7 @@ function App() {
             }
           />
           <Route
-            path="/pathlab/collection-today"
+            path="/pathlab/collection-by-date"
             element={
               <ProtectedRoute>
                 <TodayCollection />

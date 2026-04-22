@@ -361,6 +361,142 @@ const IconButton = styled.button`
   }
 `;
 
+const ClearFilterButton = styled.button`
+    margin-left: 10px;
+    padding: 4px 8px;
+    font-size: 16px;
+    font-weight: 600;
+    background: #d4cee2;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+`;
+
+const FilterModal = styled.div`
+background: #fff;
+width: 520px;
+padding: 34px;
+border-radius: 12px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+animation: fadeIn 0.2s ease;
+
+@keyframes fadeIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+`;
+
+const FilterHeader = styled.div`
+font-size: 20px;
+font-weight: 600;
+padding: 20px 24px;
+border-bottom: 1px solid #eee;
+`;
+
+const FilterBody = styled.div`
+padding: 24px;
+display: flex;
+flex-direction: column;
+gap: 20px;
+`;
+
+const FilterGroup = styled.div`
+display: flex;
+flex-direction: column;
+gap: 8px;
+`;
+
+const FilterLabel = styled.label`
+font-size: 14px;
+font-weight: 500;
+color: #444;
+`;
+
+const FilterModalOverlay = styled.div`
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.35);
+display: flex;
+align-items: center;
+justify-content: center;
+z-index: 1000;
+`;
+
+const ModalActions = styled.div`
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+`;
+
+const Button = styled.button`
+  grid-column: span 2;
+  height: 40px;
+  align-self: end;
+padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #3b82f6;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+font-size: 14px;
+  &:hover {
+    background: #2563eb;
+  }
+`;
+
+const CancelButton = styled.button`
+  grid-column: span 2;
+  height: 40px;
+  align-self: end;
+padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #c4cad5;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+font-size: 14px;
+  &:hover {
+    background: #7a85a0;
+  }
+`;
+
+const FormInput = styled.input`
+  padding: 10px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #333333;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #4a90e2;
+  }
+
+  &::placeholder {
+    color: #999999;
+  }
+
+  &:disabled {
+    background-color: #f5f5f5;
+    color: #666666;
+    cursor: not-allowed;
+    border-color: #d0d0d0;
+  }
+`;
+
 const TodayCollection = () => {
     usePageTitle("Today's Sample Collection");
     const navigate = useNavigate();
@@ -375,6 +511,9 @@ const TodayCollection = () => {
     const [employees, setEmployees] = useState([]);
     const [editingGroupKey, setEditingGroupKey] = useState(null);
     const [selectedGroupEmployee, setSelectedGroupEmployee] = useState(null);
+    const [fromDate, setFromDate] = useState(null);
+    const [toDate, setToDate] = useState(null);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     // Fetch employees from API
     const fetchEmployees = async () => {
         try {
@@ -407,21 +546,22 @@ const TodayCollection = () => {
 ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
             };
 
-            const today = new Date();
+            let start, end;
 
-            const start = new Date(
-                today.getFullYear(),
-                today.getMonth(),
-                today.getDate(),
-                0, 0, 0
-            );
+            if (fromDate && toDate) {
+                // include full day range
+                start = new Date(fromDate);
+                start.setHours(0, 0, 0, 0);
 
-            const end = new Date(
-                today.getFullYear(),
-                today.getMonth(),
-                today.getDate() + 1,
-                0, 0, 0
-            );
+                end = new Date(toDate);
+                end.setHours(23, 59, 59, 999);
+            } else {
+                // fallback → today
+                const today = new Date();
+
+                start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+                end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
+            }
 
             const fields = JSON.stringify([
                 "name",
@@ -769,8 +909,7 @@ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     };
 
     const handleFilter = () => {
-        console.log("Open filter modal");
-        // TODO: Open filter modal
+        setIsFilterOpen(true);
     };
 
     const filteredData = collectionsData.filter((collection) =>
@@ -782,7 +921,24 @@ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     return (
         <Layout>
             <CollectionContainer>
-                <PageTitle>Showing Today's Sample Collections</PageTitle>
+                <PageTitle>
+                    {fromDate && toDate ? (
+                        <>
+                            Showing Sample Collections from {fromDate} to {toDate}
+                            <ClearFilterButton
+                                onClick={() => {
+                                    setFromDate(null);
+                                    setToDate(null);
+                                    fetchCollections();
+                                }}
+                            >
+                                Clear Filter
+                            </ClearFilterButton>
+                        </>
+                    ) : (
+                        "Showing Today's Sample Collections"
+                    )}
+                </PageTitle>
                 {filtersFromState?.docstatus === 0 && (
                     <div style={{ color: "#4a90e2", marginBottom: 10 }}>
                         Showing Today's Sample Collections
@@ -828,6 +984,48 @@ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
                     />
                 )}
             </CollectionContainer>
+            {isFilterOpen && (
+                <FilterModalOverlay>
+                    <FilterModal>
+                        <FilterHeader>Filter by Date</FilterHeader>
+
+                        <FilterBody>
+                            <FilterGroup>
+
+                                <FilterLabel>From Date</FilterLabel>
+                                <FormInput
+                                    type="date"
+                                    value={fromDate || ""}
+                                    onChange={(e) => setFromDate(e.target.value)}
+                                />
+
+                                <FilterLabel>To Date</FilterLabel>
+                                <FormInput
+                                    type="date"
+                                    value={toDate || ""}
+                                    onChange={(e) => setToDate(e.target.value)}
+                                />
+                            </FilterGroup>
+
+
+                            <ModalActions>
+                                <Button
+                                    onClick={() => {
+                                        setIsFilterOpen(false);
+                                        fetchCollections();
+                                    }}
+                                >
+                                    Apply
+                                </Button>
+
+                                <CancelButton onClick={() => setIsFilterOpen(false)}>
+                                    Cancel
+                                </CancelButton>
+                            </ModalActions>
+                        </FilterBody>
+                    </FilterModal>
+                </FilterModalOverlay>
+            )}
         </Layout>
     );
 };
