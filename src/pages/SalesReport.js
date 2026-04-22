@@ -596,7 +596,12 @@ const SalesReport = () => {
               // ✅ ITEMS (join names)
               const items =
                 invoiceDetails?.items
-                  ?.map((item) => item.item_name)
+                  ?.map((item) => {
+                    let name = item.item_name || "";
+
+                    // Remove prefixes LAB-, PLB-, PHC-
+                    return name.replace(/^(LAB-|PLB-|PHC-)/, "").trim();
+                  })
                   .join(", ") || "";
 
               // ✅ PRACTITIONER NAME (with cache)
