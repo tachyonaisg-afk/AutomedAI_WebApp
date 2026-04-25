@@ -231,7 +231,7 @@ const TotalRow = styled.tr`
 `;
 
 const TableHeader = styled.th`
-  padding: 12px 16px;
+  padding: 12px 8px;
   text-align: left;
   font-size: 11px;
   font-weight: 600;
@@ -244,7 +244,7 @@ const TableHeader = styled.th`
 const TableBody = styled.tbody``;
 
 const TableCell = styled.td`
-  padding: 12px 16px;
+  padding: 12px 8px;
   font-size: 14px;
   color: #333333;
   white-space: nowrap;
@@ -254,13 +254,14 @@ const TableCell = styled.td`
 `;
 
 const InvoiceLink = styled.a`
-  color: #4a90e2;
-  text-decoration: none;
-  cursor: pointer;
+color: #333333;
+  // color: #4a90e2;
+  // text-decoration: none;
+  // cursor: pointer;
 
-  &:hover {
-    text-decoration: underline;
-  }
+  // &:hover {
+  //   text-decoration: underline;
+  // }
 `;
 
 const PaginationWrapper = styled.div`
@@ -1073,6 +1074,8 @@ const SalesReport = () => {
                     {paginatedData.length > 0 && (
                       <TotalRow>
                         <TableCell>Total</TableCell>
+                        <TableCell></TableCell>
+                        <TableCell></TableCell>
                         <TableCell></TableCell>
                         <TableCell></TableCell>
                         <TableCell></TableCell>
