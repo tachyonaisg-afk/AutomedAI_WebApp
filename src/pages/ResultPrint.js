@@ -428,7 +428,7 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 4px;
+  padding: 4px 12px;
   font-size: 12px;
   color: #000000;
   word-wrap: break-word;
@@ -1437,12 +1437,12 @@ const ResultPrint = () => {
                             {/* Table Header again */}
                             <tr>
                               <TableHeader>Test Parameter</TableHeader>
-                              <TableHeader style={{ textAlign: "right" }}>Result</TableHeader>
+                              <TableHeader style={{ textAlign: "left" }}>Result</TableHeader>
 
                               {!isDescriptive && (
                                 <>
-                                  <TableHeader style={{ textAlign: "right" }}>Units</TableHeader>
-                                  <TableHeader style={{ textAlign: "right" }}>Reference Interval</TableHeader>
+                                  <TableHeader style={{ textAlign: "left" }}>Units</TableHeader>
+                                  <TableHeader style={{ textAlign: "left" }}>Reference Interval</TableHeader>
                                 </>
                               )}
                             </tr>
@@ -1488,7 +1488,7 @@ const ResultPrint = () => {
                                   }}
                                 />
 
-                                <TableCell style={{ textAlign: "right" }}>
+                                <TableCell style={{ textAlign: "left" }}>
                                   {item.result_value}
                                 </TableCell>
                               </TableRow>
@@ -1522,7 +1522,7 @@ const ResultPrint = () => {
 
                                 <TableCell
                                   style={{
-                                    textAlign: "right",
+                                    textAlign: "left",
                                     fontWeight: isOutOfRange(
                                       item.result_value,
                                       item.normal_range,
@@ -1535,11 +1535,11 @@ const ResultPrint = () => {
                                   {item.result_value}
                                 </TableCell>
 
-                                <TableCell style={{ textAlign: "right" }}>
+                                <TableCell style={{ textAlign: "left" }}>
                                   {item.lab_test_uom}
                                 </TableCell>
 
-                                <TableCell style={{ textAlign: "right" }}>
+                                <TableCell style={{ textAlign: "left" }}>
                                   {item.normal_range}
                                 </TableCell>
                               </TableRow>
