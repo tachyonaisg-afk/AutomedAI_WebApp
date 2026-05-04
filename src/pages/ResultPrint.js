@@ -1454,12 +1454,9 @@ const ResultPrint = () => {
                             <tr>
                               <TableHeader>Test Parameter</TableHeader>
                               <TableHeader style={{ textAlign: "left" }}>Result</TableHeader>
-                              <TableHeader style={{ textAlign: "left" }}>Result</TableHeader>
 
                               {!isDescriptive && (
                                 <>
-                                  <TableHeader style={{ textAlign: "left" }}>Units</TableHeader>
-                                  <TableHeader style={{ textAlign: "left" }}>Reference Interval</TableHeader>
                                   <TableHeader style={{ textAlign: "left" }}>Units</TableHeader>
                                   <TableHeader style={{ textAlign: "left" }}>Reference Interval</TableHeader>
                                 </>
