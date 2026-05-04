@@ -344,7 +344,7 @@ const OpdAdmin = () => {
                             <IconWrapper variant="red">
                                 <CreditCard size={26} />
                             </IconWrapper>
-                            <ActionTitle>Cancel Bill</ActionTitle>
+                            <ActionTitle>Billing Management</ActionTitle>
                         </ActionCard>
 
                         <ActionCard>

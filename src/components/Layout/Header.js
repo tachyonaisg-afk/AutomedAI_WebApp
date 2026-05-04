@@ -138,8 +138,15 @@ const AvatarIconWrapper = styled.div`
   }
 `;
 
+const WelcomeText = styled.span`
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+`;
+
 const Header = () => {
   const location = useLocation();
+  const [fullName, setFullName] = useState("");
   const [logo, setLogo] = useState(
     () => localStorage.getItem("company_logo") || ""
   );
@@ -182,11 +189,14 @@ const Header = () => {
         const fullLogo = logoPath
           ? `https://hms.automedai.in${logoPath}`
           : "";
+        const abbreviation = data.abbr;
 
         // ✅ Save to cache
         if (fullLogo) localStorage.setItem("company_logo", fullLogo);
         if (data.company_name)
           localStorage.setItem("company_name", data.company_name);
+        if (abbreviation)
+          localStorage.setItem("company_abbreviation", abbreviation);
 
         // ✅ Update state
         setLogo(fullLogo);
@@ -197,6 +207,19 @@ const Header = () => {
     };
 
     fetchCompanyData();
+  }, []);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setFullName(parsedUser.full_name || "");
+      } catch (err) {
+        console.error("Error parsing user data:", err);
+      }
+    }
   }, []);
 
   const getBreadcrumbs = () => {
@@ -271,6 +294,7 @@ const Header = () => {
             <Bell />
             <NotificationBadge />
           </NotificationIcon>
+          {fullName && <WelcomeText>Welcome  <div>{fullName}</div></WelcomeText>}
           <UserAvatar>
             <AvatarIconWrapper>
               <User />

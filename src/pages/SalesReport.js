@@ -368,7 +368,7 @@ const FilterNotification = styled.div`
   background-color: #e3f2fd;
   border: 1px solid #90caf9;
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 12px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -557,6 +557,7 @@ const SalesReport = () => {
       const filtersArray = [
         ["posting_date", ">=", activeFilters.fromDate],
         ["posting_date", "<=", activeFilters.toDate],
+        ["docstatus","=", "1"]
       ];
 
       // Apply user filter only if not "All"
@@ -569,6 +570,7 @@ const SalesReport = () => {
         {
           limit_page_length: 1000,
           fields: JSON.stringify([
+            "docstatus",
             "name",
             "posting_date",
             "owner",

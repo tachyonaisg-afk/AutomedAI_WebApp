@@ -210,7 +210,11 @@ const LoginForm = () => {
 
       // Fetch role after login
       const res = await fetch(
-        `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${email}"]]`
+        `https://hms.automedai.in/api/resource/User?fields=["name","role_profile_name"]&filters=[["name","=","${email}"]]`,
+        {
+          method: "GET",
+          credentials: "include", // VERY IMPORTANT
+        }
       );
 
       const data = await res.json();

@@ -5,7 +5,7 @@ import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
 import styled from "styled-components";
-import { UserPlus, Users, Receipt, ClipboardCheck, Video, FileBarChart, Mountain, Sun, Search, Users as UsersIcon, IndianRupee, Clock, Pill, CreditCard } from "lucide-react";
+import { UserPlus, Users, Receipt, ClipboardCheck, Video, FileBarChart, Mountain, Sun, Search, Users as UsersIcon, IndianRupee, Clock, Pill, CreditCard, Eye } from "lucide-react";
 
 const PageWrapper = styled.div`
   display: flex;
@@ -250,6 +250,7 @@ const SearchResultItem = styled.div`
   border-bottom: 1px solid #f1f5f9;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 4px;
 
   &:last-child {
@@ -465,6 +466,33 @@ const InsightSkeletonCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+`;
+
+const ResultLeft = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ResultActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: #f1f5f9;
+  color: #334155;
+
+  &:hover {
+    background-color: #e2e8f0;
+  }
 `;
 
 const thStyle = {
@@ -777,54 +805,54 @@ const Dashboard = () => {
   };
 
   const fetchSalesInvoiceTotal = async () => {
-  try {
-    const today = getTodayDate();
+    try {
+      const today = getTodayDate();
 
-    const fields = JSON.stringify([
-      "name",
-      "patient",
-      "patient_name",
-      "posting_date",
-      "posting_time",
-      "company",
-      "status",
-      "total_qty",
-      "net_total"
-    ]);
+      const fields = JSON.stringify([
+        "name",
+        "patient",
+        "patient_name",
+        "posting_date",
+        "posting_time",
+        "company",
+        "status",
+        "total_qty",
+        "net_total"
+      ]);
 
-    const params = {
-      fields,
-      limit_page_length: 200000,
-      order_by: "posting_date",
-      filters: JSON.stringify([
-        ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
-        ["posting_date", "=", today]
-      ])
-    };
+      const params = {
+        fields,
+        limit_page_length: 200000,
+        order_by: "posting_date",
+        filters: JSON.stringify([
+          ["Sales Invoice Item", "item_code", "=", "STO-ITEM-2025-00539"],
+          ["posting_date", "=", today]
+        ])
+      };
 
-    const response = await api.get(
-      "https://hms.automedai.in/api/resource/Sales Invoice",
-      params
-    );
+      const response = await api.get(
+        "https://hms.automedai.in/api/resource/Sales Invoice",
+        params
+      );
 
-    const invoices = Array.isArray(response.data?.data)
-      ? response.data.data
-      : [];
+      const invoices = Array.isArray(response.data?.data)
+        ? response.data.data
+        : [];
 
-    const total = invoices
-      .filter(item => item.status === "Paid")
-      .reduce((sum, item) => {
-        const val = parseFloat(item.net_total);
-        return sum + (isNaN(val) ? 0 : val);
-      }, 0);
+      const total = invoices
+        .filter(item => item.status === "Paid")
+        .reduce((sum, item) => {
+          const val = parseFloat(item.net_total);
+          return sum + (isNaN(val) ? 0 : val);
+        }, 0);
 
-    setFeesCollected(total);
+      setFeesCollected(total);
 
-  } catch (error) {
-    console.error("Sales Invoice total error:", error);
-    setFeesCollected(0);
-  }
-};
+    } catch (error) {
+      console.error("Sales Invoice total error:", error);
+      setFeesCollected(0);
+    }
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -1115,6 +1143,38 @@ const Dashboard = () => {
     });
   };
 
+  const handleAddBilling = async (patientId) => {
+    try {
+      const response = await api.get(
+        API_ENDPOINTS.PATIENTS.DETAIL(patientId)
+      );
+
+      const patientData = response.data?.data;
+
+      if (!patientData) {
+        console.error("Patient data not available");
+        return;
+      }
+
+      navigate("/opd/billing/add", {
+        state: {
+          preselectedPatient: {
+            name: patientData.name,
+            patient_name:
+              patientData.patient_name ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+            customer_name:
+              patientData.customer ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+          },
+          defaultItemCode: "STO-ITEM-2025-00539",
+        },
+      });
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+    }
+  };
+
   return (
     <Layout>
       <PageWrapper>
@@ -1179,10 +1239,36 @@ const Dashboard = () => {
                     searchResults.map((patient, index) => (
                       <SearchResultItem
                         key={index}
-                        onMouseDown={() => handlePatientSelect(patient)}
+                      // onMouseDown={() => handlePatientSelect(patient)}
                       >
-                        <ResultValue>{patient.description}</ResultValue>
-                        <ResultDescription>{patient.value}</ResultDescription>
+                        <ResultLeft>
+                          <ResultValue>{patient.description}</ResultValue>
+                          <ResultDescription>{patient.value}</ResultDescription>
+                        </ResultLeft>
+
+                        <ResultActions>
+                          <ActionButton
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              navigate(`/patients/${patient.value}`);
+                              setShowSearchResults(false);
+                            }}
+                          >
+                            <Eye size={14} />
+                            View
+                          </ActionButton>
+
+                          <ActionButton
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              handleAddBilling(patient.value);
+                              setShowSearchResults(false);
+                            }}
+                          >
+                            <CreditCard size={14} />
+                            Bill
+                          </ActionButton>
+                        </ResultActions>
                       </SearchResultItem>
                     ))
                   ) : (

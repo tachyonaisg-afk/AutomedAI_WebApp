@@ -777,7 +777,11 @@ const OPDPatientRegistration = () => {
     const [showAddressResults, setShowAddressResults] = useState(false);
     const [searchingAddress, setSearchingAddress] = useState(false);
     const [activeAddressIndex, setActiveAddressIndex] = useState(-1);
+    const [existingPatient, setExistingPatient] = useState(null);
+    const [checkingPatient, setCheckingPatient] = useState(false);
+    const [showExistingPatientModal, setShowExistingPatientModal] = useState(false);
     const addressRefs = useRef([]);
+    const lastCheckedUID = useRef(null);
 
     const mobileInputRef = useRef(null);
     const occupationInputRef = useRef(null);
@@ -1632,7 +1636,111 @@ const OPDPatientRegistration = () => {
         }
     };
 
+    //existing patient check
+    const checkExistingPatient = async (uid) => {
+        if (!uid || uid.length < 12) return;
+
+        try {
+            setCheckingPatient(true);
+            const cleanUID = uid.replace(/\s/g, "");
+            const response = await apiService.get(
+                `https://hms.automedai.in/api/resource/Patient?fields=["*"]&filters=[["uid","=","${cleanUID}"]]`
+            );
+
+            const data = response.data;
+
+            if (data?.data?.length > 0) {
+                const patient = data.data[0];
+                setExistingPatient(patient);
+
+                // alert(`Patient already exists: ${patient.patient_name}`);
+                setShowExistingPatientModal(true);
+
+                // OPTIONAL (recommended): Autofill form
+                setFormData((prev) => ({
+                    ...prev,
+                    firstName: patient.first_name || "",
+                    middleName: patient.middle_name || "",
+                    lastName: patient.last_name || "",
+                    gender: patient.sex || "",
+                    dateOfBirth: patient.dob || "",
+                    mobile: patient.mobile || "",
+                    company: patient.custom_company || "",
+                }));
+
+                // Set medical history too
+                setMedicalHistory((prev) => ({
+                    ...prev,
+                    custom_religion: patient.custom_religion || "",
+                    custom_cast: patient.custom_cast || "",
+                    maritalStatus: patient.marital_status || "",
+                    regularMedication: patient.medication || "",
+                    surgeryHistory: patient.surgical_history || "",
+                }));
+            } else {
+                setExistingPatient(null);
+            }
+        } catch (error) {
+            console.error("Error checking patient:", error);
+        } finally {
+            setCheckingPatient(false);
+        }
+    };
+
+    const handleViewPatient = () => {
+        if (!existingPatient?.name) return;
+
+        navigate(`/patients/${existingPatient.name}`);
+    };
+
+    const handleGoToBilling = async () => {
+        if (!existingPatient?.name) return;
+
+        try {
+            const response = await apiService.get(
+                API_ENDPOINTS.PATIENTS.DETAIL(existingPatient.name)
+            );
+
+            const patientData = response.data?.data;
+
+            navigate("/opd/billing/add", {
+                state: {
+                    preselectedPatient: {
+                        name: patientData.name,
+                        patient_name:
+                            patientData.patient_name ||
+                            `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+                        customer_name:
+                            patientData.customer ||
+                            `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+                    },
+                    defaultItemCode: "STO-ITEM-2025-00539",
+                },
+            });
+
+            setShowExistingPatientModal(false);
+        } catch (err) {
+            console.error("Error fetching patient details:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (
+            formData.uid &&
+            formData.uid.length === 12 &&
+            formData.uid !== lastCheckedUID.current
+        ) {
+            lastCheckedUID.current = formData.uid;
+            checkExistingPatient(formData.uid);
+        }
+    }, [formData.uid]);
+
     const createPatient = async () => {
+        if (existingPatient) {
+            // alert("This patient already exists. Cannot create duplicate.");
+            setShowExistingPatientModal(true);
+            return;
+        }
         setIsSubmitting(true);
         try {
             const payload = {
@@ -3219,6 +3327,32 @@ const OPDPatientRegistration = () => {
                     onClose={() => setIsAadhaarOCRScannerOpen(false)}
                     onDataExtracted={handleAadhaarDataExtracted}
                 />
+
+                {showExistingPatientModal && existingPatient && (
+                    <ModalOverlay>
+                        <ModalContent>
+                            <ModalHeader>Patient Already Exists</ModalHeader>
+
+                            <p style={{ marginBottom: "16px" }}>
+                                {existingPatient.patient_name} already exists in the system.
+                            </p>
+
+                            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                                <BackButton onClick={() => setShowExistingPatientModal(false)}>
+                                    Cancel
+                                </BackButton>
+
+                                <NextButton onClick={handleViewPatient}>
+                                    View Patient
+                                </NextButton>
+
+                                <NextButton onClick={handleGoToBilling}>
+                                    Go to Billing
+                                </NextButton>
+                            </div>
+                        </ModalContent>
+                    </ModalOverlay>
+                )}
 
                 {isAddDoctorOpen && (
                     <ModalOverlay>

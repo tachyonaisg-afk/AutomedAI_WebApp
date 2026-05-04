@@ -6,6 +6,17 @@ import api from "../services/api";
 import AsyncSelect from "react-select/async";
 import WorksheetEditor from "../utils/WorksheetEditor";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+    DndContext,
+    closestCenter,
+} from "@dnd-kit/core";
+
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
+import DraggableRow from "../components/shared/DraggableRow";
 // ================= STYLES =================
 
 const PageWrapper = styled.div`
@@ -297,6 +308,7 @@ function AddNewTest() {
     const [descriptiveRows, setDescriptiveRows] = useState([]);
 
     const navigate = useNavigate();
+    const companyCode = localStorage.getItem('company_abbreviation') || '';
 
     // ================= FETCH DROPDOWNS =================
 
@@ -328,6 +340,7 @@ function AddNewTest() {
         setGroupRows(prev => [
             ...prev,
             {
+                id: Date.now() + Math.random(),
                 type: "test",
                 lab_test_template: null,
                 description: "",
@@ -347,6 +360,7 @@ function AddNewTest() {
         setCompoundRows(prev => [
             ...prev,
             {
+                id: Date.now() + Math.random(),
                 lab_test_event: "",
                 lab_test_uom: "",
                 normal_range: "",
@@ -364,6 +378,7 @@ function AddNewTest() {
         setDescriptiveRows(prev => [
             ...prev,
             {
+                id: Date.now() + Math.random(),
                 particulars: "",
                 allow_blank: 0
             }
@@ -520,10 +535,18 @@ function AddNewTest() {
         try {
             const res = await api.get(`/resource/Lab Test Template/${decodedId}`);
             const data = res.data.data;
+            const rawName = data.lab_test_name || "";
+
+            let cleanName = rawName;
+
+            if (companyCode) {
+                const regex = new RegExp(`^${companyCode}\\s*-\\s*`, "i");
+                cleanName = rawName.replace(regex, "").trim();
+            }
 
             // ===== SET FORM =====
             setForm({
-                lab_test_name: data.lab_test_name || "",
+                lab_test_name: cleanName,
                 custom_display_name: data.custom_display_name || "",
                 lab_test_code: data.lab_test_code || "",
                 department: data.department || "",
@@ -543,6 +566,7 @@ function AddNewTest() {
             // ===== HANDLE DESCRIPTION =====
             if (data.lab_test_template_type === "Descriptive") {
                 const rows = data.descriptive_test_templates.map((r) => ({
+                    id: Date.now() + Math.random(),
                     particulars: r.particulars || "",
                     allow_blank: r.allow_blank || 0,
                 }));
@@ -553,6 +577,7 @@ function AddNewTest() {
             // ===== HANDLE COMPOUND =====
             if (data.lab_test_template_type === "Compound") {
                 const rows = data.normal_test_templates.map((r) => ({
+                    id: Date.now() + Math.random(),
                     lab_test_event: r.lab_test_event || "",
                     lab_test_uom: r.lab_test_uom || "",
                     normal_range: r.normal_range || "",
@@ -565,6 +590,7 @@ function AddNewTest() {
             // ===== HANDLE GROUPED =====
             if (data.lab_test_template_type === "Grouped") {
                 const rows = data.lab_test_groups.map((g) => ({
+                    id: Date.now() + Math.random(),
                     type: g.template_or_new_line === "Add Test" ? "test" : "event",
                     lab_test_template:
                         g.template_or_new_line === "Add Test"
@@ -610,11 +636,11 @@ function AddNewTest() {
                 }
             }
 
-            // ================= STEP 1: CREATE ITEM =================
+            // ================= STEP 1: CREATE ITEM =================// TODO: There will be changes here
             let createdItem = form.item;
             if (!isEditMode) {
                 const itemRes = await api.post("/resource/Item", {
-                    item_name: form.lab_test_name,
+                    item_name: form.lab_test_name,//company code + "-" + form.item_name,
                     item_group: form.item_group,
                     stock_uom: "Nos",
                     gst_hsn_code: form.gst_hsn_code || "999312",
@@ -622,7 +648,7 @@ function AddNewTest() {
                     is_stock_item: 0,
                     item_defaults: [
                         {
-                            company: company,
+                            custom_company: company,
                             default_price_list: "Standard Selling",
                         },
                     ],
@@ -718,8 +744,19 @@ function AddNewTest() {
 
             // ================= STEP 2: CREATE LAB TEST =================
 
+            const finalName = (() => {
+                const raw = form.lab_test_name.trim();
+
+                const regex = new RegExp(`^${companyCode}\\s*-\\s*`, "i");
+
+                // remove existing prefix (if any), then re-add clean one
+                const clean = raw.replace(regex, "").trim();
+
+                return `${companyCode}- ${clean}`;
+            })();
+
             const payload = {
-                lab_test_name: form.lab_test_name,
+                lab_test_name: finalName,
                 lab_test_code: form.lab_test_code,
                 lab_test_description: form.description,
                 department: form.department,
@@ -979,6 +1016,7 @@ function AddNewTest() {
                                         >
                                             <thead style={{ background: "#bbd9f8", height: "40px" }}>
                                                 <tr style={{ background: "#f8fafc" }}>
+                                                    <th></th>
                                                     <th>No.</th>
                                                     <th>Test Name</th>
                                                     <th>Description</th>
@@ -988,96 +1026,118 @@ function AddNewTest() {
                                                 </tr>
                                             </thead>
 
-                                            <tbody style={{ background: "#f8fafc" }}>
-                                                {groupRows.map((row, index) => (
-                                                    <tr key={index}>
-                                                        <td style={{ textAlign: "center" }}>{index + 1}</td>
+                                            <DndContext
+                                                collisionDetection={closestCenter}
+                                                onDragEnd={(event) => {
+                                                    const { active, over } = event;
+                                                    if (!over || active.id === over.id) return;
 
-                                                        {/* TEST NAME */}
-                                                        <td style={{ minWidth: "220px" }}>
-                                                            <AsyncSelect
-                                                                cacheOptions
-                                                                defaultOptions
-                                                                loadOptions={loadOptions}
-                                                                value={row.lab_test_template}
-                                                                isDisabled={row.type === "event"}
-                                                                onChange={(selected) =>
-                                                                    handleRowChange(index, "lab_test_template", selected)
-                                                                }
-                                                                placeholder="Search Test..."
+                                                    if (active.id !== over?.id) {
+                                                        setGroupRows((items) => {
+                                                            const oldIndex = items.findIndex((i) => i.id === active.id);
+                                                            const newIndex = items.findIndex((i) => i.id === over.id);
 
-                                                                menuPortalTarget={document.body}   // ✅ KEY FIX
-                                                                menuPosition="fixed"               // ✅ important
+                                                            return arrayMove(items, oldIndex, newIndex);
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <SortableContext
+                                                    items={groupRows.map((row) => row.id)}
+                                                    strategy={verticalListSortingStrategy}
+                                                >
+                                                    <tbody style={{ background: "#f8fafc" }}>
+                                                        {groupRows.map((row, index) => (
+                                                            <DraggableRow key={row.id} id={row.id}>
+                                                                <td style={{ textAlign: "center" }}>{index + 1}</td>
 
-                                                                styles={{
-                                                                    control: (base) => ({
-                                                                        ...base,
-                                                                        minHeight: "38px",
-                                                                        borderRadius: "8px",
-                                                                        borderColor: "#e2e8f0",
-                                                                        backgroundColor: "#f8fafc",
-                                                                    }),
-                                                                    menuPortal: (base) => ({
-                                                                        ...base,
-                                                                        zIndex: 9999, // ensure on top
-                                                                    }),
-                                                                    menu: (base) => ({
-                                                                        ...base,
-                                                                        zIndex: 9999,
-                                                                    }),
-                                                                }}
-                                                            />
-                                                        </td>
+                                                                {/* TEST NAME */}
+                                                                <td style={{ minWidth: "220px" }}>
+                                                                    <AsyncSelect
+                                                                        cacheOptions
+                                                                        defaultOptions
+                                                                        loadOptions={loadOptions}
+                                                                        value={row.lab_test_template}
+                                                                        isDisabled={row.type === "event"}
+                                                                        onChange={(selected) =>
+                                                                            handleRowChange(index, "lab_test_template", selected)
+                                                                        }
+                                                                        placeholder="Search Test..."
 
-                                                        {/* DESCRIPTION */}
-                                                        <td>
-                                                            <FormControl
-                                                                value={row.description}
-                                                                disabled
-                                                            />
-                                                        </td>
+                                                                        menuPortalTarget={document.body}   // ✅ KEY FIX
+                                                                        menuPosition="fixed"               // ✅ important
 
-                                                        {/* EVENT */}
-                                                        <td>
-                                                            <FormControl
-                                                                disabled={row.type === "test" && row.lab_test_template}
-                                                                value={row.event}
-                                                                onChange={(e) =>
-                                                                    handleRowChange(index, "event", e.target.value)
-                                                                }
-                                                            />
-                                                        </td>
+                                                                        styles={{
+                                                                            control: (base) => ({
+                                                                                ...base,
+                                                                                minHeight: "38px",
+                                                                                borderRadius: "8px",
+                                                                                borderColor: "#e2e8f0",
+                                                                                backgroundColor: "#f8fafc",
+                                                                            }),
+                                                                            menuPortal: (base) => ({
+                                                                                ...base,
+                                                                                zIndex: 9999, // ensure on top
+                                                                            }),
+                                                                            menu: (base) => ({
+                                                                                ...base,
+                                                                                zIndex: 9999,
+                                                                            }),
+                                                                        }}
+                                                                    />
+                                                                </td>
 
-                                                        {/* ALLOW BLANK */}
-                                                        <td>
-                                                            <CheckBoxControl
-                                                                type="checkbox"
-                                                                checked={row.allow_blank === 1}
-                                                                readOnly
-                                                            />
-                                                        </td>
-                                                        <td style={{ textAlign: "center" }}>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => deleteRow(index)}
-                                                                style={{
-                                                                    // background: "#ef4444",
-                                                                    color: "#ff0000",
-                                                                    border: "none",
-                                                                    padding: "6px 12px",
-                                                                    borderRadius: "6px",
-                                                                    cursor: "pointer",
-                                                                    fontSize: "22px",
-                                                                    fontWeight: "bold",
-                                                                    textAlign: "center",
-                                                                }}
-                                                            >
-                                                                X
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
+                                                                {/* DESCRIPTION */}
+                                                                <td>
+                                                                    <FormControl
+                                                                        value={row.description}
+                                                                        disabled
+                                                                    />
+                                                                </td>
+
+                                                                {/* EVENT */}
+                                                                <td>
+                                                                    <FormControl
+                                                                        disabled={row.type === "test" && row.lab_test_template}
+                                                                        value={row.event}
+                                                                        onChange={(e) =>
+                                                                            handleRowChange(index, "event", e.target.value)
+                                                                        }
+                                                                    />
+                                                                </td>
+
+                                                                {/* ALLOW BLANK */}
+                                                                <td>
+                                                                    <CheckBoxControl
+                                                                        type="checkbox"
+                                                                        checked={row.allow_blank === 1}
+                                                                        readOnly
+                                                                    />
+                                                                </td>
+                                                                <td style={{ textAlign: "center" }}>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => deleteRow(index)}
+                                                                        style={{
+                                                                            // background: "#ef4444",
+                                                                            color: "#ff0000",
+                                                                            border: "none",
+                                                                            padding: "6px 12px",
+                                                                            borderRadius: "6px",
+                                                                            cursor: "pointer",
+                                                                            fontSize: "22px",
+                                                                            fontWeight: "bold",
+                                                                            textAlign: "center",
+                                                                        }}
+                                                                    >
+                                                                        X
+                                                                    </button>
+                                                                </td>
+                                                            </DraggableRow>
+                                                        ))}
+                                                    </tbody>
+                                                </SortableContext>
+                                            </DndContext>
                                         </table>
                                     </div>
                                 </Section>
@@ -1102,6 +1162,7 @@ function AddNewTest() {
                                         >
                                             <thead style={{ background: "#bbd9f8", height: "40px" }}>
                                                 <tr>
+                                                    <th></th>
                                                     <th>No.</th>
                                                     <th>Event</th>
                                                     <th>UOM</th>
@@ -1110,60 +1171,82 @@ function AddNewTest() {
                                                 </tr>
                                             </thead>
 
-                                            <tbody>
-                                                {compoundRows.map((row, index) => (
-                                                    <tr key={index}>
-                                                        <td style={{ textAlign: "center" }}>{index + 1}</td>
+                                            <DndContext
+                                                collisionDetection={closestCenter}
+                                                onDragEnd={(event) => {
+                                                    const { active, over } = event;
+                                                    if (!over || active.id === over.id) return;
 
-                                                        <td>
-                                                            <FormControl
-                                                                value={row.lab_test_event}
-                                                                onChange={(e) =>
-                                                                    handleCompoundChange(index, "lab_test_event", e.target.value)
-                                                                }
-                                                            />
-                                                        </td>
+                                                    if (active.id !== over?.id) {
+                                                        setCompoundRows((items) => {
+                                                            const oldIndex = items.findIndex((i) => i.id === active.id);
+                                                            const newIndex = items.findIndex((i) => i.id === over.id);
 
-                                                        <td>
-                                                            <FormSelect
-                                                                value={row.lab_test_uom}
-                                                                onChange={(e) =>
-                                                                    handleCompoundChange(index, "lab_test_uom", e.target.value)
-                                                                }
-                                                            >
-                                                                <option value="">Select</option>
-                                                                {uoms.map((u) => (
-                                                                    <option key={u.name}>{u.name}</option>
-                                                                ))}
-                                                            </FormSelect>
-                                                        </td>
+                                                            return arrayMove(items, oldIndex, newIndex);
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <SortableContext
+                                                    items={compoundRows.map((row) => row.id)}
+                                                    strategy={verticalListSortingStrategy}
+                                                >
+                                                    <tbody>
+                                                        {compoundRows.map((row, index) => (
+                                                            <DraggableRow key={row.id} id={row.id}>
+                                                                <td style={{ textAlign: "center" }}>{index + 1}</td>
 
-                                                        <td>
-                                                            <FormControl
-                                                                value={row.normal_range}
-                                                                onChange={(e) =>
-                                                                    handleCompoundChange(index, "normal_range", e.target.value)
-                                                                }
-                                                            />
-                                                        </td>
+                                                                <td>
+                                                                    <FormControl
+                                                                        value={row.lab_test_event}
+                                                                        onChange={(e) =>
+                                                                            handleCompoundChange(index, "lab_test_event", e.target.value)
+                                                                        }
+                                                                    />
+                                                                </td>
 
-                                                        <td style={{ textAlign: "center" }}>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => deleteCompoundRow(index)}
-                                                                style={{
-                                                                    color: "#ff0000",
-                                                                    border: "none",
-                                                                    fontSize: "20px",
-                                                                    cursor: "pointer",
-                                                                }}
-                                                            >
-                                                                X
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
+                                                                <td>
+                                                                    <FormSelect
+                                                                        value={row.lab_test_uom}
+                                                                        onChange={(e) =>
+                                                                            handleCompoundChange(index, "lab_test_uom", e.target.value)
+                                                                        }
+                                                                    >
+                                                                        <option value="">Select</option>
+                                                                        {uoms.map((u) => (
+                                                                            <option key={u.name}>{u.name}</option>
+                                                                        ))}
+                                                                    </FormSelect>
+                                                                </td>
+
+                                                                <td>
+                                                                    <FormControl
+                                                                        value={row.normal_range}
+                                                                        onChange={(e) =>
+                                                                            handleCompoundChange(index, "normal_range", e.target.value)
+                                                                        }
+                                                                    />
+                                                                </td>
+
+                                                                <td style={{ textAlign: "center" }}>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => deleteCompoundRow(index)}
+                                                                        style={{
+                                                                            color: "#ff0000",
+                                                                            border: "none",
+                                                                            fontSize: "20px",
+                                                                            cursor: "pointer",
+                                                                        }}
+                                                                    >
+                                                                        X
+                                                                    </button>
+                                                                </td>
+                                                            </DraggableRow>
+                                                        ))}
+                                                    </tbody>
+                                                </SortableContext>
+                                            </DndContext>
                                         </table>
                                     </div>
                                 </Section>
@@ -1188,6 +1271,7 @@ function AddNewTest() {
                                         >
                                             <thead style={{ background: "#bbd9f8", height: "40px" }}>
                                                 <tr>
+                                                    <th></th>
                                                     <th>No.</th>
                                                     <th>Result Component</th>
                                                     <th>Allow Blank</th>
@@ -1195,52 +1279,74 @@ function AddNewTest() {
                                                 </tr>
                                             </thead>
 
-                                            <tbody>
-                                                {descriptiveRows.map((row, index) => (
-                                                    <tr key={index}>
-                                                        <td style={{ textAlign: "center" }}>{index + 1}</td>
+                                            <DndContext
+                                                collisionDetection={closestCenter}
+                                                onDragEnd={(event) => {
+                                                    const { active, over } = event;
+                                                    if (!over || active.id === over.id) return;
 
-                                                        <td>
-                                                            <FormControl
-                                                                value={row.particulars}
-                                                                onChange={(e) =>
-                                                                    handleDescriptiveChange(index, "particulars", e.target.value)
-                                                                }
-                                                            />
-                                                        </td>
+                                                    if (active.id !== over?.id) {
+                                                        setDescriptiveRows((items) => {
+                                                            const oldIndex = items.findIndex((i) => i.id === active.id);
+                                                            const newIndex = items.findIndex((i) => i.id === over.id);
 
-                                                        <td style={{ textAlign: "center" }}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={row.allow_blank === 1}
-                                                                onChange={(e) =>
-                                                                    handleDescriptiveChange(
-                                                                        index,
-                                                                        "allow_blank",
-                                                                        e.target.checked ? 1 : 0
-                                                                    )
-                                                                }
-                                                                style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                                                            />
-                                                        </td>
+                                                            return arrayMove(items, oldIndex, newIndex);
+                                                        });
+                                                    }
+                                                }}
+                                            >
+                                                <SortableContext
+                                                    items={descriptiveRows.map((row) => row.id)}
+                                                    strategy={verticalListSortingStrategy}
+                                                >
+                                                    <tbody>
+                                                        {descriptiveRows.map((row, index) => (
+                                                            <DraggableRow key={row.id} id={row.id}>
+                                                                <td style={{ textAlign: "center" }}>{index + 1}</td>
 
-                                                        <td style={{ textAlign: "center" }}>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => deleteDescriptiveRow(index)}
-                                                                style={{
-                                                                    color: "#ff0000",
-                                                                    border: "none",
-                                                                    fontSize: "20px",
-                                                                    cursor: "pointer",
-                                                                }}
-                                                            >
-                                                                X
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
+                                                                <td>
+                                                                    <FormControl
+                                                                        value={row.particulars}
+                                                                        onChange={(e) =>
+                                                                            handleDescriptiveChange(index, "particulars", e.target.value)
+                                                                        }
+                                                                    />
+                                                                </td>
+
+                                                                <td style={{ textAlign: "center" }}>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={row.allow_blank === 1}
+                                                                        onChange={(e) =>
+                                                                            handleDescriptiveChange(
+                                                                                index,
+                                                                                "allow_blank",
+                                                                                e.target.checked ? 1 : 0
+                                                                            )
+                                                                        }
+                                                                        style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                                                                    />
+                                                                </td>
+
+                                                                <td style={{ textAlign: "center" }}>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => deleteDescriptiveRow(index)}
+                                                                        style={{
+                                                                            color: "#ff0000",
+                                                                            border: "none",
+                                                                            fontSize: "20px",
+                                                                            cursor: "pointer",
+                                                                        }}
+                                                                    >
+                                                                        X
+                                                                    </button>
+                                                                </td>
+                                                            </DraggableRow>
+                                                        ))}
+                                                    </tbody>
+                                                </SortableContext>
+                                            </DndContext>
                                         </table>
                                     </div>
                                 </Section>

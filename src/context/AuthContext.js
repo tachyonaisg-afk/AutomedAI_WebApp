@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext } from 'react';
+import { setSessionDuration } from '../utils/sessionManager';
 
 const AuthContext = createContext(null);
 
@@ -82,6 +83,23 @@ export const AuthProvider = ({ children }) => {
           console.error("Error fetching role:", err);
         }
 
+        try {
+          const res = await fetch(
+            "https://hms.automedai.in/api/resource/System Settings/System Settings?fields=[\"session_expiry\"]",
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+
+          const data = await res.json();
+          const expiry = data?.data?.session_expiry;
+
+          setSessionDuration(expiry);
+        } catch (err) {
+          console.error("Failed to fetch session expiry, using default");
+        }
+
         const userData = {
           username,
           full_name: data.full_name || username,
@@ -95,6 +113,9 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('user', JSON.stringify(userData));
         console.log('✅ Login successful! User:', userData);
+
+        const expiryTime = Date.now() + 60 * 60 * 1000;
+        localStorage.setItem("sessionExpiry", expiryTime.toString());
         return true;
       } else {
         console.log('❌ Login failed:', data);
@@ -127,6 +148,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       localStorage.removeItem('company_logo');
       localStorage.removeItem("company_name");
+      localStorage.removeItem("company_abbreviation");
+      localStorage.removeItem("sessionExpiry");
     }
   };
 
@@ -144,4 +167,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

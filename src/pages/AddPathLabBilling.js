@@ -762,7 +762,7 @@ const AddPathLabBilling = () => {
   const [doctorResults, setDoctorResults] = useState([]);
   const [showDoctorResults, setShowDoctorResults] = useState(false);
   const [searchingDoctor, setSearchingDoctor] = useState(false);
-
+  const companyCode = localStorage.getItem('company_abbreviation') || '';
   // Fetch dropdown options on mount
   useEffect(() => {
     fetchDropdownOptions();

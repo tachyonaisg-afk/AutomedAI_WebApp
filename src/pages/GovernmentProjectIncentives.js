@@ -103,6 +103,7 @@ const PaginationWrapper = styled.div`
   justify-content: center;
   margin-top: 16px;
   gap: 6px;
+  flex-wrap: wrap; /* 🔥 important */
 `;
 
 const PageButton = styled.button`
@@ -112,6 +113,11 @@ const PageButton = styled.button`
   background: ${(props) => (props.active ? "#4a90e2" : "white")};
   color: ${(props) => (props.active ? "white" : "black")};
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 // Grand Total Box
@@ -173,10 +179,54 @@ function GovernmentProjectIncentives() {
   const currentData = filteredData.slice(start, start + pageSize);
 
   // Grand Total (IMPORTANT)
+  // const grandTotal = filteredData.reduce(
+  //   (sum, item) => sum + (item.net_total || 0),
+  //   0
+  // );
+
   const grandTotal = filteredData.reduce(
-    (sum, item) => sum + (item.net_total || 0),
+    (sum, item) => sum + Number(item.net_total || 0),
     0
   );
+
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredData.length / pageSize);
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [filteredData]);
+
+  const getPaginationRange = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    let l;
+
+    for (let i = 1; i <= totalPages; i++) {
+      if (
+        i === 1 ||
+        i === totalPages ||
+        (i >= currentPage - delta && i <= currentPage + delta)
+      ) {
+        range.push(i);
+      }
+    }
+
+    for (let i of range) {
+      if (l) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l > 2) {
+          rangeWithDots.push("...");
+        }
+      }
+      rangeWithDots.push(i);
+      l = i;
+    }
+
+    return rangeWithDots;
+  };
 
   return (
     <Layout>
@@ -249,15 +299,38 @@ function GovernmentProjectIncentives() {
         {/* Pagination */}
         {totalPages > 1 && (
           <PaginationWrapper>
-            {[...Array(totalPages)].map((_, i) => (
-              <PageButton
-                key={i}
-                active={currentPage === i + 1}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
-              </PageButton>
-            ))}
+            {/* PREV */}
+            <PageButton
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Prev
+            </PageButton>
+
+            {/* PAGE NUMBERS */}
+            {getPaginationRange().map((page, index) =>
+              page === "..." ? (
+                <span key={index} style={{ padding: "6px 10px" }}>...</span>
+              ) : (
+                <PageButton
+                  key={index}
+                  active={currentPage === page}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </PageButton>
+              )
+            )}
+
+            {/* NEXT */}
+            <PageButton
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </PageButton>
           </PaginationWrapper>
         )}
       </PageWrapper>

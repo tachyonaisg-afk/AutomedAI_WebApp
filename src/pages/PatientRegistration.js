@@ -768,7 +768,10 @@ const PatientRegistration = () => {
     status: "Active",
   });
   const [creatingDoctor, setCreatingDoctor] = useState(false);
-
+  const [existingPatient, setExistingPatient] = useState(null);
+  const [checkingPatient, setCheckingPatient] = useState(false);
+  const [showExistingPatientModal, setShowExistingPatientModal] = useState(false);
+  const lastCheckedUID = useRef(null);
   //search location
   const [addressSearch, setAddressSearch] = useState("");
   const [addressResults, setAddressResults] = useState([]);
@@ -864,6 +867,11 @@ const PatientRegistration = () => {
   const [showItemResults, setShowItemResults] = useState(false);
   const [searchingItem, setSearchingItem] = useState(false);
   const [showPHCOnly, setShowPHCOnly] = useState(false);
+
+  const [showAgentInfo, setShowAgentInfo] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
 
   const casteOptions = [
     { label: "General", value: "General" },
@@ -1038,6 +1046,42 @@ const PatientRegistration = () => {
       console.error("Error fetching practitioners:", error);
     }
   };
+
+  const fetchEmployees = async () => {
+    try {
+      setLoadingEmployees(true);
+
+      const res = await fetch(
+        'https://hms.automedai.in/api/resource/Employee?fields=["name","user_id","employee_name"]',
+        {
+          headers: { Accept: "application/json" },
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (data?.data) {
+        setEmployees(data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching employees:", err);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAgentInfo && employees.length === 0) {
+      fetchEmployees();
+    }
+  }, [showAgentInfo]);
+
+  useEffect(() => {
+    if (!showAgentInfo) {
+      setSelectedEmployee(null);
+    }
+  }, [showAgentInfo]);
 
   // Fetch gender and company options from API
   useEffect(() => {
@@ -1715,7 +1759,112 @@ const PatientRegistration = () => {
     }
   };
 
+  const handleViewPatient = () => {
+    if (!existingPatient?.name) return;
+
+    navigate(`/patients/${existingPatient.name}`);
+  };
+
+  const handleGoToBilling = async () => {
+    if (!existingPatient?.name) return;
+
+    try {
+      const response = await apiService.get(
+        API_ENDPOINTS.PATIENTS.DETAIL(existingPatient.name)
+      );
+
+      const patientData = response.data?.data;
+
+      navigate("/opd/billing/add", {
+        state: {
+          preselectedPatient: {
+            name: patientData.name,
+            patient_name:
+              patientData.patient_name ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+            customer_name:
+              patientData.customer ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+          },
+          defaultItemCode: "STO-ITEM-2025-00539",
+        },
+      });
+
+      setShowExistingPatientModal(false);
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+    }
+  };
+
+  const checkExistingPatient = async (uid) => {
+    if (!uid || uid.length < 12) return;
+
+    try {
+      setCheckingPatient(true);
+
+      const cleanUID = uid.replace(/\s/g, "");
+
+      const response = await apiService.get(
+        `https://hms.automedai.in/api/resource/Patient?fields=["*"]&filters=[["uid","=","${cleanUID}"]]`
+      );
+
+      const data = response.data;
+
+      if (data?.data?.length > 0) {
+        const patient = data.data[0];
+        setExistingPatient(patient);
+
+        // alert(`Patient already exists: ${patient.patient_name}`);
+        setShowExistingPatientModal(true);
+
+        // OPTIONAL (recommended): Autofill form
+        setFormData((prev) => ({
+          ...prev,
+          firstName: patient.first_name || "",
+          middleName: patient.middle_name || "",
+          lastName: patient.last_name || "",
+          gender: patient.sex || "",
+          dateOfBirth: patient.dob || "",
+          mobile: patient.mobile || "",
+          company: patient.custom_company || "",
+        }));
+
+        // Set medical history too
+        setMedicalHistory((prev) => ({
+          ...prev,
+          custom_religion: patient.custom_religion || "",
+          custom_cast: patient.custom_cast || "",
+          maritalStatus: patient.marital_status || "",
+          regularMedication: patient.medication || "",
+          surgeryHistory: patient.surgical_history || "",
+        }));
+      } else {
+        setExistingPatient(null);
+      }
+    } catch (error) {
+      console.error("Error checking patient:", error);
+    } finally {
+      setCheckingPatient(false);
+    }
+  };
+
+  useEffect(() => {
+    if (
+      formData.uid &&
+      formData.uid.length === 12 &&
+      formData.uid !== lastCheckedUID.current
+    ) {
+      lastCheckedUID.current = formData.uid;
+      checkExistingPatient(formData.uid);
+    }
+  }, [formData.uid]);
+
   const createPatient = async () => {
+    if (existingPatient) {
+      // alert("This patient already exists. Cannot create duplicate.");
+      setShowExistingPatientModal(true);
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload = {
@@ -1915,8 +2064,12 @@ const PatientRegistration = () => {
               rounding_adjustment: 0,
               mode_of_transport: "Road",
               gst_vehicle_type: "Regular",
+              // custom_agent: customAgent,
               // service_unit: "All Healthcare Service Units - RKMS",
             };
+            if (selectedEmployee) {
+              invoicePayload.custom_agent = selectedEmployee;
+            }
 
             // Add ref_practitioner if selected
             if (billingData.referringPractitioner) {
@@ -2270,7 +2423,7 @@ const PatientRegistration = () => {
                       placeholder="Select Gender"
                       isSearchable
                       isClearable
-                      required
+                    // required
                     />
                   </FormGroup>
 
@@ -2769,9 +2922,24 @@ const PatientRegistration = () => {
           {currentStep === 2 && (
             <>
               <FormSection>
-                <SectionTitle>Patient Information</SectionTitle>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <SectionTitle>Patient Information</SectionTitle>
 
-                <FormRow threeColumns={requiresAppointment}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
+                    <input
+                      type="checkbox"
+                      checked={showAgentInfo}
+                      onChange={(e) => setShowAgentInfo(e.target.checked)}
+                    />
+                    Add Employee Info
+                  </label>
+                </div>
+
+                <FormRow threeColumns={requiresAppointment || showAgentInfo}>
                   <FormGroup>
                     <FormLabel>
                       Practitioner<RequiredAsterisk>*</RequiredAsterisk>
@@ -2829,6 +2997,39 @@ const PatientRegistration = () => {
                           required
                         />
                       </FormGroup>
+                    </>
+                  )}
+
+                  {showAgentInfo && (
+                    <>
+                      <FormGroup>
+                        <FormLabel>Select Employee</FormLabel>
+
+                        <Select
+                          options={employees.map(emp => ({
+                            label: emp.employee_name,
+                            value: emp.name,
+                          }))}
+                          value={
+                            employees
+                              .map(emp => ({
+                                label: emp.employee_name,
+                                value: emp.name,
+                              }))
+                              .find(opt => opt.value === selectedEmployee) || null
+                          }
+                          onChange={(selected) =>
+                            setSelectedEmployee(selected ? selected.value : null)
+                          }
+                          placeholder={loadingEmployees ? "Loading..." : "Select employee"}
+                          isSearchable
+                          isClearable
+                        />
+                      </FormGroup>
+
+                      <AddDoctorButton type="button">
+                        + Add Employee
+                      </AddDoctorButton>
                     </>
                   )}
                 </FormRow>
@@ -3316,6 +3517,33 @@ const PatientRegistration = () => {
           onClose={() => setIsAadhaarOCRScannerOpen(false)}
           onDataExtracted={handleAadhaarDataExtracted}
         />
+
+        {showExistingPatientModal && existingPatient && (
+          <ModalOverlay>
+            <ModalContent>
+              <ModalHeader>Patient Already Exists</ModalHeader>
+
+              <p style={{ marginBottom: "16px" }}>
+                {existingPatient.patient_name} already exists in the system.
+              </p>
+
+              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <BackButton onClick={() => setShowExistingPatientModal(false)}>
+                  Cancel
+                </BackButton>
+
+                <NextButton onClick={handleViewPatient}>
+                  View Patient
+                </NextButton>
+
+                <NextButton onClick={handleGoToBilling}>
+                  Go to Billing
+                </NextButton>
+              </div>
+            </ModalContent>
+          </ModalOverlay>
+        )}
+
         {isAddDoctorOpen && (
           <ModalOverlay>
             <ModalContent>

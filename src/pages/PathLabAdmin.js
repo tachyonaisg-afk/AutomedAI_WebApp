@@ -356,20 +356,20 @@ const OpdAdmin = () => {
               <ActionTitle>Test Template Management</ActionTitle>
             </ActionCard>
 
-            <ActionCard
+            {/* <ActionCard
             // onClick={() => navigate("/pathlab/admin/test-result-manage")}
             >
               <IconWrapper variant="orange">
                 <Clock size={26} />
               </IconWrapper>
               <ActionTitle>Test Result Manage</ActionTitle>
-            </ActionCard>
+            </ActionCard> */}
 
             <ActionCard>
               <IconWrapper variant="red">
                 <CreditCard size={26} />
               </IconWrapper>
-              <ActionTitle>Cancel Bill</ActionTitle>
+              <ActionTitle>Billing Management</ActionTitle>
             </ActionCard>
 
             <ActionCard>

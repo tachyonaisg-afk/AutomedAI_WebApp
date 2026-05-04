@@ -9,6 +9,7 @@
  */
 
 import API_CONFIG from "../../config/api.config";
+import { updateSessionExpiry } from "../../utils/sessionManager";
 
 class ApiClient {
   constructor() {
@@ -102,6 +103,34 @@ class ApiClient {
   /**
    * Handle errors
    */
+  // handleSessionExpired() {
+  //   if (typeof window !== "undefined") {
+  //     // Prevent multiple redirects
+  //     if (window.__SESSION_EXPIRED__) return;
+
+  //     window.__SESSION_EXPIRED__ = true;
+
+  //     // Clear state
+  //     localStorage.removeItem("isAuthenticated");
+  //     localStorage.removeItem("user");
+  //     localStorage.removeItem("company_name");
+  //     localStorage.removeItem("company_logo");
+
+  //     // Optional: call logout API
+  //     fetch(`${this.baseURL}/method/logout`, {
+  //       method: "POST",
+  //       credentials: "include",
+  //     }).catch(() => { });
+
+  //     // Redirect cleanly
+  //     setTimeout(() => {
+  //       window.location.href = "/login";
+  //     }, 500);
+  //   }
+
+  //   throw new Error("Session expired");
+  // }
+
   handleError(error) {
     if (error.response) {
       const { status, data } = error.response;
@@ -118,6 +147,10 @@ class ApiClient {
 
         case 403:
           throw new Error("Forbidden. You do not have permission.");
+
+        // case 401:
+        // case 403:
+        //   return this.handleSessionExpired();
 
         case 404:
           throw new Error("Resource not found.");
@@ -215,6 +248,11 @@ class ApiClient {
         );
         error.response = apiResponse;
         throw error;
+      }
+
+      // After successful response (before return)
+      if (response.ok && typeof window !== "undefined") {
+        updateSessionExpiry();
       }
 
       return await this.applyResponseInterceptors(apiResponse);

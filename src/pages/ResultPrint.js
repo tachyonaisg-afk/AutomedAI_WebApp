@@ -291,7 +291,7 @@ const BackButton = styled.button`
 const ReportPreview = styled.div`
   padding: 0px 15px;
   background-color: #ffffff;
-  border: 1px solid #e0e0e0;
+  // border: 1px solid #e0e0e0;
   border-radius: 4px;
   min-height: 1005px;
   display: flex;
@@ -408,7 +408,7 @@ const ResultsTable = styled.table`
 
 const TableHeader = styled.th`
   text-align: left;
-  padding: 10px 12px;
+  padding: 5px 12px;
   background-color: #ffffff;
   font-size: 12px;
   color: #000000;
@@ -428,8 +428,8 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 4px 12px;
-  font-size: 12px;
+  padding: 1px 12px;
+  font-size: 14px;
   color: #000000;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -441,7 +441,7 @@ const ReportFooter = styled.div`
   // margin-bottom: 100px;
   margin-top: auto;
   padding-top: 0px;
-  border-top: 1px solid #e0e0e0;
+  // border-top: 1px solid #e0e0e0;
 `;
 
 const EndOfReport = styled.div`
@@ -450,7 +450,7 @@ const EndOfReport = styled.div`
   font-weight: 600;
   color: #000000;
   padding: 5px 0;
-  border-top: 2px solid #e0e0e0;
+  // border-top: 2px solid #e0e0e0;
   letter-spacing: 1px;
 
   @media print {
@@ -655,10 +655,26 @@ const ResultPrint = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const companyCode = localStorage.getItem('company_abbreviation') || '';
+
   // Helper function to remove prefixes from test names
   const removeTestPrefix = (testName) => {
     if (!testName) return testName;
-    return testName.replace(/^(PHC-|LAB-|PLB-)\s*/i, '');
+
+    const prefixes = ["PHC", "LAB", "PLB", companyCode?.toUpperCase()]
+      .filter(Boolean)
+      .join("|");
+
+    const regex = new RegExp(`^(${prefixes})-\\s*`, "i");
+
+    let cleaned = testName;
+
+    // 🔁 Keep removing prefixes until none left
+    while (regex.test(cleaned)) {
+      cleaned = cleaned.replace(regex, "");
+    }
+
+    return cleaned.trim();
   };
 
   // Helper function to format date to dd/mm/yyyy
@@ -1408,10 +1424,10 @@ const ResultPrint = () => {
               </PatientInfoSection>
               <ResultsTable>
                 <colgroup>
-                  <col style={{ width: "35%" }} />  
-                  <col style={{ width: "15%" }} />  
-                  <col style={{ width: "15%" }} />  
-                  <col style={{ width: "35%" }} /> 
+                  <col style={{ width: "35%" }} />
+                  <col style={{ width: "17%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "36%" }} />
                 </colgroup>
                 <tbody>
                   {selectedTestDetails.map((testDetail, index) => {
@@ -1438,9 +1454,12 @@ const ResultPrint = () => {
                             <tr>
                               <TableHeader>Test Parameter</TableHeader>
                               <TableHeader style={{ textAlign: "left" }}>Result</TableHeader>
+                              <TableHeader style={{ textAlign: "left" }}>Result</TableHeader>
 
                               {!isDescriptive && (
                                 <>
+                                  <TableHeader style={{ textAlign: "left" }}>Units</TableHeader>
+                                  <TableHeader style={{ textAlign: "left" }}>Reference Interval</TableHeader>
                                   <TableHeader style={{ textAlign: "left" }}>Units</TableHeader>
                                   <TableHeader style={{ textAlign: "left" }}>Reference Interval</TableHeader>
                                 </>
