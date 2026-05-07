@@ -1424,6 +1424,17 @@ const PatientRegistration = () => {
     try {
       let finalQuery = query.trim();
 
+      // -----------------------------
+      // EMPLOYEE MODE (HIGHEST PRIORITY)
+      // -----------------------------
+      if (showAgentInfo) {
+        const cleanedQuery = query
+          .trim()
+          .replace(/^(plb|lab|phc)-?\s*/i, "");
+
+        finalQuery = `PLB- ${cleanedQuery}`;
+      }
+
       // Normalize prefix (PLB / LAB / PHC)
       const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
 
@@ -1468,9 +1479,19 @@ const PatientRegistration = () => {
       const typed = query.trim().toUpperCase();
 
       // ------------------------------------------------
+      // EMPLOYEE MODE (HIGHEST PRIORITY)
+      // ------------------------------------------------
+      if (showAgentInfo) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith("PLB")
+        );
+      }
+
+
+      // ------------------------------------------------
       // PHC MODE (Highest Priority)
       // ------------------------------------------------
-      if (showPHCOnly) {
+      else if (showPHCOnly) {
         results = results.filter((item) =>
           item.description?.toUpperCase().startsWith("PHC")
         );
@@ -1519,6 +1540,12 @@ const PatientRegistration = () => {
       setSearchingItem(false);
     }
   }, [showPHCOnly, getLockedCategory]);
+
+  useEffect(() => {
+    if (showAgentInfo) {
+      setShowPHCOnly(false);
+    }
+  }, [showAgentInfo]);
 
   // Debounce effect for item search
   useEffect(() => {
@@ -3041,7 +3068,7 @@ const PatientRegistration = () => {
 
                   <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
-                    {(
+                    {!showAgentInfo && (
                       formData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
                       formData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
                     ) && (

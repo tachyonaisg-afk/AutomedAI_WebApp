@@ -444,8 +444,10 @@ const Billing = () => {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchCustomer, setSearchCustomer] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const today = new Date().toISOString().split("T")[0];
+
+  const [fromDate, setFromDate] = useState(today);
+  const [toDate, setToDate] = useState(today);
   const invoiceRef = useRef();
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState("");
@@ -819,7 +821,7 @@ const Billing = () => {
       }
 
       const payload = {
-        doctype: "Sales Invoice",
+        // doctype: "Sales Invoice",
         fields: [
           "name",
           "patient",
@@ -838,15 +840,26 @@ const Billing = () => {
       };
 
       const res = await api.post(
-        "/method/frappe.client.get_list",
+        "/resource/Sales Invoice",
         payload,
         { withCredentials: true }
       );
 
       const data = res.data?.message || [];
 
-      // ✅ sort latest first
-      const sorted = data.sort(
+      // ✅ Remove duplicates based on invoice name
+      const uniqueInvoicesMap = {};
+
+      data.forEach((invoice) => {
+        if (!uniqueInvoicesMap[invoice.name]) {
+          uniqueInvoicesMap[invoice.name] = invoice;
+        }
+      });
+
+      const uniqueInvoices = Object.values(uniqueInvoicesMap);
+
+      // ✅ Stable newest first
+      const sorted = uniqueInvoices.sort(
         (a, b) => new Date(b.creation) - new Date(a.creation)
       );
 
