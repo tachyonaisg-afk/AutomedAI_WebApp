@@ -741,7 +741,7 @@ const PathLabBilling = () => {
       const sorted = uniqueInvoices.sort(
         (a, b) => new Date(b.creation) - new Date(a.creation)
       );
-
+      console.log("Invoices:", data);
       setInvoices(sorted);
 
     } catch (err) {
@@ -764,11 +764,15 @@ const PathLabBilling = () => {
     { key: "status", label: "STATUS" },
     { key: "actions", label: "ACTION" },
   ];
-  const renderStatus = (status) => (
-    <InvoiceStatus variant={status.toLowerCase()}>
-      {status}
-    </InvoiceStatus>
-  );
+  const renderStatus = (status) => {
+    const safeStatus = status || "Unknown";
+
+    return (
+      <InvoiceStatus variant={safeStatus.toLowerCase()}>
+        {safeStatus}
+      </InvoiceStatus>
+    );
+  };
   const printInvoice = async (row) => {
     try {
       const res = await api.get(`/resource/Sales Invoice/${row.name}`);

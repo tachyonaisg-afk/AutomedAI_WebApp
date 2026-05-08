@@ -885,11 +885,15 @@ const Billing = () => {
     { key: "actions", label: "ACTION" },
   ];
 
-  const renderStatus = (status) => (
-    <InvoiceStatus variant={status.toLowerCase()}>
-      {status}
-    </InvoiceStatus>
-  );
+  const renderStatus = (status) => {
+    const safeStatus = status || "Unknown";
+
+    return (
+      <InvoiceStatus variant={safeStatus.toLowerCase()}>
+        {safeStatus}
+      </InvoiceStatus>
+    );
+  };
   const printInvoice = async (row) => {
     try {
       const res = await api.get(`/resource/Sales Invoice/${row.name}`);
