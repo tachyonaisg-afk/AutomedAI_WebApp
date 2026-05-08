@@ -686,9 +686,16 @@ const PathLabBilling = () => {
         filters.push(["posting_date", "between", [fromDate, toDate]]);
       }
 
-      if (searchCustomer) {
-        filters.push(["patient", "=", searchCustomer]);
-      }
+      // Patient Name search
+      const or_filters = searchCustomer
+        ? [
+          [
+            "patient_name",
+            "like",
+            `%${searchCustomer}%`,
+          ],
+        ]
+        : [];
 
       const payload = {
         // doctype: "Sales Invoice",
@@ -705,6 +712,7 @@ const PathLabBilling = () => {
           "`tabSales Invoice Item`.item_group",
         ],
         filters,
+        or_filters,
         limit_page_length: 100000000,
         limit_start: 0,
       };
@@ -1218,12 +1226,12 @@ const PathLabBilling = () => {
         <ToolbarSection>
           {/* Search */}
           <SearchContainer>
-            <DateLabel>Search by Patient ID:</DateLabel>
+            <DateLabel>Search by Patient Name:</DateLabel>
             <SearchIcon>
               <Search />
             </SearchIcon>
             <SearchInput
-              placeholder="Search by Patient ID..."
+              placeholder="Search by Patient Name..."
               value={searchCustomer}
               onChange={(e) => setSearchCustomer(e.target.value)}
             />

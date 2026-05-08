@@ -811,14 +811,16 @@ const Billing = () => {
         ]);
       }
 
-      // Patient filter
-      if (searchCustomer) {
-        filters.push([
-          "patient",
-          "=",
-          searchCustomer,
-        ]);
-      }
+      // Patient Name search
+      const or_filters = searchCustomer
+        ? [
+          [
+            "patient_name",
+            "like",
+            `%${searchCustomer}%`,
+          ],
+        ]
+        : [];
 
       const payload = {
         // doctype: "Sales Invoice",
@@ -835,6 +837,7 @@ const Billing = () => {
           "`tabSales Invoice Item`.item_group",
         ],
         filters,
+        or_filters,
         limit_page_length: 100000000,
         limit_start: 0,
       };
@@ -1336,12 +1339,12 @@ const Billing = () => {
         <ToolbarSection>
           {/* Search */}
           <SearchContainer>
-            <DateLabel>Search by Patient ID:</DateLabel>
+            <DateLabel>Search by Patient Name:</DateLabel>
             <SearchIcon>
               <Search />
             </SearchIcon>
             <SearchInput
-              placeholder="Search by Patient ID..."
+              placeholder="Search by Patient Name..."
               value={searchCustomer}
               onChange={(e) => setSearchCustomer(e.target.value)}
             />
