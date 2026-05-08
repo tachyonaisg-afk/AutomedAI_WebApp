@@ -359,10 +359,10 @@ const PathLabResults = () => {
           </SearchContainer>
 
           <ButtonGroup>
-            <FilterButton onClick={handleFilter}>
+            {/* <FilterButton onClick={handleFilter}>
               <Filter />
               Filter
-            </FilterButton>
+            </FilterButton> */}
           </ButtonGroup>
         </ToolbarSection>
 

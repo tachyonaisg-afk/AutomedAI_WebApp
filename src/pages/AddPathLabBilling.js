@@ -12,7 +12,7 @@ import paymentQR from "../assets/paymentupi.jpeg";
 const BillingContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
 `;
 
 const Title = styled.h1`
@@ -706,6 +706,23 @@ const SearchButton = styled.button`
   }
 `;
 
+const AddDoctorButton = styled.button`
+  margin-top: 28px;
+  margin-right: 250px;
+  background: none;
+  color: #4a90e2;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #4a90e2;
+
+  &:hover {
+    background-color: #4a90e2;
+    color: #fff;
+  }
+`;
+
 const AddPathLabBilling = () => {
   usePageTitle("Add Billing");
   const navigate = useNavigate();
@@ -762,6 +779,10 @@ const AddPathLabBilling = () => {
   const [doctorResults, setDoctorResults] = useState([]);
   const [showDoctorResults, setShowDoctorResults] = useState(false);
   const [searchingDoctor, setSearchingDoctor] = useState(false);
+  const [showAgentInfo, setShowAgentInfo] = useState(false);
+  const [employees, setEmployees] = useState([]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [loadingEmployees, setLoadingEmployees] = useState(false);
   const companyCode = localStorage.getItem('company_abbreviation') || '';
   // Fetch dropdown options on mount
   useEffect(() => {
@@ -1024,6 +1045,42 @@ const AddPathLabBilling = () => {
   //   }
   // }, []);
 
+  const fetchEmployees = async () => {
+    try {
+      setLoadingEmployees(true);
+
+      const res = await fetch(
+        'https://hms.automedai.in/api/resource/Employee?fields=["name","user_id","employee_name"]',
+        {
+          headers: { Accept: "application/json" },
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (data?.data) {
+        setEmployees(data.data);
+      }
+    } catch (err) {
+      console.error("Error fetching employees:", err);
+    } finally {
+      setLoadingEmployees(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showAgentInfo && employees.length === 0) {
+      fetchEmployees();
+    }
+  }, [showAgentInfo]);
+
+  useEffect(() => {
+    if (!showAgentInfo) {
+      setSelectedEmployee(null);
+    }
+  }, [showAgentInfo]);
+
   // Debounced patient search
   const searchPatients = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -1067,6 +1124,7 @@ const AddPathLabBilling = () => {
 
     return null;
   }, [items]);
+
   // Debounced item search
   const searchItems = useCallback(async (query) => {
     if (!query || query.length < 2) {
@@ -1079,6 +1137,17 @@ const AddPathLabBilling = () => {
 
     try {
       let finalQuery = query.trim();
+
+      // -----------------------------
+      // EMPLOYEE MODE (HIGHEST PRIORITY)
+      // -----------------------------
+      if (showAgentInfo) {
+        const cleanedQuery = query
+          .trim()
+          .replace(/^(plb|lab|phc)-?\s*/i, "");
+
+        finalQuery = `PLB- ${cleanedQuery}`;
+      }
 
       // Normalize prefix (PLB / LAB / PHC)
       const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
@@ -1124,9 +1193,18 @@ const AddPathLabBilling = () => {
       const typed = query.trim().toUpperCase();
 
       // ------------------------------------------------
+      // EMPLOYEE MODE (HIGHEST PRIORITY)
+      // ------------------------------------------------
+      if (showAgentInfo) {
+        results = results.filter((item) =>
+          item.description?.toUpperCase().startsWith("PLB")
+        );
+      }
+
+      // ------------------------------------------------
       // PHC MODE (Highest Priority)
       // ------------------------------------------------
-      if (showPHCOnly) {
+      else if (showPHCOnly) {
         results = results.filter((item) =>
           item.description?.toUpperCase().startsWith("PHC")
         );
@@ -1173,6 +1251,12 @@ const AddPathLabBilling = () => {
       setSearchingItem(false);
     }
   }, [showPHCOnly, getLockedCategory]);
+
+  useEffect(() => {
+    if (showAgentInfo) {
+      setShowPHCOnly(false);
+    }
+  }, [showAgentInfo]);
 
   // Debounce effect for patient search
   useEffect(() => {
@@ -1684,7 +1768,22 @@ const AddPathLabBilling = () => {
         <form onSubmit={handleSubmit}>
           {/* Patient & Company Information */}
           <FormSection>
-            <SectionTitle>Patient & Company Information</SectionTitle>
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}>
+              <SectionTitle>Patient & Company Information</SectionTitle>
+
+              <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
+                <input
+                  type="checkbox"
+                  checked={showAgentInfo}
+                  onChange={(e) => setShowAgentInfo(e.target.checked)}
+                />
+                Add Employee Info
+              </label>
+            </div>
             <FormGrid>
               <FormGroup>
                 <FormLabel>
@@ -1826,6 +1925,39 @@ const AddPathLabBilling = () => {
                 />
               </FormGroup>
 
+              {showAgentInfo && (
+                <>
+                  <FormGroup>
+                    <FormLabel>Select Employee</FormLabel>
+
+                    <Select
+                      options={employees.map(emp => ({
+                        label: emp.employee_name,
+                        value: emp.name,
+                      }))}
+                      value={
+                        employees
+                          .map(emp => ({
+                            label: emp.employee_name,
+                            value: emp.name,
+                          }))
+                          .find(opt => opt.value === selectedEmployee) || null
+                      }
+                      onChange={(selected) =>
+                        setSelectedEmployee(selected ? selected.value : null)
+                      }
+                      placeholder={loadingEmployees ? "Loading..." : "Select employee"}
+                      isSearchable
+                      isClearable
+                    />
+                  </FormGroup>
+
+                  <AddDoctorButton type="button">
+                    + Add Employee
+                  </AddDoctorButton>
+                </>
+              )}
+
             </FormGrid>
 
             {/* <CheckboxGroup>
@@ -1896,7 +2028,7 @@ const AddPathLabBilling = () => {
 
               <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
 
-                {(
+                {!showAgentInfo && (
                   billingData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
                   billingData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
                 ) && (
@@ -2044,7 +2176,7 @@ const AddPathLabBilling = () => {
           </ItemsSection>
 
           {/* Bottom Section - Calculations & Payment */}
-          <BottomSection style={{ marginTop: "24px" }}>
+          <BottomSection style={{ marginTop: "8px" }}>
             <CalculationCard>
               <CardTitle>Calculation</CardTitle>
               <CalculationRow>

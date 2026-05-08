@@ -1201,10 +1201,10 @@ const PathLabBilling = () => {
               <Plus />
               Add Billing
             </AddButton>
-            <ExportButton>
+            {/* <ExportButton>
               <Download />
               Export Report
-            </ExportButton>
+            </ExportButton> */}
           </ButtonGroup>
         </HeaderSection>
 
@@ -1268,8 +1268,8 @@ const PathLabBilling = () => {
               type="button"
               value="Reset"
               onClick={() => {
-                setFromDate("");
-                setToDate("");
+                setFromDate(today);
+                setToDate(today);
               }}
             />
           </DateContainer>

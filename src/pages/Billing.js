@@ -1306,10 +1306,10 @@ const Billing = () => {
               <Plus />
               Add Billing
             </AddButton>
-            <ExportButton>
+            {/* <ExportButton>
               <Download />
               Export Report
-            </ExportButton>
+            </ExportButton> */}
           </ButtonGroup>
         </HeaderSection>
 

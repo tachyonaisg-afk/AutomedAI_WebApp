@@ -587,10 +587,10 @@ const LabTest = () => {
               <Filter />
               Filter
             </FilterButton>
-            <NewButton onClick={handleNewTest}>
+            {/* <NewButton onClick={handleNewTest}>
               <Plus />
               New Test
-            </NewButton>
+            </NewButton> */}
           </ButtonGroup>
         </ToolbarSection>
 

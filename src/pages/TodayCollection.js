@@ -963,10 +963,10 @@ ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
                             <Filter />
                             Filter
                         </FilterButton>
-                        <NewButton onClick={handleNewCollection}>
+                        {/* <NewButton onClick={handleNewCollection}>
                             <Plus />
                             New Collection
-                        </NewButton>
+                        </NewButton> */}
                     </ButtonGroup>
                 </ToolbarSection>
 
