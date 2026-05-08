@@ -717,7 +717,7 @@ const PathLabBilling = () => {
         limit_start: 0,
       };
 
-      const res = await api.post(
+      const res = await api.get(
         "/resource/Sales Invoice",
         payload,
         { withCredentials: true }
