@@ -682,8 +682,13 @@ const PathLabBilling = () => {
         ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]],
       ];
 
+      // Date filter
       if (fromDate && toDate) {
-        filters.push(["posting_date", "between", [fromDate, toDate]]);
+        filters.push([
+          "posting_date",
+          "between",
+          [fromDate, toDate],
+        ]);
       }
 
       // Patient Name search
@@ -697,33 +702,29 @@ const PathLabBilling = () => {
         ]
         : [];
 
-      const payload = {
-        // doctype: "Sales Invoice",
-        fields: [
-          "name",
-          "patient",
-          "patient_name",
-          "posting_date",
-          "company",
-          "status",
-          "creation",
-          "total_qty",
-          "net_total",
-          "`tabSales Invoice Item`.item_group",
-        ],
-        filters,
-        or_filters,
-        limit_page_length: 100000000,
-        limit_start: 0,
-      };
+      const res = await api.get("/resource/Sales Invoice", {
+        params: {
+          fields: JSON.stringify([
+            "name",
+            "patient",
+            "patient_name",
+            "posting_date",
+            "company",
+            "status",
+            "creation",
+            "total_qty",
+            "net_total",
+            "`tabSales Invoice Item`.item_group",
+          ]),
+          filters: JSON.stringify(filters),
+          or_filters: JSON.stringify(or_filters),
+          limit_page_length: 100000000,
+          limit_start: 0,
+        },
+        withCredentials: true,
+      });
 
-      const res = await api.get(
-        "/resource/Sales Invoice",
-        payload,
-        { withCredentials: true }
-      );
-
-      const data = res.data?.message || [];
+      const data = res.data?.data || [];
 
       // ✅ Remove duplicates based on invoice name
       const uniqueInvoicesMap = {};
