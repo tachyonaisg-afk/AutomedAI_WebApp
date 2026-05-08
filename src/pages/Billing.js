@@ -823,25 +823,22 @@ const Billing = () => {
         : [];
 
       const res = await api.get("/resource/Sales Invoice", {
-        params: {
-          fields: JSON.stringify([
-            "name",
-            "patient",
-            "patient_name",
-            "posting_date",
-            "company",
-            "status",
-            "creation",
-            "total_qty",
-            "net_total",
-            "`tabSales Invoice Item`.item_group",
-          ]),
-          filters: JSON.stringify(filters),
-          or_filters: JSON.stringify(or_filters),
-          limit_page_length: 100000000,
-          limit_start: 0,
-        },
-        withCredentials: true,
+        fields: JSON.stringify([
+          "name",
+          "patient",
+          "patient_name",
+          "posting_date",
+          "company",
+          "status",
+          "creation",
+          "total_qty",
+          "net_total",
+          "`tabSales Invoice Item`.item_group",
+        ]),
+        filters: JSON.stringify(filters),
+        or_filters: JSON.stringify(or_filters),
+        limit_page_length: 100000000,
+        limit_start: 0,
       });
 
       const data = res.data?.data || [];

@@ -703,25 +703,22 @@ const PathLabBilling = () => {
         : [];
 
       const res = await api.get("/resource/Sales Invoice", {
-        params: {
-          fields: JSON.stringify([
-            "name",
-            "patient",
-            "patient_name",
-            "posting_date",
-            "company",
-            "status",
-            "creation",
-            "total_qty",
-            "net_total",
-            "`tabSales Invoice Item`.item_group",
-          ]),
-          filters: JSON.stringify(filters),
-          or_filters: JSON.stringify(or_filters),
-          limit_page_length: 100000000,
-          limit_start: 0,
-        },
-        withCredentials: true,
+        fields: JSON.stringify([
+          "name",
+          "patient",
+          "patient_name",
+          "posting_date",
+          "company",
+          "status",
+          "creation",
+          "total_qty",
+          "net_total",
+          "`tabSales Invoice Item`.item_group",
+        ]),
+        filters: JSON.stringify(filters),
+        or_filters: JSON.stringify(or_filters),
+        limit_page_length: 100000000,
+        limit_start: 0,
       });
 
       const data = res.data?.data || [];
@@ -730,7 +727,7 @@ const PathLabBilling = () => {
       const uniqueInvoicesMap = {};
 
       data.forEach((invoice) => {
-        if (!uniqueInvoicesMap[invoice.name]) {
+        if (invoice?.name && !uniqueInvoicesMap[invoice.name]) {
           uniqueInvoicesMap[invoice.name] = invoice;
         }
       });
@@ -741,11 +738,14 @@ const PathLabBilling = () => {
       const sorted = uniqueInvoices.sort(
         (a, b) => new Date(b.creation) - new Date(a.creation)
       );
-      console.log("Invoices:", data);
+
+      console.log("Invoices:", sorted);
+
       setInvoices(sorted);
 
     } catch (err) {
       console.error("❌ Error fetching invoices:", err);
+      console.error(err?.response?.data);
     } finally {
       setLoading(false);
     }
