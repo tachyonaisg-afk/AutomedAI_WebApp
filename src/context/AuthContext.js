@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
       //   body: formData,
       // });
 
-      const response = await fetch('https://hms.automedai.in/api/method/login', {
+      const response = await fetch('https://stg.automedai.in/api/method/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
