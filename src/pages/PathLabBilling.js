@@ -601,11 +601,12 @@ const PathLabBilling = () => {
 
         api.get("/resource/Sales Invoice", {
           ...baseParams,
-          limit_page_length: 10000,
+          limit_page_length: 100000,
           filters: JSON.stringify([
             ["posting_date", "between", [firstDayOfMonth, today]],
             ["status", "=", "Paid"],
             ["company", "=", selectedCompany],
+            ["Sales Invoice Item","item_group","in",["LAB","PHC","PLB"]]
           ]),
         }),
 

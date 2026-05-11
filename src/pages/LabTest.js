@@ -419,7 +419,7 @@ const LabTest = () => {
 
       const params = {
         fields:
-          '["name","patient","patient_name","status","lab_test_name","sample","department"]',
+          '["name","patient","patient_name","status","lab_test_name","sample","department","creation"]',
         filters: JSON.stringify(filters),
         order_by: "creation desc",
         limit_start: limitStart,
@@ -439,6 +439,7 @@ const LabTest = () => {
         const tests = response.data.data.map((t) => ({
           ...t,
           lab_test_name: formatTestName(t.lab_test_name),
+          creation: t.creation?.split(" ")[0] || "",
         }));
 
         setLabTestsData(tests);
@@ -501,6 +502,7 @@ const LabTest = () => {
     { key: "patient_name", label: "PATIENT NAME" },
     { key: "lab_test_name", label: "TEST NAME" },
     { key: "department", label: "DEPARTMENT" },
+    { key: "creation", label: "CREATION DATE" },
     { key: "status", label: "SAMPLE STATUS" },
     { key: "actions", label: "ACTION" },
   ];
