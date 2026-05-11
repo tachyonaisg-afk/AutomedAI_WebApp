@@ -1,13 +1,16 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
 
+# Ensure devDependencies are installed
+ENV NODE_ENV=development
+
 # Install dependencies
-RUN npm install --legacy-peer-deps --silent
+RUN npm install --legacy-peer-deps
 
 # Copy app files
 COPY . .
@@ -24,7 +27,7 @@ COPY --from=build /app/build /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80
+# Expose port
 EXPOSE 80
 
 # Start nginx

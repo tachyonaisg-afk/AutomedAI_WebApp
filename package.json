@@ -48,6 +48,8 @@
     ]
   },
   "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-keywords": "^5.1.0",
     "http-proxy-middleware": "^3.0.5"
   }
 }
