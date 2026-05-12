@@ -955,6 +955,41 @@ const Dashboard = () => {
   };
 
   // Search patients function
+  // const searchPatients = async (query) => {
+  //   if (!query.trim()) {
+  //     setSearchResults([]);
+  //     setShowSearchResults(false);
+  //     return;
+  //   }
+
+  //   try {
+  //     setIsSearching(true);
+  //     console.log("🔍 Searching for patients with query:", query);
+
+  //     const response = await api.get(API_ENDPOINTS.PATIENTS.SEARCH_LINK, {
+  //       txt: query,
+  //       doctype: "Patient",
+  //       page_length: 500,
+  //     });
+
+  //     console.log("✅ Search API Response:", response);
+  //     console.log("📊 Search results data:", response.data);
+
+  //     const results = response.data?.message || response.data?.data || [];
+
+  //     console.log("📋 Processed search results:", results);
+  //     console.log("📝 First search result:", results[0]);
+
+  //     setSearchResults(results);
+  //     setShowSearchResults(true);
+  //   } catch (err) {
+  //     console.error("❌ Error searching patients:", err);
+  //     setSearchResults([]);
+  //     setShowSearchResults(false);
+  //   } finally {
+  //     setIsSearching(false);
+  //   }
+  // };
   const searchPatients = async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -964,21 +999,38 @@ const Dashboard = () => {
 
     try {
       setIsSearching(true);
+
       console.log("🔍 Searching for patients with query:", query);
 
-      const response = await api.get(API_ENDPOINTS.PATIENTS.SEARCH_LINK, {
-        txt: query,
-        doctype: "Patient",
-        page_length: 500,
-      });
+      const response = await api.get(
+        "https://hms.automedai.in/api/resource/Patient",
+        {
+          limit_page_length: 5000,
+          fields: JSON.stringify([
+            "name",
+            "patient_name",
+            "sex",
+            "mobile",
+            "email",
+            "uid",
+            "custom_external_id",
+          ]),
+          or_filters: JSON.stringify([
+            ["custom_external_id", "like", `%${query}%`],
+            ["patient_name", "like", `%${query}%`],
+            ["uid", "like", `%${query}%`],
+            ["email", "like", `%${query}%`],
+            ["mobile", "like", `%${query}%`],
+            ["name", "like", `%${query}%`],
+          ]),
+        }
+      );
 
       console.log("✅ Search API Response:", response);
-      console.log("📊 Search results data:", response.data);
 
-      const results = response.data?.message || response.data?.data || [];
+      const results = response.data?.data || [];
 
       console.log("📋 Processed search results:", results);
-      console.log("📝 First search result:", results[0]);
 
       setSearchResults(results);
       setShowSearchResults(true);
@@ -1242,15 +1294,26 @@ const Dashboard = () => {
                       // onMouseDown={() => handlePatientSelect(patient)}
                       >
                         <ResultLeft>
-                          <ResultValue>{patient.description}</ResultValue>
-                          <ResultDescription>{patient.value}</ResultDescription>
+                          {/* <ResultValue>{patient.description}</ResultValue>
+                          <ResultDescription>{patient.value}</ResultDescription> */}
+                          <ResultValue>
+                            {patient.patient_name || "-"}
+                          </ResultValue>
+
+                          <ResultDescription>
+                            {patient.name}
+                            {patient.mobile ? ` • ${patient.mobile}` : ""}
+                            {patient.custom_external_id
+                              ? ` • ${patient.custom_external_id}`
+                              : ""}
+                          </ResultDescription>
                         </ResultLeft>
 
                         <ResultActions>
                           <ActionButton
                             onMouseDown={(e) => {
                               e.stopPropagation();
-                              navigate(`/patients/${patient.value}`);
+                              navigate(`/patients/${patient.name}`);
                               setShowSearchResults(false);
                             }}
                           >
@@ -1261,7 +1324,7 @@ const Dashboard = () => {
                           <ActionButton
                             onMouseDown={(e) => {
                               e.stopPropagation();
-                              handleAddBilling(patient.value);
+                              handleAddBilling(patient.name);
                               setShowSearchResults(false);
                             }}
                           >

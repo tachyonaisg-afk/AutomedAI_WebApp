@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
 import { Camera } from "lucide-react";
 import usePageTitle from "../hooks/usePageTitle";
+import api from "../services/api";
+
+// ================= STYLES =================
 
 const SettingsContainer = styled.div`
   display: flex;
@@ -32,6 +35,12 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 8px;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
 `;
 
 const SectionTitleWrapper = styled.div`
@@ -165,6 +174,11 @@ const SaveButton = styled.button`
   &:hover {
     background-color: #357abd;
   }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 `;
 
 const Separator = styled.hr`
@@ -198,22 +212,80 @@ const PasswordFormGrid = styled.div`
   gap: 20px;
 `;
 
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+// ================= COMPONENT =================
+
 const Settings = () => {
   usePageTitle("Settings");
+
+  const fileInputRef = useRef(null);
+
+  const [loading, setLoading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  const [userEmail, setUserEmail] = useState("");
+
   const [profileData, setProfileData] = useState({
-    fullName: "Dr. Emily Carter",
-    phoneNumber: "(555) 123-4567",
-    email: "emily.carter@clinic.com",
+    fullName: "",
+    mobileNo: "",
+    email: "",
+    userImage: "",
   });
 
   const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
+  // ================= FETCH USER =================
+
+  const fetchUserDetails = async () => {
+    try {
+      setLoading(true);
+
+      // Get logged in email
+      const loggedUserRes = await api.get(
+        "/method/frappe.auth.get_logged_user"
+      );
+
+      const email = loggedUserRes.data?.message;
+
+      if (!email) return;
+
+      setUserEmail(email);
+
+      // Get user details
+      const userRes = await api.get(`/resource/User/${email}`);
+
+      const user = userRes.data?.data;
+
+      setProfileData({
+        fullName: user?.full_name || "",
+        mobileNo: user?.mobile_no || user?.phone || "",
+        email: user?.email || "",
+        userImage: user?.user_image
+          ? `https://hms.automedai.in${user.user_image}`
+          : "",
+      });
+    } catch (err) {
+      console.error("Error fetching user details", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, []);
+
+  // ================= HANDLE INPUTS =================
+
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
+
     setProfileData((prev) => ({
       ...prev,
       [name]: value,
@@ -222,31 +294,136 @@ const Settings = () => {
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
+
     setPasswordData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleProfileSave = (e) => {
-    e.preventDefault();
-    console.log("Profile saved:", profileData);
-    // Handle profile save
+  // ================= NAME SPLIT =================
+
+  const splitName = (fullName) => {
+    const parts = fullName.trim().split(" ");
+
+    const first_name = parts[0] || "";
+    const last_name = parts.length > 1 ? parts[parts.length - 1] : "";
+    const middle_name =
+      parts.length > 2 ? parts.slice(1, -1).join(" ") : "";
+
+    return {
+      first_name,
+      middle_name,
+      last_name,
+    };
   };
 
-  const handlePasswordSave = (e) => {
+  // ================= UPDATE PROFILE =================
+
+  const handleProfileSave = async (e) => {
     e.preventDefault();
+
+    try {
+      setLoading(true);
+
+      const { first_name, middle_name, last_name } = splitName(
+        profileData.fullName
+      );
+
+      const payload = {
+        email: profileData.email,
+        first_name,
+        middle_name,
+        last_name,
+        mobile_no: profileData.mobileNo,
+      };
+
+      await api.put(`/resource/User/${userEmail}`, payload);
+
+      alert("Profile updated successfully");
+
+      fetchUserDetails();
+    } catch (err) {
+      console.error("Error updating profile", err);
+      alert("Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ================= IMAGE UPLOAD =================
+
+  const handleImageUpload = async (e) => {
+    try {
+      const file = e.target.files[0];
+
+      if (!file) return;
+
+      const formData = new FormData();
+
+      formData.append("file", file);
+      formData.append("is_private", 0);
+
+      // Upload image
+      const uploadRes = await api.post("/method/upload_file", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const fileUrl = uploadRes.data?.message?.file_url;
+
+      if (!fileUrl) {
+        alert("Image upload failed");
+        return;
+      }
+
+      // Update user image
+      await api.put(`/resource/User/${userEmail}`, {
+        user_image: fileUrl,
+      });
+
+      setProfileData((prev) => ({
+        ...prev,
+        userImage: `https://hms.automedai.in${fileUrl}`,
+      }));
+
+      alert("Profile image updated successfully");
+    } catch (err) {
+      console.error("Error uploading image", err);
+      alert("Failed to upload image");
+    }
+  };
+
+  // ================= CHANGE PASSWORD =================
+
+  const handlePasswordSave = async (e) => {
+    e.preventDefault();
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New passwords do not match");
+      alert("Passwords do not match");
       return;
     }
-    console.log("Password changed");
-    // Handle password change
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+
+    try {
+      setPasswordLoading(true);
+
+      await api.put(`/resource/User/${userEmail}`, {
+        new_password: passwordData.newPassword,
+      });
+
+      alert("Password updated successfully");
+
+      setPasswordData({
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error("Error updating password", err);
+      alert("Failed to update password");
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   return (
@@ -254,27 +431,48 @@ const Settings = () => {
       <SettingsContainer>
         <PageTitle>Settings & Profile</PageTitle>
 
-        {/* Profile Section */}
+        {/* ================= PROFILE SECTION ================= */}
+
         <Section>
           <SectionHeader>
             <SectionTitleWrapper>
               <SectionTitle>Profile</SectionTitle>
-              <SectionDescription>Update your photo and personal details here.</SectionDescription>
+
+              <SectionDescription>
+                Update your photo and personal details here.
+              </SectionDescription>
             </SectionTitleWrapper>
+
             <ProfilePictureSection>
               <ProfilePicture>
-                <img
-                  src="https://via.placeholder.com/120x120?text=Profile"
-                  alt="Profile"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                  }}
-                />
+                {profileData.userImage ? (
+                  <img
+                    src={profileData.userImage}
+                    alt="Profile"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <Camera size={40} color="#777" />
+                )}
               </ProfilePicture>
-              <ChangePhotoButton>
+
+              <ChangePhotoButton
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+              >
                 <Camera />
                 Change photo
               </ChangePhotoButton>
+
+              <HiddenFileInput
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+
               <FileInfo>JPG, GIF or PNG. 1MB max.</FileInfo>
             </ProfilePictureSection>
           </SectionHeader>
@@ -283,57 +481,100 @@ const Settings = () => {
             <FormGrid>
               <FormGroup>
                 <FormLabel>Full Name</FormLabel>
-                <FormInput type="text" name="fullName" value={profileData.fullName} onChange={handleProfileChange} placeholder="Dr. Emily Carter" />
+
+                <FormInput
+                  type="text"
+                  name="fullName"
+                  value={profileData.fullName}
+                  onChange={handleProfileChange}
+                  placeholder="Enter full name"
+                />
               </FormGroup>
 
               <FormGroup>
-                <FormLabel>Phone Number</FormLabel>
-                <FormInput type="tel" name="phoneNumber" value={profileData.phoneNumber} onChange={handleProfileChange} placeholder="(555) 123-4567" />
+                <FormLabel>Mobile Number</FormLabel>
+
+                <FormInput
+                  type="tel"
+                  name="mobileNo"
+                  value={profileData.mobileNo}
+                  onChange={handleProfileChange}
+                  placeholder="Enter mobile number"
+                />
               </FormGroup>
 
               <FormGroup fullWidth>
                 <FormLabel>Email Address</FormLabel>
-                <FormInput type="email" name="email" value={profileData.email} onChange={handleProfileChange} placeholder="emily.carter@clinic.com" />
+
+                <FormInput
+                  type="email"
+                  name="email"
+                  value={profileData.email}
+                  onChange={handleProfileChange}
+                  placeholder="Enter email address"
+                />
               </FormGroup>
             </FormGrid>
 
-            <SaveButton type="submit">Save Changes</SaveButton>
+            <SaveButton type="submit" disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </SaveButton>
           </form>
         </Section>
 
         <Separator />
 
-        {/* Security Section */}
+        {/* ================= SECURITY SECTION ================= */}
+
         <Section>
           <SectionHeader>
             <SectionTitleWrapper>
               <SectionTitle>Security</SectionTitle>
-              <SectionDescription>Manage your password, two-factor authentication, and active sessions.</SectionDescription>
+
+              <SectionDescription>
+                Manage your password and account security.
+              </SectionDescription>
             </SectionTitleWrapper>
           </SectionHeader>
 
           <SecurityContent>
             <ChangePasswordSection>
-              <ChangePasswordTitle>Change Password</ChangePasswordTitle>
+              <ChangePasswordTitle>
+                Change Password
+              </ChangePasswordTitle>
+
               <form onSubmit={handlePasswordSave}>
                 <PasswordFormGrid>
                   <FormGroup>
-                    <FormLabel>Current Password</FormLabel>
-                    <FormInput type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} placeholder="Enter current password" />
-                  </FormGroup>
-
-                  <FormGroup>
                     <FormLabel>New Password</FormLabel>
-                    <FormInput type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} placeholder="Enter new password" />
+
+                    <FormInput
+                      type="password"
+                      name="newPassword"
+                      value={passwordData.newPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Enter new password"
+                    />
                   </FormGroup>
 
                   <FormGroup>
                     <FormLabel>Confirm New Password</FormLabel>
-                    <FormInput type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} placeholder="Confirm new password" />
+
+                    <FormInput
+                      type="password"
+                      name="confirmPassword"
+                      value={passwordData.confirmPassword}
+                      onChange={handlePasswordChange}
+                      placeholder="Confirm new password"
+                    />
                   </FormGroup>
                 </PasswordFormGrid>
 
-                <SaveButton type="submit">Update Password</SaveButton>
+                <SaveButton type="submit" disabled={passwordLoading}>
+                  {passwordLoading
+                    ? "Updating..."
+                    : "Update Password"}
+                </SaveButton>
               </form>
             </ChangePasswordSection>
           </SecurityContent>
