@@ -187,7 +187,7 @@ function LabTestManage() {
     const fetchTests = async () => {
         try {
             const res = await api.get(
-                `/resource/Lab Test Template?limit_start=0&limit_page_length=2500&fields=["name","lab_test_name","department"]`
+                `/resource/Lab Test Template?limit_start=0&limit_page_length=2500&fields=["name","lab_test_name","department","disabled"]`
             );
 
             const data = res.data;
@@ -290,6 +290,7 @@ function LabTestManage() {
                                 <Th>Test ID</Th>
                                 <Th>Test Name</Th>
                                 <Th>Department</Th>
+                                <Th>Status</Th>
                                 <Th>Actions</Th>
                             </tr>
                         </Thead>
@@ -301,6 +302,7 @@ function LabTestManage() {
                                         <Td>{test.name}</Td>
                                         <Td>{test.lab_test_name}</Td>
                                         <Td>{test.department}</Td>
+                                        <Td>{test.disabled ? "Disabled" : "Active"}</Td>
                                         <Td>
                                             <ActionButtons>
                                                 <EditButton

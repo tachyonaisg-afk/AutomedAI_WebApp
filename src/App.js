@@ -40,6 +40,7 @@ import LabTestManage from './pages/LabTestManage';
 import AddNewTest from './pages/AddNewTest';
 import GovernmentProjectIncentives from './pages/GovernmentProjectIncentives';
 import TodayCollection from './pages/TodayCollection';
+import EditPatientDetails from './pages/EditPatientDetails';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -87,6 +88,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <PatientDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/patients/update"
+            element={
+              <ProtectedRoute>
+                <EditPatientDetails />
               </ProtectedRoute>
             }
           />

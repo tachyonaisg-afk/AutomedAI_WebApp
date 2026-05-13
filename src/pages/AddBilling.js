@@ -1203,18 +1203,41 @@ const AddBilling = () => {
     }
 
     setSearchingPatient(true);
+
     try {
-      const response = await apiService.get(API_ENDPOINTS.PATIENTS.SEARCH_LINK, {
-        doctype: "Patient",
-        txt: query,
-        page_length: 10,
-      });
-      if (response.data?.results || response.data?.message) {
-        setPatientResults(response.data.results || response.data.message || []);
-        setShowPatientResults(true);
-      }
+      const response = await apiService.get(
+        "https://hms.automedai.in/api/resource/Patient",
+        {
+          limit_page_length: 5000,
+          fields: JSON.stringify([
+            "name",
+            "patient_name",
+            "sex",
+            "dob",
+            "mobile",
+            "email",
+            "uid",
+            "custom_external_id",
+          ]),
+          or_filters: JSON.stringify([
+            ["custom_external_id", "like", `%${query}%`],
+            ["patient_name", "like", `%${query}%`],
+            ["uid", "like", `%${query}%`],
+            ["email", "like", `%${query}%`],
+            ["mobile", "like", `%${query}%`],
+            ["name", "like", `%${query}%`],
+          ]),
+        }
+      );
+
+      const results = response.data?.data || [];
+
+      setPatientResults(results);
+      setShowPatientResults(true);
     } catch (err) {
       console.error("Error searching patients:", err);
+      setPatientResults([]);
+      setShowPatientResults(false);
     } finally {
       setSearchingPatient(false);
     }
@@ -1299,14 +1322,17 @@ const AddBilling = () => {
   };
 
   const handlePatientSelect = async (patient) => {
-    const patientId = patient.value || patient.name;
+    const patientId = patient.name;
 
     // Fetch patient details to get the patient_name and linked customer
     try {
       const response = await apiService.get(API_ENDPOINTS.PATIENTS.GET_BY_ID(patientId));
       const patientData = response.data?.data;
       console.log(patientData, "patientData");
-      const patientName = patientData?.patient_name || patient.description || patientId;
+      const patientName =
+        patientData?.patient_name ||
+        patient.patient_name ||
+        patientId;
       const customerName = patientData?.customer || patientName;
 
       setBillingData((prev) => ({
@@ -1319,7 +1345,9 @@ const AddBilling = () => {
       }));
     } catch (err) {
       console.error("Error fetching patient details:", err);
-      const patientName = patient.description || patientId;
+      const patientName =
+        patient.patient_name ||
+        patientId;
       setBillingData((prev) => ({
         ...prev,
         customer: patientName,
@@ -2032,7 +2060,17 @@ const AddBilling = () => {
                               key={index}
                               onMouseDown={() => handlePatientSelect(patient)}
                             >
-                              {patient.value || patient.name} - {patient.description || ""}
+                              <div style={{ fontWeight: 600 }}>
+                                {patient.patient_name || "-"}
+                              </div>
+
+                              <div style={{ fontSize: "12px", color: "#666" }}>
+                                {patient.name}
+                                {patient.mobile ? ` • ${patient.mobile}` : ""}
+                                {patient.custom_external_id
+                                  ? ` • ${patient.custom_external_id}`
+                                  : ""}
+                              </div>
                             </SearchResultItem>
                           ))
                         ) : (
@@ -2149,7 +2187,7 @@ const AddBilling = () => {
                   </SearchInputWrapper>
                 )}
               </FormGroup>
-              
+
               {!requiresAppointment && (
                 <>
                   <FormGroup>

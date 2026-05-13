@@ -606,16 +606,27 @@ const PathLabBilling = () => {
             ["posting_date", "between", [firstDayOfMonth, today]],
             ["status", "=", "Paid"],
             ["company", "=", selectedCompany],
-            ["Sales Invoice Item","item_group","in",["LAB","PHC","PLB"]]
+            ["Sales Invoice Item", "item_group", "in", ["LAB", "PHC", "PLB"]]
           ]),
         }),
 
         fetchPathlabRevenueToday(selectedCompany),
       ]);
 
+      // ✅ Remove duplicate invoices by invoice ID
+      const uniqueMonthInvoicesMap = {};
+
+      (monthRes.data?.data || []).forEach((invoice) => {
+        if (invoice?.name && !uniqueMonthInvoicesMap[invoice.name]) {
+          uniqueMonthInvoicesMap[invoice.name] = invoice;
+        }
+      });
+
+      const uniqueMonthInvoices = Object.values(uniqueMonthInvoicesMap);
+
       const overdueTotal = sumNetTotal(overdueRes.data?.data);
       const pendingTotal = sumNetTotal(pendingRes.data?.data);
-      const monthTotal = sumNetTotal(monthRes.data?.data);
+      const monthTotal = sumNetTotal(uniqueMonthInvoices);
 
       setSummary({
         revenueToday: pathlabRevenue,
@@ -652,7 +663,7 @@ const PathLabBilling = () => {
       color: "#f57c00",
     },
     {
-      label: "Collection This Month",
+      label: "Collection This Month (PathLab)",
       value: `₹${summary.paidThisMonth.toLocaleString()}`,
       // change: "+18.3%",
       positive: true,
@@ -917,6 +928,19 @@ const PathLabBilling = () => {
 
       const today = new Date();
       const formattedDate = today.toLocaleDateString("en-GB");
+      // ✅ Format Invoice Date & Time from ERPNext posting_date + posting_time
+      const invoiceDate = new Date(
+        `${invoice.posting_date}T${invoice.posting_time}`
+      );
+
+      const formattedInvoiceDateTime = invoiceDate.toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
       let category = "";
 
       if (invoice.items && invoice.items.length > 0) {
@@ -1028,8 +1052,8 @@ const PathLabBilling = () => {
     </div>
 
     <div class="flex gap-1">
-        <span class="font-bold">Invoice Date:</span>
-        <span class="border-b border-dotted border-gray-400 flex-grow">${formattedDate}</span>
+        <span class="font-bold">Invoice Date & Time:</span>
+        <span class="border-b border-dotted border-gray-400 flex-grow">${formattedInvoiceDateTime}</span>
     </div>
 
     <!-- Row 2 -->

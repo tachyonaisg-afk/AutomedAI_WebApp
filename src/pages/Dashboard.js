@@ -1010,6 +1010,7 @@ const Dashboard = () => {
             "name",
             "patient_name",
             "sex",
+            "dob",
             "mobile",
             "email",
             "uid",

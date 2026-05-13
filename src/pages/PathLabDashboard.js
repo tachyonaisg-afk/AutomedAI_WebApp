@@ -5,7 +5,7 @@ import api, { API_ENDPOINTS } from "../services/api";
 import usePageTitle from "../hooks/usePageTitle";
 
 import styled from "styled-components";
-import { UserPlus, Users, Receipt, ClipboardCheck, Video, FileBarChart, Mountain, Sun, Search, Users as UsersIcon, IndianRupee, Clock, Pill, CreditCard } from "lucide-react";
+import { UserPlus, Users, Receipt, ClipboardCheck, Video, FileBarChart, Mountain, Sun, Search, Users as UsersIcon, IndianRupee, Clock, Pill, CreditCard, Eye } from "lucide-react";
 
 const PageWrapper = styled.div`
   display: flex;
@@ -466,6 +466,34 @@ const InsightSkeletonCard = styled.div`
   flex-direction: column;
   gap: 10px;
 `;
+
+const ResultLeft = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ResultActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background-color: #f1f5f9;
+  color: #334155;
+
+  &:hover {
+    background-color: #e2e8f0;
+  }
+`;
+
 const thStyle = {
   border: "1px solid #ddd",
   padding: "8px",
@@ -848,21 +876,39 @@ const PathLabDashboard = () => {
 
     try {
       setIsSearching(true);
+
       console.log("🔍 Searching for patients with query:", query);
 
-      const response = await api.get(API_ENDPOINTS.PATIENTS.SEARCH_LINK, {
-        txt: query,
-        doctype: "Patient",
-        page_length: 500,
-      });
+      const response = await api.get(
+        "https://hms.automedai.in/api/resource/Patient",
+        {
+          limit_page_length: 5000,
+          fields: JSON.stringify([
+            "name",
+            "patient_name",
+            "sex",
+            "dob",
+            "mobile",
+            "email",
+            "uid",
+            "custom_external_id",
+          ]),
+          or_filters: JSON.stringify([
+            ["custom_external_id", "like", `%${query}%`],
+            ["patient_name", "like", `%${query}%`],
+            ["uid", "like", `%${query}%`],
+            ["email", "like", `%${query}%`],
+            ["mobile", "like", `%${query}%`],
+            ["name", "like", `%${query}%`],
+          ]),
+        }
+      );
 
       console.log("✅ Search API Response:", response);
-      console.log("📊 Search results data:", response.data);
 
-      const results = response.data?.message || response.data?.data || [];
+      const results = response.data?.data || [];
 
       console.log("📋 Processed search results:", results);
-      console.log("📝 First search result:", results[0]);
 
       setSearchResults(results);
       setShowSearchResults(true);
@@ -998,8 +1044,39 @@ const PathLabDashboard = () => {
       }
     });
   };
-  const handlePendingTestResultsClick= () => {
+  const handlePendingTestResultsClick = () => {
     navigate("/pathlab/labtest");
+  };
+  const handleAddBilling = async (patientId) => {
+    try {
+      const response = await api.get(
+        API_ENDPOINTS.PATIENTS.DETAIL(patientId)
+      );
+
+      const patientData = response.data?.data;
+
+      if (!patientData) {
+        console.error("Patient data not available");
+        return;
+      }
+
+      navigate("/pathlab/billing/add", {
+        state: {
+          preselectedPatient: {
+            name: patientData.name,
+            patient_name:
+              patientData.patient_name ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+            customer_name:
+              patientData.customer ||
+              `${patientData.first_name || ""} ${patientData.middle_name || ""} ${patientData.last_name || ""}`.trim(),
+          },
+          defaultItemCode: "STO-ITEM-2025-00539",
+        },
+      });
+    } catch (err) {
+      console.error("Error fetching patient details:", err);
+    }
   };
 
   return (
@@ -1059,10 +1136,45 @@ const PathLabDashboard = () => {
                     searchResults.map((patient, index) => (
                       <SearchResultItem
                         key={index}
-                        onMouseDown={() => handlePatientSelect(patient)}
+                      // onMouseDown={() => handlePatientSelect(patient)}
                       >
-                        <ResultValue>{patient.description}</ResultValue>
-                        <ResultDescription>{patient.value}</ResultDescription>
+                        <ResultLeft>
+                          <ResultValue>
+                            {patient.patient_name || "-"}
+                          </ResultValue>
+
+                          <ResultDescription>
+                            {patient.name}
+                            {patient.mobile ? ` • ${patient.mobile}` : ""}
+                            {patient.custom_external_id
+                              ? ` • ${patient.custom_external_id}`
+                              : ""}
+                          </ResultDescription>
+                        </ResultLeft>
+
+                        <ResultActions>
+                          <ActionButton
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              navigate(`/patients/${patient.name}`);
+                              setShowSearchResults(false);
+                            }}
+                          >
+                            <Eye size={14} />
+                            View
+                          </ActionButton>
+
+                          <ActionButton
+                            onMouseDown={(e) => {
+                              e.stopPropagation();
+                              handleAddBilling(patient.name);
+                              setShowSearchResults(false);
+                            }}
+                          >
+                            <CreditCard size={14} />
+                            Bill
+                          </ActionButton>
+                        </ResultActions>
                       </SearchResultItem>
                     ))
                   ) : (
@@ -1132,8 +1244,8 @@ const PathLabDashboard = () => {
             )}
           </Section>
         </FadeInWrapper>
-      </PageWrapper>
-    </Layout>
+      </PageWrapper >
+    </Layout >
   );
 };
 
