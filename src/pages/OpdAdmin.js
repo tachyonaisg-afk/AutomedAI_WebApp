@@ -340,7 +340,7 @@ const OpdAdmin = () => {
                             <ActionTitle>Doctor Scheduling</ActionTitle>
                         </ActionCard>
 
-                        <ActionCard>
+                        <ActionCard onClick={() => navigate("/opd/admin/billing-management") }>
                             <IconWrapper variant="red">
                                 <CreditCard size={26} />
                             </IconWrapper>

@@ -1398,8 +1398,8 @@ const Billing = () => {
               type="button"
               value="Reset"
               onClick={() => {
-                setFromDate("");
-                setToDate("");
+                setFromDate(today);
+                setToDate(today);
               }}
             />
           </DateContainer>

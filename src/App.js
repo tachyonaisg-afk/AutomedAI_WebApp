@@ -41,6 +41,10 @@ import AddNewTest from './pages/AddNewTest';
 import GovernmentProjectIncentives from './pages/GovernmentProjectIncentives';
 import TodayCollection from './pages/TodayCollection';
 import EditPatientDetails from './pages/EditPatientDetails';
+import BillingManagementList from './pages/OPDBillingManagementList';
+import OPDBillingManagementList from './pages/OPDBillingManagementList';
+import PathLabBillingManagementList from './pages/PathLabBillingManagementList';
+import PathLabBillEdit from './pages/PathLabBillEdit';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -189,6 +193,14 @@ function App() {
             }
           />
           <Route
+            path="/opd/admin/billing-management"
+            element={
+              <ProtectedRoute>
+                <OPDBillingManagementList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/opd/admin/empanel-doctors"
             element={
               <ProtectedRoute>
@@ -307,6 +319,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <GovernmentProjectIncentives />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/admin/billing-management"
+            element={
+              <ProtectedRoute>
+                <PathLabBillingManagementList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pathlab/admin/billing-management/edit/:id"
+            element={
+              <ProtectedRoute>
+                <PathLabBillEdit />
               </ProtectedRoute>
             }
           />

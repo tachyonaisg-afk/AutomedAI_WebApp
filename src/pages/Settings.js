@@ -683,7 +683,7 @@ const Settings = () => {
             <InfoCard style={{ width: "100%" }}>
               <InfoLabel>Copyright</InfoLabel>
               <InfoValue>
-                © 2026 AutoMed AI. All rights reserved.
+                © 2026 Tachyon AI Private Limited. All rights reserved.
               </InfoValue>
             </InfoCard>
           </InfoGrid>
