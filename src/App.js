@@ -92,7 +92,7 @@ function App() {
             }
           />
           <Route
-            path="/patients/update"
+            path="/patients/update/:id"
             element={
               <ProtectedRoute>
                 <EditPatientDetails />

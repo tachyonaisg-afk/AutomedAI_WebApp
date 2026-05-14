@@ -216,6 +216,48 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const InfoCard = styled.div`
+  border: 1px solid #eaeaea;
+  border-radius: 10px;
+  padding: 18px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const InfoLabel = styled.span`
+  font-size: 13px;
+  color: #888;
+  font-weight: 500;
+`;
+
+const InfoValue = styled.div`
+  font-size: 15px;
+  color: #333;
+  font-weight: 600;
+  word-break: break-word;
+
+  a {
+    color: #4a90e2;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+`;
+
 // ================= COMPONENT =================
 
 const Settings = () => {
@@ -578,6 +620,73 @@ const Settings = () => {
               </form>
             </ChangePasswordSection>
           </SecurityContent>
+        </Section>
+
+        {/* ================= ABOUT SECTION ================= */}
+
+        <Section>
+          <SectionHeader>
+            <SectionTitleWrapper>
+              <SectionTitle>About Application</SectionTitle>
+
+              <SectionDescription>
+                Application information, support details and version info.
+              </SectionDescription>
+            </SectionTitleWrapper>
+          </SectionHeader>
+
+          <InfoGrid>
+            {/* <InfoCard>
+              <InfoLabel>Application Name</InfoLabel>
+              <InfoValue>AutoMed AI HMS</InfoValue>
+            </InfoCard> */}
+
+            <InfoCard>
+              <InfoLabel>Version</InfoLabel>
+              <InfoValue>v1.0.0</InfoValue>
+            </InfoCard>
+
+            <InfoCard>
+              <InfoLabel>Official Website</InfoLabel>
+
+              <InfoValue>
+                <a
+                  href="https://automedai.in/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  https://automedai.in/
+                </a>
+              </InfoValue>
+            </InfoCard>
+
+            <InfoCard>
+              <InfoLabel>Support Email</InfoLabel>
+              <InfoValue>support@automedai.in</InfoValue>
+            </InfoCard>
+
+            {/* <InfoCard>
+              <InfoLabel>Environment</InfoLabel>
+              <InfoValue>Production</InfoValue>
+            </InfoCard>
+
+            <InfoCard>
+              <InfoLabel>Last Updated</InfoLabel>
+              <InfoValue>14 May 2026</InfoValue>
+            </InfoCard> */}
+
+            {/* <InfoCard>
+              <InfoLabel>Developed By</InfoLabel>
+              <InfoValue>AutoMed AI</InfoValue>
+            </InfoCard> */}
+
+            <InfoCard style={{ width: "100%" }}>
+              <InfoLabel>Copyright</InfoLabel>
+              <InfoValue>
+                © 2026 AutoMed AI. All rights reserved.
+              </InfoValue>
+            </InfoCard>
+          </InfoGrid>
         </Section>
       </SettingsContainer>
     </Layout>

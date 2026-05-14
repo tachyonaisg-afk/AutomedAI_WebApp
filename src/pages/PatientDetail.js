@@ -281,7 +281,8 @@ const PatientDetail = () => {
   ];
 
   const handleEditProfile = () => {
-    console.log("Edit profile for patient:", id);
+    // console.log("Edit profile for patient:", id);
+    navigate(`/patients/update/${id}`);
     // Navigate to edit page or open edit modal
   };
 
