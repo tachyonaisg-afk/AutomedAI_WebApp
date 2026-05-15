@@ -76,7 +76,8 @@ function OPDBillingManagementList() {
       ];
 
       // Date filters
-      if (fromDate && toDate) {
+      // Apply date filter only when not searching
+      if (!searchText && fromDate && toDate) {
         filters.push([
           "posting_date",
           "between",
@@ -144,36 +145,62 @@ function OPDBillingManagementList() {
 
   const handleCancelInvoice = async (row) => {
     try {
+
+      // ==============================
+      // CONFIRMATION
+      // ==============================
       const confirmCancel = window.confirm(
         `Are you sure you want to cancel invoice ${row.name}?`
       );
 
       if (!confirmCancel) return;
 
-      // 1. Cancel Sales Invoice
-      await api.post("/method/frappe.client.cancel", {
-        doctype: "Sales Invoice",
-        name: row.name,
-      });
+      setLoading(true);
 
-      // 2. Find linked payment entries
-      const paymentRes = await api.get("/resource/Payment Entry Reference", {
+      // ==============================
+      // 1. FETCH PAYMENT ENTRY IDS
+      // ==============================
+      const paymentRes = await api.get("/resource/Payment Entry", {
         filters: JSON.stringify([
-          ["reference_name", "=", row.name],
+          [
+            "Payment Entry Reference",
+            "reference_name",
+            "=",
+            row.name,
+          ],
         ]),
-        fields: JSON.stringify([
-          "parent",
-        ]),
+        fields: JSON.stringify(["name"]),
       });
 
       const paymentEntries = paymentRes.data?.data || [];
 
-      // 3. Cancel all linked payment entries
-      for (const payment of paymentEntries) {
-        await api.post("/method/frappe.client.cancel", {
-          doctype: "Payment Entry",
-          name: payment.parent,
-        });
+      const paymentIds = paymentEntries.map((p) => p.name);
+
+      // ==============================
+      // 2. CANCEL SALES INVOICE
+      // ==============================
+      await api.put(`/resource/Sales Invoice/${row.name}`, {
+        docstatus: 2,
+      });
+
+      // ==============================
+      // 3. CANCEL PAYMENT ENTRIES
+      // ==============================
+      for (const paymentId of paymentIds) {
+        try {
+
+          await api.put(`/resource/Payment Entry/${paymentId}`, {
+            docstatus: 2,
+          });
+
+        } catch (err) {
+
+          console.error(
+            `Failed cancelling Payment Entry ${paymentId}`,
+            err
+          );
+
+        }
       }
 
       alert("Invoice cancelled successfully");
@@ -181,8 +208,15 @@ function OPDBillingManagementList() {
       fetchInvoices();
 
     } catch (error) {
+
       console.error("Cancel Error:", error);
+
       alert("Failed to cancel invoice");
+
+    } finally {
+
+      setLoading(false);
+
     }
   };
 

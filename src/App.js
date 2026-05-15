@@ -41,7 +41,6 @@ import AddNewTest from './pages/AddNewTest';
 import GovernmentProjectIncentives from './pages/GovernmentProjectIncentives';
 import TodayCollection from './pages/TodayCollection';
 import EditPatientDetails from './pages/EditPatientDetails';
-import BillingManagementList from './pages/OPDBillingManagementList';
 import OPDBillingManagementList from './pages/OPDBillingManagementList';
 import PathLabBillingManagementList from './pages/PathLabBillingManagementList';
 import PathLabBillEdit from './pages/PathLabBillEdit';

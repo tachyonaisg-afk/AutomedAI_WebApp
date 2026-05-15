@@ -695,7 +695,7 @@ const PathLabBilling = () => {
       ];
 
       // Date filter
-      if (fromDate && toDate) {
+      if (!searchCustomer && fromDate && toDate) {
         filters.push([
           "posting_date",
           "between",

@@ -291,13 +291,13 @@ const EditPatientDetails = () => {
         setLoading(true);
 
         const patientRes = await api.get(
-          `/api/resource/Patient/${id}`
+          `/resource/Patient/${id}`
         );
 
         const patient = patientRes?.data?.data;
 
         const addressRes = await api.get(
-          `/api/resource/Address?filters=${encodeURIComponent(
+          `/resource/Address?filters=${encodeURIComponent(
             JSON.stringify([
               ["Dynamic Link", "link_doctype", "=", "Patient"],
               ["Dynamic Link", "link_name", "=", id],
@@ -451,7 +451,7 @@ const EditPatientDetails = () => {
         custom_cast: formData.custom_cast,
       };
 
-      await api.put(`/api/resource/Patient/${id}`, payload);
+      await api.put(`/resource/Patient/${id}`, payload);
 
       navigate(`/patients/${id}`);
     } catch (err) {

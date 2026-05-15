@@ -74,7 +74,8 @@ function PathLabBillingManagementList() {
             ];
 
             // Date filters
-            if (fromDate && toDate) {
+            // Apply date filter only when not searching
+            if (!searchText && fromDate && toDate) {
                 filters.push([
                     "posting_date",
                     "between",
@@ -148,39 +149,187 @@ function PathLabBillingManagementList() {
 
             if (!confirmCancel) return;
 
-            // 1. Cancel Sales Invoice
-            await api.post("/method/frappe.client.cancel", {
-                doctype: "Sales Invoice",
-                name: row.name,
-            });
+            setLoading(true);
 
-            // 2. Find linked payment entries
-            const paymentRes = await api.get("/resource/Payment Entry Reference", {
+            // ==============================
+            // 1. FETCH SALES INVOICE DETAILS
+            // ==============================
+            const invoiceRes = await api.get(`/resource/Sales Invoice/${row.name}`);
+
+            const invoiceData = invoiceRes.data?.data;
+
+            const items = invoiceData?.items || [];
+
+            // =========================================
+            // 2. EXTRACT LAB TEST IDS (reference_dn)
+            // =========================================
+            const labTestIds = items
+                .filter(
+                    (item) =>
+                        item.reference_dt === "Lab Test" &&
+                        item.reference_dn
+                )
+                .map((item) => item.reference_dn);
+
+            // =========================================
+            // 3. FETCH SAMPLE IDS FROM LAB TESTS
+            // =========================================
+            const sampleIds = [];
+
+            for (const labTestId of labTestIds) {
+                try {
+                    const labTestRes = await api.get(
+                        `/resource/Lab Test/${labTestId}`
+                    );
+
+                    const sampleId = labTestRes.data?.data?.sample;
+
+                    if (sampleId) {
+                        sampleIds.push(sampleId);
+                    }
+                } catch (err) {
+                    console.error(
+                        `Failed fetching Lab Test ${labTestId}`,
+                        err
+                    );
+                }
+            }
+
+            // =========================================
+            // 4. FETCH PAYMENT ENTRY IDS
+            // =========================================
+            const paymentRes = await api.get("/resource/Payment Entry", {
                 filters: JSON.stringify([
-                    ["reference_name", "=", row.name],
+                    [
+                        "Payment Entry Reference",
+                        "reference_name",
+                        "=",
+                        row.name,
+                    ],
                 ]),
-                fields: JSON.stringify([
-                    "parent",
-                ]),
+                fields: JSON.stringify(["name"]),
             });
 
             const paymentEntries = paymentRes.data?.data || [];
 
-            // 3. Cancel all linked payment entries
-            for (const payment of paymentEntries) {
-                await api.post("/method/frappe.client.cancel", {
-                    doctype: "Payment Entry",
-                    name: payment.parent,
-                });
+            const paymentIds = paymentEntries.map((p) => p.name);
+
+            // =========================================
+            // 5. CANCEL SALES INVOICE
+            // =========================================
+            await api.put(`/resource/Sales Invoice/${row.name}`, {
+                docstatus: 2,
+            });
+
+            // =========================================
+            // 6. CANCEL PAYMENT ENTRIES
+            // =========================================
+            for (const paymentId of paymentIds) {
+                try {
+                    await api.put(`/resource/Payment Entry/${paymentId}`, {
+                        docstatus: 2,
+                    });
+                } catch (err) {
+                    console.error(
+                        `Failed cancelling Payment Entry ${paymentId}`,
+                        err
+                    );
+                }
             }
 
-            alert("Invoice cancelled successfully");
+            // =========================================
+            // 7. CANCEL LAB TESTS
+            // =========================================
+            for (const labTestId of labTestIds) {
+                try {
+                    await api.put(`/resource/Lab Test/${labTestId}`, {
+                        docstatus: 2,
+                    });
+                } catch (err) {
+                    console.error(
+                        `Failed cancelling Lab Test ${labTestId}`,
+                        err
+                    );
+                }
+            }
+
+            // =========================================
+            // 8. CANCEL SAMPLE COLLECTIONS
+            // =========================================
+            for (const sampleId of sampleIds) {
+                try {
+                    await api.put(
+                        `/resource/Sample Collection/${sampleId}`,
+                        {
+                            docstatus: 2,
+                        }
+                    );
+                } catch (err) {
+                    console.error(
+                        `Failed cancelling Sample Collection ${sampleId}`,
+                        err
+                    );
+                }
+            }
+
+            // =========================================
+            // 9. DELETE CONFIRMATION MODAL
+            // =========================================
+            const confirmDelete = window.confirm(
+                "Invoice cancelled successfully.\n\nDo you also want to permanently delete related Lab Tests and Sample Collections?"
+            );
+
+            if (confirmDelete) {
+
+                // =========================================
+                // 10. DELETE LAB TESTS
+                // =========================================
+                for (const labTestId of labTestIds) {
+                    try {
+                        await api.delete(
+                            `/resource/Lab Test/${labTestId}`
+                        );
+                    } catch (err) {
+                        console.error(
+                            `Failed deleting Lab Test ${labTestId}`,
+                            err
+                        );
+                    }
+                }
+
+                // =========================================
+                // 11. DELETE SAMPLE COLLECTIONS
+                // =========================================
+                for (const sampleId of sampleIds) {
+                    try {
+                        await api.delete(
+                            `/resource/Sample Collection/${sampleId}`
+                        );
+                    } catch (err) {
+                        console.error(
+                            `Failed deleting Sample Collection ${sampleId}`,
+                            err
+                        );
+                    }
+                }
+
+                alert(
+                    "Invoice, payments, lab tests and sample collections deleted successfully."
+                );
+
+            } else {
+                alert(
+                    "Invoice cancelled successfully."
+                );
+            }
 
             fetchInvoices();
 
         } catch (error) {
             console.error("Cancel Error:", error);
             alert("Failed to cancel invoice");
+        } finally {
+            setLoading(false);
         }
     };
 

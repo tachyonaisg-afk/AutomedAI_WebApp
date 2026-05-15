@@ -662,7 +662,7 @@ const Settings = () => {
 
             <InfoCard>
               <InfoLabel>Support Email</InfoLabel>
-              <InfoValue>support@automedai.in</InfoValue>
+              <InfoValue>care@automedai.in</InfoValue>
             </InfoCard>
 
             {/* <InfoCard>

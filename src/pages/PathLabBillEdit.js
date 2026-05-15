@@ -1579,54 +1579,232 @@ function PathLabBillEdit() {
             console.log("Items array:", JSON.stringify(items, null, 2));
             console.log("billingData:", JSON.stringify(billingData, null, 2));
 
-            // =============================
-            // CANCEL OLD SALES INVOICE
-            // =============================
-            console.log("Cancelling old invoice...");
+            // =========================================
+            // STEP A: FETCH SALES INVOICE DETAILS
+            // =========================================
+            console.log("Fetching original invoice details...");
 
-            await apiService.post(
-                "/method/frappe.client.cancel",
-                {
-                    doctype: "Sales Invoice",
-                    name: id,
-                }
+            const invoiceRes = await apiService.get(
+                `/resource/Sales Invoice/${id}`
             );
 
-            console.log("Old invoice cancelled");
+            const invoiceData = invoiceRes.data?.data;
 
-            // =============================
-            // FIND PAYMENT ENTRIES
-            // =============================
-            const paymentRefRes = await apiService.get(
-                "/resource/Payment Entry Reference",
+            const invoiceItems = invoiceData?.items || [];
+
+            // =========================================
+            // STEP B: EXTRACT LAB TEST IDS
+            // =========================================
+            const labTestIds = invoiceItems
+                .filter(
+                    (item) =>
+                        item.reference_dt === "Lab Test" &&
+                        item.reference_dn
+                )
+                .map((item) => item.reference_dn);
+
+            console.log("Lab Test IDs:", labTestIds);
+
+            // =========================================
+            // STEP C: FETCH SAMPLE COLLECTION IDS
+            // =========================================
+            const sampleIds = [];
+
+            for (const labTestId of labTestIds) {
+
+                try {
+
+                    const labTestRes = await apiService.get(
+                        `/resource/Lab Test/${labTestId}`
+                    );
+
+                    const sampleId = labTestRes.data?.data?.sample;
+
+                    if (sampleId) {
+                        sampleIds.push(sampleId);
+                    }
+
+                } catch (err) {
+
+                    console.error(
+                        `Failed fetching Lab Test ${labTestId}`,
+                        err
+                    );
+
+                }
+            }
+
+            console.log("Sample IDs:", sampleIds);
+
+            // =========================================
+            // STEP D: FETCH PAYMENT ENTRY IDS
+            // =========================================
+            const paymentRes = await apiService.get(
+                "/resource/Payment Entry",
                 {
                     filters: JSON.stringify([
-                        ["reference_name", "=", id],
+                        [
+                            "Payment Entry Reference",
+                            "reference_name",
+                            "=",
+                            id,
+                        ],
                     ]),
-                    fields: JSON.stringify([
-                        "parent",
-                    ]),
+                    fields: JSON.stringify(["name"]),
                 }
             );
 
-            const paymentEntries = paymentRefRes.data?.data || [];
+            const paymentEntries = paymentRes.data?.data || [];
 
-            console.log("Payment entries:", paymentEntries);
+            const paymentIds = paymentEntries.map((p) => p.name);
 
-            // =============================
-            // CANCEL PAYMENT ENTRIES
-            // =============================
-            for (const payment of paymentEntries) {
-                console.log("Cancelling payment:", payment.parent);
+            console.log("Payment IDs:", paymentIds);
 
-                await apiService.post(
-                    "/method/frappe.client.cancel",
-                    {
-                        doctype: "Payment Entry",
-                        name: payment.parent,
-                    }
-                );
+            // =========================================
+            // STEP E: CANCEL SALES INVOICE
+            // =========================================
+            console.log("Cancelling Sales Invoice...");
+
+            await apiService.put(
+                `/resource/Sales Invoice/${id}`,
+                {
+                    docstatus: 2,
+                }
+            );
+
+            console.log("Sales Invoice cancelled");
+
+            // =========================================
+            // STEP F: CANCEL PAYMENT ENTRIES
+            // =========================================
+            for (const paymentId of paymentIds) {
+
+                try {
+
+                    console.log("Cancelling Payment Entry:", paymentId);
+
+                    await apiService.put(
+                        `/resource/Payment Entry/${paymentId}`,
+                        {
+                            docstatus: 2,
+                        }
+                    );
+
+                } catch (err) {
+
+                    console.error(
+                        `Failed cancelling Payment Entry ${paymentId}`,
+                        err
+                    );
+
+                }
             }
+
+            // =========================================
+            // STEP G: CANCEL LAB TESTS
+            // =========================================
+            for (const labTestId of labTestIds) {
+
+                try {
+
+                    console.log("Cancelling Lab Test:", labTestId);
+
+                    await apiService.put(
+                        `/resource/Lab Test/${labTestId}`,
+                        {
+                            docstatus: 2,
+                        }
+                    );
+
+                } catch (err) {
+
+                    console.error(
+                        `Failed cancelling Lab Test ${labTestId}`,
+                        err
+                    );
+
+                }
+            }
+
+            // =========================================
+            // STEP H: CANCEL SAMPLE COLLECTIONS
+            // =========================================
+            for (const sampleId of sampleIds) {
+
+                try {
+
+                    console.log(
+                        "Cancelling Sample Collection:",
+                        sampleId
+                    );
+
+                    await apiService.put(
+                        `/resource/Sample Collection/${sampleId}`,
+                        {
+                            docstatus: 2,
+                        }
+                    );
+
+                } catch (err) {
+
+                    console.error(
+                        `Failed cancelling Sample Collection ${sampleId}`,
+                        err
+                    );
+
+                }
+            }
+
+            // =========================================
+            // STEP I: DELETE LAB TESTS
+            // =========================================
+            for (const labTestId of labTestIds) {
+
+                try {
+
+                    console.log("Deleting Lab Test:", labTestId);
+
+                    await apiService.delete(
+                        `/resource/Lab Test/${labTestId}`
+                    );
+
+                } catch (err) {
+
+                    console.error(
+                        `Failed deleting Lab Test ${labTestId}`,
+                        err
+                    );
+
+                }
+            }
+
+            // =========================================
+            // STEP J: DELETE SAMPLE COLLECTIONS
+            // =========================================
+            for (const sampleId of sampleIds) {
+
+                try {
+
+                    console.log(
+                        "Deleting Sample Collection:",
+                        sampleId
+                    );
+
+                    await apiService.delete(
+                        `/resource/Sample Collection/${sampleId}`
+                    );
+
+                } catch (err) {
+
+                    console.error(
+                        `Failed deleting Sample Collection ${sampleId}`,
+                        err
+                    );
+
+                }
+            }
+
+            console.log("Old invoice cleanup completed");
 
             // ============ Step 1: Create Sales Invoice ============
             console.log("Step 1: Creating Sales Invoice...");
@@ -1782,7 +1960,7 @@ function PathLabBillEdit() {
                         <ArrowLeft size={16} />
                         Back
                     </SearchButton>
-                    <Title>Add Billing</Title>
+                    <Title>Edit Billing</Title>
                 </div>
 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
