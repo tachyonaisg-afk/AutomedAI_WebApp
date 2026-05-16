@@ -275,14 +275,10 @@ const EditPatientDetails = () => {
   const calculateDOBFromAge = (age) => {
     if (!age) return "";
 
-    const today = new Date();
-    const dob = new Date(
-      today.getFullYear() - age,
-      today.getMonth(),
-      today.getDate()
-    );
+    const currentYear = new Date().getFullYear();
+    const birthYear = currentYear - Number(age);
 
-    return dob.toISOString().split("T")[0];
+    return `${birthYear}-01-01`;
   };
 
   useEffect(() => {
@@ -461,6 +457,9 @@ const EditPatientDetails = () => {
       setSubmitting(false);
     }
   };
+  const isCasteDisabled =
+    !formData.custom_religion ||
+    !["Hindu", "Muslim"].includes(formData.custom_religion);
 
   // if (loading) {
   //   return (
@@ -591,9 +590,28 @@ const EditPatientDetails = () => {
                   type="tel"
                   name="mobile"
                   value={formData.mobile}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    let value = e.target.value.replace(/\D/g, "");
+
+                    // Only allow starting with 6/7/8/9
+                    if (value.length === 1 && !["6", "7", "8", "9"].includes(value)) {
+                      return;
+                    }
+
+                    if (value.length <= 10) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        mobile: value,
+                      }));
+                    }
+                  }}
                   maxLength={10}
                 />
+                {formData.mobile &&
+                  formData.mobile.length === 10 &&
+                  !/^[6-9]\d{9}$/.test(formData.mobile) && (
+                    <ErrorText>Enter valid Indian mobile number</ErrorText>
+                  )}
 
                 <HelperText>
                   Enter valid 10 digit mobile number
@@ -637,14 +655,16 @@ const EditPatientDetails = () => {
                   name="custom_cast"
                   value={formData.custom_cast}
                   onChange={handleInputChange}
+                  disabled={isCasteDisabled}
                 >
                   <option value="">Select Caste</option>
 
-                  {getFilteredCastes().map((caste) => (
-                    <option key={caste.value} value={caste.value}>
-                      {caste.label}
-                    </option>
-                  ))}
+                  {!isCasteDisabled &&
+                    getFilteredCastes().map((caste) => (
+                      <option key={caste.value} value={caste.value}>
+                        {caste.label}
+                      </option>
+                    ))}
                 </FormSelect>
               </FormGroup>
             </FormGrid>

@@ -44,6 +44,7 @@ import EditPatientDetails from './pages/EditPatientDetails';
 import OPDBillingManagementList from './pages/OPDBillingManagementList';
 import PathLabBillingManagementList from './pages/PathLabBillingManagementList';
 import PathLabBillEdit from './pages/PathLabBillEdit';
+import OPDBillEdit from './pages/OPDBillEdit';
 
 const LogoutHandler = () => {
   const { logout } = useAuth();
@@ -196,6 +197,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <OPDBillingManagementList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/opd/admin/billing-management/edit/:id"
+            element={
+              <ProtectedRoute>
+                <OPDBillEdit />
               </ProtectedRoute>
             }
           />

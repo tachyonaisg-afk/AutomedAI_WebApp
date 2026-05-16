@@ -246,6 +246,13 @@ const Header = () => {
     if (path === "/opd/recent-opd-patients") return { pages: ["OPD", "Recent OPD Patients"] };
     if (path === "/opd/admin") return { pages: ["OPD", "Admin"] };
     if (path === "/opd/admin/empanel-doctors") return { pages: ["OPD", "Admin", "Empanel Doctors"] };
+    if (path === "/opd/admin/billing-management") return { pages: ["OPD", "Admin", "Billing Management"] };
+    if (path === "/opd/admin/billing-management/edit/:id") return { pages: ["OPD", "Admin", "Billing Management"] };
+    if (path === "/opd/admin/appointment-management") return { pages: ["OPD", "Admin", "Appointment Management"] };
+    if (path === "/opd/admin/appointment-management/edit/:id") return { pages: ["OPD", "Admin", "Appointment Management"] };
+    if (path === "/opd/admin/telemedicine-management") return { pages: ["OPD", "Admin", "Telemedicine Management"] };
+    if (path === "/opd/admin/telemedicine-management/edit/:id") return { pages: ["OPD", "Admin", "Telemedicine Management"] };
+    if (path === "/opd/admin/telemedicine-management/edit/:id") return { pages: ["OPD", "Admin", "Telemedicine Management"] };
 
     if (path === "/pathlab") return { pages: ["PathLab", "Dashboard"] };
     if (path === "/pathlab/patient-registration") return { pages: ["PathLab", "Patient Registration"] };
@@ -254,12 +261,18 @@ const Header = () => {
     if (path === "/pathlab/patients") return { pages: ["PathLab", "Patients"] };
     if (path === "/pathlab/collection") return { pages: ["PathLab", "Sample Collection"] };
     if (path === "/pathlab/collection/new") return { pages: ["PathLab", "Sample Collection"] };
+    if (path === "/pathlab/collection-by-date") return { pages: ["PathLab", "Sample Collection By Date"] };
     if (path === "/pathlab/labtest") return { pages: ["PathLab", "Lab Test List"] };
     if (path === "/pathlab/labtest/new") return { pages: ["PathLab", "Add Lab Test"] };
     if (path === "/pathlab/results") return { pages: ["PathLab", "Lab Test Results"] };
     if (path === "/pathlab/admin") return { pages: ["PathLab", "Admin"] };
     if (path === "/pathlab/admin/test-manage") return { pages: ["PathLab", "Admin", "Test Manage"] };
     if (path === "/pathlab/admin/test-manage/add") return { pages: ["PathLab", "Admin", "Test Manage", "Add Test"] };
+    if (path === "/pathlab/admin/test-manage/edit/:id") return { pages: ["PathLab", "Admin", "Test Manage"] };
+    if (path === "/pathlab/admin/billing-management") return { pages: ["PathLab", "Admin", "Billing Management"] };
+    if (path === "/pathlab/admin/billing-management/edit/:id") return { pages: ["PathLab", "Admin", "Billing Management"] };
+    if (path === "/pathlab/admin/appointment-management") return { pages: ["PathLab", "Admin", "Appointment Management"] };
+    if (path === "/pathlab/admin/appointment-management/edit/:id") return { pages: ["PathLab", "Admin", "Appointment Management"] };
 
     if (path === "/consultations") return { pages: ["Consultations"] };
     if (path === "/appointments") return { pages: ["Appointments"] };

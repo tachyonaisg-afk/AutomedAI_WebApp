@@ -29,7 +29,6 @@ const SecondaryButton = styled.button`
   }
 `;
 
-
 function OPDBillingManagementList() {
   const navigate = useNavigate();
 
@@ -145,10 +144,6 @@ function OPDBillingManagementList() {
 
   const handleCancelInvoice = async (row) => {
     try {
-
-      // ==============================
-      // CONFIRMATION
-      // ==============================
       const confirmCancel = window.confirm(
         `Are you sure you want to cancel invoice ${row.name}?`
       );
@@ -158,8 +153,13 @@ function OPDBillingManagementList() {
       setLoading(true);
 
       // ==============================
-      // 1. FETCH PAYMENT ENTRY IDS
+      // 1. FETCH SALES INVOICE DETAILS
       // ==============================
+      const invoiceRes = await api.get(`/resource/Sales Invoice/${row.name}`);
+
+      // =========================================
+      // 4. FETCH PAYMENT ENTRY IDS
+      // =========================================
       const paymentRes = await api.get("/resource/Payment Entry", {
         filters: JSON.stringify([
           [
@@ -176,47 +176,36 @@ function OPDBillingManagementList() {
 
       const paymentIds = paymentEntries.map((p) => p.name);
 
-      // ==============================
-      // 2. CANCEL SALES INVOICE
-      // ==============================
+      // =========================================
+      // 5. CANCEL SALES INVOICE
+      // =========================================
       await api.put(`/resource/Sales Invoice/${row.name}`, {
         docstatus: 2,
       });
 
-      // ==============================
-      // 3. CANCEL PAYMENT ENTRIES
-      // ==============================
+      // =========================================
+      // 6. CANCEL PAYMENT ENTRIES
+      // =========================================
       for (const paymentId of paymentIds) {
         try {
-
           await api.put(`/resource/Payment Entry/${paymentId}`, {
             docstatus: 2,
           });
-
         } catch (err) {
-
           console.error(
             `Failed cancelling Payment Entry ${paymentId}`,
             err
           );
-
         }
       }
-
-      alert("Invoice cancelled successfully");
 
       fetchInvoices();
 
     } catch (error) {
-
       console.error("Cancel Error:", error);
-
       alert("Failed to cancel invoice");
-
     } finally {
-
       setLoading(false);
-
     }
   };
 

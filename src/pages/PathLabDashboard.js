@@ -1136,7 +1136,7 @@ const PathLabDashboard = () => {
                     searchResults.map((patient, index) => (
                       <SearchResultItem
                         key={index}
-                      // onMouseDown={() => handlePatientSelect(patient)}
+                        onMouseDown={() => handlePatientSelect(patient)}
                       >
                         <ResultLeft>
                           <ResultValue>

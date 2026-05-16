@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Layout from "../components/Layout/Layout";
 import styled from "styled-components";
@@ -12,7 +12,7 @@ import paymentQR from "../assets/paymentupi.jpeg";
 const BillingContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
 `;
 
 const Title = styled.h1`
@@ -43,7 +43,7 @@ const SectionTitle = styled.h2`
 
 const FormGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 
   @media (max-width: 1024px) {
@@ -56,6 +56,12 @@ const FormGrid = styled.div`
 `;
 
 const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const FormGroupD = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -639,7 +645,6 @@ const ErrorMessage = styled.div`
   font-size: 14px;
   margin-bottom: 16px;
 `;
-
 const ReactSelect = styled(Select)`
   .react-select__control {
     min-height: 42px;
@@ -706,17 +711,17 @@ const SearchButton = styled.button`
     background: #3c7edb;
   }
 `;
-
 const AddDoctorButton = styled.button`
-  margin-top: 28px;
-  margin-right: 250px;
+  width: 100%;
+  height: 42px;
+  margin-top: 24px; /* align with inputs */
+
   background: none;
   color: #4a90e2;
-  border: none;
+  border: 1px solid #4a90e2;
   cursor: pointer;
   font-weight: 600;
   border-radius: 6px;
-  border: 1px solid #4a90e2;
 
   &:hover {
     background-color: #4a90e2;
@@ -724,7 +729,96 @@ const AddDoctorButton = styled.button`
   }
 `;
 
-function PathLabBillEdit() {
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 400px;
+`;
+
+const ModalHeader = styled.h3`
+  margin-bottom: 16px;
+`;
+
+const ModalActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+`;
+const ErrorText = styled.span`
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #e53935; /* soft red */
+  font-weight: 500;
+
+  /* subtle animation */
+  opacity: 0;
+  transform: translateY(-2px);
+  animation: fadeIn 0.2s ease-in forwards;
+
+  @keyframes fadeIn {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #dc2626;
+  margin-left: 4px;
+`;
+
+const NextButton = styled.button`
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #357abd;
+  }
+`;
+
+const modalOverlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    background: "rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 9999,
+};
+
+const modalStyle = {
+    background: "#fff",
+    padding: "24px",
+    borderRadius: "8px",
+    width: "400px",
+    maxWidth: "90%",
+};
+
+const OPDBillEdit = () => {
     usePageTitle("Edit Billing");
     const navigate = useNavigate();
     const location = useLocation();
@@ -733,6 +827,7 @@ function PathLabBillEdit() {
     // Determine base path for navigation (handles both /billing and /opd/billing)
     const basePath = location.pathname.startsWith("/opd") ? "/opd/billing" : "/billing";
     const [originalInvoice, setOriginalInvoice] = useState(null);
+
     // Form state
     const [billingData, setBillingData] = useState({
         company: "",
@@ -758,7 +853,7 @@ function PathLabBillEdit() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-
+    const [doctorFeeMap, setDoctorFeeMap] = useState({});
     // Search states
     const [patientSearch, setPatientSearch] = useState("");
     const [patientResults, setPatientResults] = useState([]);
@@ -770,8 +865,6 @@ function PathLabBillEdit() {
     const [itemResults, setItemResults] = useState([]);
     const [showItemResults, setShowItemResults] = useState(false);
     const [searchingItem, setSearchingItem] = useState(false);
-    const [showPHCOnly, setShowPHCOnly] = useState(false);
-    const [doctorFeeMap, setDoctorFeeMap] = useState({});
     // Dropdown options
     const [practitioners, setPractitioners] = useState([]);
     const [serviceUnits, setServiceUnits] = useState([]);
@@ -781,11 +874,20 @@ function PathLabBillEdit() {
     const [doctorResults, setDoctorResults] = useState([]);
     const [showDoctorResults, setShowDoctorResults] = useState(false);
     const [searchingDoctor, setSearchingDoctor] = useState(false);
-    const [showAgentInfo, setShowAgentInfo] = useState(false);
-    const [employees, setEmployees] = useState([]);
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
-    const [loadingEmployees, setLoadingEmployees] = useState(false);
-    const companyCode = localStorage.getItem('company_abbreviation') || '';
+    const [availableDoctors, setAvailableDoctors] = useState([]);
+    const [loadingDoctors, setLoadingDoctors] = useState(false);
+    const [isAddDoctorOpen, setIsAddDoctorOpen] = useState(false);
+    const [genderOptions, setGenderOptions] = useState([]);
+    const [newDoctorData, setNewDoctorData] = useState({
+        first_name: "",
+        last_name: "",
+        gender: "",
+        practitioner_type: "External",
+        custom_registration_number: "",
+        custom_specializedqualification: "",
+        status: "Active",
+    });
+    const [creatingDoctor, setCreatingDoctor] = useState(false);
 
     const fetchInvoice = async () => {
         try {
@@ -854,6 +956,38 @@ function PathLabBillEdit() {
             fetchInvoice();
         }
     }, [id]);
+
+    useEffect(() => {
+        fetchAvailableDoctors(billingData.company, billingData.posting_date);
+    }, [billingData.company, billingData.posting_date]);
+
+    const fetchAvailableDoctors = async (company, date) => {
+        if (!company || !date) {
+            setAvailableDoctors([]);
+            return;
+        }
+
+        try {
+            setLoadingDoctors(true);
+
+            const response = await fetch(
+                `https://midl.automedai.in/doctor_room/assignments/by-company-date?company=${encodeURIComponent(company)}&schedule_date=${date}`
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                setAvailableDoctors(data.data || []);
+            } else {
+                setAvailableDoctors([]);
+            }
+        } catch (error) {
+            console.error("Error fetching available doctors:", error);
+            setAvailableDoctors([]);
+        } finally {
+            setLoadingDoctors(false);
+        }
+    };
 
     // Fetch dropdown options on mount
     useEffect(() => {
@@ -980,6 +1114,19 @@ function PathLabBillEdit() {
 
     const fetchDropdownOptions = async () => {
         try {
+
+            const fetchGenderOptions = await fetch("https://hms.automedai.in/api/resource/Gender", {
+                headers: {
+                    Accept: "application/json",
+                },
+                credentials: "include",
+            });
+            const data = await fetchGenderOptions.json();
+            if (data && data.data) {
+                console.log("Gender options loaded:", data.data);
+                setGenderOptions(data.data);
+            }
+
             // Fetch practitioners
             const practitionerRes = await apiService.get(API_ENDPOINTS.PRACTITIONERS.LIST, {
                 fields: '["name", "practitioner_name"]',
@@ -1057,14 +1204,19 @@ function PathLabBillEdit() {
         const applyDoctorFee = async () => {
             const doctorId = billingData.ref_practitioner?.id;
             if (!doctorId) return;
-            if (items.length === 0) return;
+
+            // ✅ Only proceed if consultation item exists
+            const hasConsultationItem = items.some(
+                (item) => item.item === "STO-ITEM-2025-00539"
+            );
+
+            if (!hasConsultationItem) return;
 
             const fee = await fetchDoctorFee(billingData.company, doctorId);
             if (!fee) return;
 
             setItems((prevItems) => {
-                const updated = prevItems.map((item) => {
-                    // ✅ Apply fee ONLY for consultation item
+                return prevItems.map((item) => {
                     if (item.item === "STO-ITEM-2025-00539") {
                         const qty = parseFloat(item.qty) || 1;
 
@@ -1074,53 +1226,13 @@ function PathLabBillEdit() {
                             amount: fee * qty,
                         };
                     }
-
-                    // ❌ Do NOT touch other items
                     return item;
                 });
-
-                return updated;
             });
         };
 
         applyDoctorFee();
-    }, [billingData.ref_practitioner?.id, billingData.company]);
-
-    const fetchEmployees = async () => {
-        try {
-            setLoadingEmployees(true);
-
-            const res = await fetch(
-                'https://hms.automedai.in/api/resource/Employee?fields=["name","user_id","employee_name"]',
-                {
-                    headers: { Accept: "application/json" },
-                    credentials: "include",
-                }
-            );
-
-            const data = await res.json();
-
-            if (data?.data) {
-                setEmployees(data.data);
-            }
-        } catch (err) {
-            console.error("Error fetching employees:", err);
-        } finally {
-            setLoadingEmployees(false);
-        }
-    };
-
-    useEffect(() => {
-        if (showAgentInfo && employees.length === 0) {
-            fetchEmployees();
-        }
-    }, [showAgentInfo]);
-
-    useEffect(() => {
-        if (!showAgentInfo) {
-            setSelectedEmployee(null);
-        }
-    }, [showAgentInfo]);
+    }, [billingData.ref_practitioner?.id, billingData.company, items]);
 
     // Debounced patient search
     const searchPatients = useCallback(async (query) => {
@@ -1171,24 +1283,6 @@ function PathLabBillEdit() {
         }
     }, []);
 
-    const getLockedCategory = useCallback(() => {
-        const validItems = items.filter(
-            (item) =>
-                item.item &&
-                item.item !== "STO-ITEM-2025-00539"
-        );
-
-        if (validItems.length === 0) return null;
-
-        const firstItemName = validItems[0].itemName?.toUpperCase() || "";
-
-        if (firstItemName.startsWith("LAB")) return "LAB";
-        if (firstItemName.startsWith("PLB")) return "PLB";
-        if (firstItemName.startsWith("PHC")) return "PHC";
-
-        return null;
-    }, [items]);
-
     // Debounced item search
     const searchItems = useCallback(async (query) => {
         if (!query || query.length < 2) {
@@ -1200,111 +1294,24 @@ function PathLabBillEdit() {
         setSearchingItem(true);
 
         try {
-            let finalQuery = query.trim();
-
-            // -----------------------------
-            // EMPLOYEE MODE (HIGHEST PRIORITY)
-            // -----------------------------
-            if (showAgentInfo) {
-                const cleanedQuery = query
-                    .trim()
-                    .replace(/^(plb|lab|phc)-?\s*/i, "");
-
-                finalQuery = `PLB- ${cleanedQuery}`;
-            }
-
-            // Normalize prefix (PLB / LAB / PHC)
-            const prefixMatch = finalQuery.match(/^(plb|lab|phc)\s+/i);
-
-            if (prefixMatch) {
-                const prefix = prefixMatch[1].toUpperCase();
-                finalQuery = finalQuery.replace(/^(plb|lab|phc)\s+/i, `${prefix}- `);
-            }
-            const lockedCategory = getLockedCategory();
-
-            // -----------------------------
-            // PHC ONLY MODE
-            // -----------------------------
-            if (showPHCOnly) {
-                finalQuery = `PHC- ${query.trim()}`;
-            }
-            // -----------------------------
-            // LOCKED CATEGORY MODE
-            // -----------------------------
-            else if (lockedCategory) {
-                const cleanedQuery = query
-                    .trim()
-                    .replace(/^(plb|lab|phc)-?\s*/i, "");
-
-                finalQuery = `${lockedCategory}- ${cleanedQuery}`;
-            }
-
             const response = await apiService.get(API_ENDPOINTS.ITEMS.SEARCH, {
                 doctype: "Item",
-                txt: finalQuery,
+                txt: query.trim(),
                 page_length: 10,
             });
 
             let results = response.data?.results || response.data?.message || [];
 
-            console.log("📊 Search results data:", results);
-            console.log("📋 Processed search results:", results);
+            // ✅ FILTER: Exclude LAB, PHC, PLB
+            results = results.filter((item) => {
+                const desc = item.description?.toUpperCase() || "";
 
-            // --------------------------------------
-            // Filter PHC visibility logic
-            // --------------------------------------
-            // Normalize typed query
-            const typed = query.trim().toUpperCase();
-
-            // ------------------------------------------------
-            // EMPLOYEE MODE (HIGHEST PRIORITY)
-            // ------------------------------------------------
-            if (showAgentInfo) {
-                results = results.filter((item) =>
-                    item.description?.toUpperCase().startsWith("PLB")
+                return !(
+                    desc.startsWith("LAB") ||
+                    desc.startsWith("PHC") ||
+                    desc.startsWith("PLB")
                 );
-            }
-
-            // ------------------------------------------------
-            // PHC MODE (Highest Priority)
-            // ------------------------------------------------
-            else if (showPHCOnly) {
-                results = results.filter((item) =>
-                    item.description?.toUpperCase().startsWith("PHC")
-                );
-            }
-
-            // ------------------------------------------------
-            // LOCKED CATEGORY MODE (Second Priority)
-            // ------------------------------------------------
-            else if (lockedCategory) {
-                results = results.filter((item) =>
-                    item.description?.toUpperCase().startsWith(lockedCategory)
-                );
-            }
-
-            // ------------------------------------------------
-            // NORMAL MODE (Default Behaviour)
-            // ------------------------------------------------
-            else {
-                // Never show PHC in normal mode
-                results = results.filter(
-                    (item) => !item.description?.toUpperCase().startsWith("PHC")
-                );
-
-                // If explicitly typing PLB → show PLB
-                if (typed.startsWith("PLB")) {
-                    results = results.filter((item) =>
-                        item.description?.toUpperCase().startsWith("PLB")
-                    );
-                }
-                // Otherwise → default LAB
-                else {
-                    results = results.filter((item) =>
-                        item.description?.toUpperCase().startsWith("LAB")
-                    );
-                }
-            }
+            });
 
             setItemResults(results);
             setShowItemResults(true);
@@ -1314,13 +1321,7 @@ function PathLabBillEdit() {
         } finally {
             setSearchingItem(false);
         }
-    }, [showPHCOnly, getLockedCategory]);
-
-    useEffect(() => {
-        if (showAgentInfo) {
-            setShowPHCOnly(false);
-        }
-    }, [showAgentInfo]);
+    }, []);
 
     // Debounce effect for patient search
     useEffect(() => {
@@ -1503,6 +1504,7 @@ function PathLabBillEdit() {
 
         return { totalQty, grossTotal, discountAmount, netTotal };
     };
+
     const paidToMapping = {
         Cash: {
             "Ramakrishna Mission Sargachi": "Cash - RKMS",
@@ -1515,33 +1517,12 @@ function PathLabBillEdit() {
             "Automed AI": "UPI-AAI - AMAI",
         }
     };
-    useEffect(() => {
-        setItems((prevItems) => {
-            let filteredItems;
 
-            if (showPHCOnly) {
-                filteredItems = prevItems.filter((item) =>
-                    item.itemName?.toUpperCase().startsWith("PHC")
-                );
-            } else {
-                filteredItems = prevItems.filter(
-                    (item) => !item.itemName?.toUpperCase().startsWith("PHC")
-                );
-            }
+    const requiresAppointment = items.some(
+        (item) => item.item === "STO-ITEM-2025-00539"
+    );
 
-            if (filteredItems.length === 0) {
-                return [{
-                    item: "",
-                    itemName: "",
-                    qty: 1,
-                    rate: 0,
-                    amount: 0,
-                }];
-            }
-
-            return filteredItems;
-        });
-    }, [showPHCOnly]);
+    // const showAddDoctorButton = items.length > 0 && !requiresAppointment;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -1595,46 +1576,46 @@ function PathLabBillEdit() {
             // =========================================
             // STEP B: EXTRACT LAB TEST IDS
             // =========================================
-            const labTestIds = invoiceItems
-                .filter(
-                    (item) =>
-                        item.reference_dt === "Lab Test" &&
-                        item.reference_dn
-                )
-                .map((item) => item.reference_dn);
+            // const labTestIds = invoiceItems
+            //     .filter(
+            //         (item) =>
+            //             item.reference_dt === "Lab Test" &&
+            //             item.reference_dn
+            //     )
+            //     .map((item) => item.reference_dn);
 
-            console.log("Lab Test IDs:", labTestIds);
+            // console.log("Lab Test IDs:", labTestIds);
 
             // =========================================
             // STEP C: FETCH SAMPLE COLLECTION IDS
             // =========================================
-            const sampleIds = [];
+            // const sampleIds = [];
 
-            for (const labTestId of labTestIds) {
+            // for (const labTestId of labTestIds) {
 
-                try {
+            //     try {
 
-                    const labTestRes = await apiService.get(
-                        `/resource/Lab Test/${labTestId}`
-                    );
+            //         const labTestRes = await apiService.get(
+            //             `/resource/Lab Test/${labTestId}`
+            //         );
 
-                    const sampleId = labTestRes.data?.data?.sample;
+            //         const sampleId = labTestRes.data?.data?.sample;
 
-                    if (sampleId) {
-                        sampleIds.push(sampleId);
-                    }
+            //         if (sampleId) {
+            //             sampleIds.push(sampleId);
+            //         }
 
-                } catch (err) {
+            //     } catch (err) {
 
-                    console.error(
-                        `Failed fetching Lab Test ${labTestId}`,
-                        err
-                    );
+            //         console.error(
+            //             `Failed fetching Lab Test ${labTestId}`,
+            //             err
+            //         );
 
-                }
-            }
+            //     }
+            // }
 
-            console.log("Sample IDs:", sampleIds);
+            // console.log("Sample IDs:", sampleIds);
 
             // =========================================
             // STEP D: FETCH PAYMENT ENTRY IDS
@@ -1700,111 +1681,7 @@ function PathLabBillEdit() {
                 }
             }
 
-            // =========================================
-            // STEP G: CANCEL LAB TESTS
-            // =========================================
-            for (const labTestId of labTestIds) {
-
-                try {
-
-                    console.log("Cancelling Lab Test:", labTestId);
-
-                    await apiService.put(
-                        `/resource/Lab Test/${labTestId}`,
-                        {
-                            docstatus: 2,
-                        }
-                    );
-
-                } catch (err) {
-
-                    console.error(
-                        `Failed cancelling Lab Test ${labTestId}`,
-                        err
-                    );
-
-                }
-            }
-
-            // =========================================
-            // STEP H: CANCEL SAMPLE COLLECTIONS
-            // =========================================
-            for (const sampleId of sampleIds) {
-
-                try {
-
-                    console.log(
-                        "Cancelling Sample Collection:",
-                        sampleId
-                    );
-
-                    await apiService.put(
-                        `/resource/Sample Collection/${sampleId}`,
-                        {
-                            docstatus: 2,
-                        }
-                    );
-
-                } catch (err) {
-
-                    console.error(
-                        `Failed cancelling Sample Collection ${sampleId}`,
-                        err
-                    );
-
-                }
-            }
-
-            // =========================================
-            // STEP I: DELETE LAB TESTS
-            // =========================================
-            for (const labTestId of labTestIds) {
-
-                try {
-
-                    console.log("Deleting Lab Test:", labTestId);
-
-                    await apiService.delete(
-                        `/resource/Lab Test/${labTestId}`
-                    );
-
-                } catch (err) {
-
-                    console.error(
-                        `Failed deleting Lab Test ${labTestId}`,
-                        err
-                    );
-
-                }
-            }
-
-            // =========================================
-            // STEP J: DELETE SAMPLE COLLECTIONS
-            // =========================================
-            for (const sampleId of sampleIds) {
-
-                try {
-
-                    console.log(
-                        "Deleting Sample Collection:",
-                        sampleId
-                    );
-
-                    await apiService.delete(
-                        `/resource/Sample Collection/${sampleId}`
-                    );
-
-                } catch (err) {
-
-                    console.error(
-                        `Failed deleting Sample Collection ${sampleId}`,
-                        err
-                    );
-
-                }
-            }
-
-            console.log("Old invoice cleanup completed");
+            console.log("Payment Entries cancelled");
 
             // ============ Step 1: Create Sales Invoice ============
             console.log("Step 1: Creating Sales Invoice...");
@@ -1833,9 +1710,6 @@ function PathLabBillEdit() {
             if (billingData.ref_practitioner?.id) {
                 invoicePayload.ref_practitioner = billingData.ref_practitioner?.id;
             }
-            // if (billingData.service_unit) {
-            //   invoicePayload.service_unit = billingData.service_unit;
-            // }
 
             const invoiceResponse = await apiService.post(API_ENDPOINTS.BILLING.CREATE, invoicePayload);
 
@@ -1853,6 +1727,80 @@ function PathLabBillEdit() {
                 docstatus: 1
             });
             console.log(`Step 2 Complete: Sales Invoice ${salesInvoiceId} submitted`);
+
+            // ============ Step 2.5: Create Appointment ============
+            let appointmentId = null;
+
+            if (requiresAppointment && billingData.ref_practitioner?.id) {
+                try {
+                    console.log("Step 2.5: Creating Patient Appointment...");
+
+                    const appointmentPayload = {
+                        doctype: "Patient Appointment",
+                        appointment_for: "Practitioner",
+                        appointment_based_on_check_in: 1,
+                        company: billingData.company,
+                        appointment_type: "Doctor Consultation",
+                        practitioner: billingData.ref_practitioner.id,
+                        patient: billingData.patient,
+                        appointment_date: billingData.posting_date,
+                        appointment_time: new Date().toTimeString().split(" ")[0],
+                        duration: "0",
+                        status: "Confirmed",
+                    };
+
+                    const appointmentRes = await apiService.post(
+                        "/resource/Patient Appointment",
+                        appointmentPayload
+                    );
+
+                    appointmentId = appointmentRes.data?.data?.name;
+
+                    console.log(`Step 2.5 Complete: Appointment ${appointmentId} created`);
+                } catch (err) {
+                    console.error("Appointment creation failed:", err);
+                    alert("Invoice created, but appointment failed ❌");
+                }
+            }
+
+            // ============ Step 2.6: Create Queue ============
+            if (requiresAppointment && appointmentId && billingData.ref_practitioner?.id) {
+                try {
+                    console.log("Step 2.6: Creating Queue Number...");
+
+                    const queuePayload = {
+                        appointment_id: appointmentId,
+                        doctor_id: billingData.ref_practitioner.id,
+                        company: billingData.company,
+                        patient_id: billingData.patient,
+                        appointment_date: billingData.posting_date,
+                    };
+
+                    const queueRes = await fetch(
+                        "https://midl.automedai.in/appointments/create",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Accept: "application/json",
+                            },
+                            body: JSON.stringify(queuePayload),
+                        }
+                    );
+
+                    const queueData = await queueRes.json();
+
+                    if (queueRes.ok) {
+                        console.log("Step 2.6 Complete: Queue created", queueData);
+                    } else {
+                        console.error("Queue creation failed:", queueData);
+                        alert("Appointment created, but queue failed ❌");
+                    }
+                } catch (err) {
+                    console.error("Queue creation error:", err);
+                    alert("Appointment created, but queue error ❌");
+                }
+            }
 
             // ============ Step 3: Create Payment Entry ============
             console.log("Step 3: Creating Payment Entry...");
@@ -1907,7 +1855,14 @@ function PathLabBillEdit() {
                 `Billing created successfully!\n\nSales Invoice: ${salesInvoiceId}` +
                 (paymentEntryId ? `\nPayment Entry: ${paymentEntryId}` : "\n(No payment needed)")
             );
-            // navigate(basePath);
+
+            // navigate(`/prescription/${billingData.patient}`, {
+            //     state: {
+            //         autoPrint: true,
+            //         selectedDoctor: billingData.ref_practitioner,
+            //         appointmentId: appointmentId,
+            //     }
+            // });
             navigate(-1);
 
         } catch (err) {
@@ -1934,6 +1889,80 @@ function PathLabBillEdit() {
         }
     };
 
+    const isEmpanelled = newDoctorData.practitioner_type === "Internal";
+
+    const createDoctor = async () => {
+        if (!newDoctorData.first_name) {
+            alert("Please fill all required fields.");
+            return;
+        }
+
+        if (isEmpanelled) {
+            if (
+                !newDoctorData.custom_specializedqualification ||
+                !newDoctorData.custom_registration_number
+            ) {
+                alert("Specialization and Registration Number are required for Empanelled doctors.");
+                return;
+            }
+        }
+        setCreatingDoctor(true);
+
+        try {
+            const response = await fetch(
+                "https://hms.automedai.in/api/resource/Healthcare Practitioner",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                    },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        doctype: "Healthcare Practitioner",
+                        ...newDoctorData,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const createdDoctor = data.data;
+
+                // Refresh list
+                await fetchDropdownOptions();
+
+                // Auto-select new doctor
+                setBillingData((prev) => ({
+                    ...prev,
+                    referringPractitioner: createdDoctor.name,
+                }));
+
+                // Reset modal
+                setIsAddDoctorOpen(false);
+                setNewDoctorData({
+                    first_name: "",
+                    last_name: "",
+                    gender: "",
+                    practitioner_type: "External",
+                    custom_registration_number: "",
+                    custom_specializedqualification: "",
+                    status: "Active",
+                });
+
+                alert("Doctor created successfully!");
+            } else {
+                alert(data.message || "Failed to create doctor.");
+            }
+        } catch (error) {
+            console.error("Error creating doctor:", error);
+            alert("Error creating doctor.");
+        } finally {
+            setCreatingDoctor(false);
+        }
+    };
+
     const practitionerOptions = practitioners.map((p) => ({
         value: p.name,
         label: p.practitioner_name || p.name,
@@ -1945,7 +1974,7 @@ function PathLabBillEdit() {
         if (activeResultIndex >= 0 && resultRefs.current[activeResultIndex]) {
             resultRefs.current[activeResultIndex].scrollIntoView({
                 block: "nearest",
-                behavior: "smooth", // optional (remove if you want instant)
+                behavior: "smooth",
             });
         }
     }, [activeResultIndex]);
@@ -1953,6 +1982,71 @@ function PathLabBillEdit() {
     useEffect(() => {
         resultRefs.current = [];
     }, [itemResults]);
+
+    const getCurrentISTTime = () => {
+        const now = new Date();
+        const istOffset = 5.5 * 60;
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        return new Date(utc + istOffset * 60000);
+    };
+
+    const getTodayIST = () => {
+        const now = new Date();
+        const istOffset = 5.5 * 60;
+        const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+        return new Date(utc + istOffset * 60000)
+            .toISOString()
+            .split("T")[0];
+    };
+
+    const filteredDoctors = availableDoctors.filter((doc) => {
+        if (!doc.to_time) return false;
+
+        const today = getTodayIST();
+
+        if (billingData.posting_date !== today) return true;
+
+        const nowIST = getCurrentISTTime();
+
+        const [hours, minutes] = doc.to_time.split(":");
+        const doctorEndTime = new Date(nowIST);
+        doctorEndTime.setHours(parseInt(hours));
+        doctorEndTime.setMinutes(parseInt(minutes));
+        doctorEndTime.setSeconds(0);
+
+        return nowIST <= doctorEndTime;
+    });
+
+    const mergedDoctorResults = useMemo(() => {
+        // If user is typing → show search results
+        if (doctorSearch && doctorSearch.length >= 2) {
+            return doctorResults.map((doc) => ({
+                id: doc.name,
+                name: doc.practitioner_name,
+                mobile: doc.mobile_phone,
+                isAvailable: false,
+            }));
+        }
+
+        // If empty → show available doctors
+        return filteredDoctors.map((doc) => ({
+            id: doc.doctor_id,
+            name: doc.doctor_name,
+            mobile: "",
+            from_time: doc.from_time,
+            to_time: doc.to_time,
+            room: doc.room_name,
+            isAvailable: true,
+        }));
+    }, [doctorSearch, doctorResults, filteredDoctors]);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setAvailableDoctors((prev) => [...prev]); // trigger re-filter
+        }, 60000); // every 1 min
+
+        return () => clearInterval(interval);
+    }, []);
 
     return (
         <Layout>
@@ -1962,7 +2056,7 @@ function PathLabBillEdit() {
                         <ArrowLeft size={16} />
                         Back
                     </SearchButton>
-                    <Title>Edit Billing</Title>
+                    <Title>Add Billing</Title>
                 </div>
 
                 {error && <ErrorMessage>{error}</ErrorMessage>}
@@ -1970,22 +2064,7 @@ function PathLabBillEdit() {
                 <form onSubmit={handleSubmit}>
                     {/* Patient & Company Information */}
                     <FormSection>
-                        <div style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center"
-                        }}>
-                            <SectionTitle>Patient & Company Information</SectionTitle>
-
-                            <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 500 }}>
-                                <input
-                                    type="checkbox"
-                                    checked={showAgentInfo}
-                                    onChange={(e) => setShowAgentInfo(e.target.checked)}
-                                />
-                                Add Employee Info
-                            </label>
-                        </div>
+                        <SectionTitle>Patient & Company Information</SectionTitle>
                         <FormGrid>
                             <FormGroup>
                                 <FormLabel>
@@ -2005,7 +2084,7 @@ function PathLabBillEdit() {
                                             placeholder="Search patient..."
                                             value={patientSearch}
                                             onChange={(e) => setPatientSearch(e.target.value)}
-                                            onFocus={() => patientSearch.length >= 2 && setShowPatientResults(true)}
+                                            onFocus={() => setShowPatientResults(true)}
                                             onBlur={() => setTimeout(() => setShowPatientResults(false), 200)}
                                         />
                                         <SearchIcon>
@@ -2041,9 +2120,25 @@ function PathLabBillEdit() {
                                 )}
                             </FormGroup>
 
+                            {/* <FormGroup>
+                <FormLabel>Company</FormLabel>
+                <FormSelect
+                  name="company"
+                  value={billingData.company}
+                  onChange={handleBillingChange}
+                >
+                  <option value="">Select company</option>
+                  {companies.map((c) => (
+                    <option key={c.name} value={c.name}>
+                      {c.company_name || c.name}
+                    </option>
+                  ))}
+                </FormSelect>
+              </FormGroup> */}
+
                             <FormGroup>
                                 <FormLabel>
-                                    Referring Practitioner
+                                    Referring Practitioner<RequiredStar>*</RequiredStar>
                                 </FormLabel>
 
                                 {billingData.ref_practitioner?.id ? (
@@ -2069,7 +2164,7 @@ function PathLabBillEdit() {
                                             value={doctorSearch}
                                             onChange={(e) => setDoctorSearch(e.target.value)}
                                             onFocus={() =>
-                                                doctorSearch.length >= 2 && setShowDoctorResults(true)
+                                                setShowDoctorResults(true)
                                             }
                                             onBlur={() => setTimeout(() => setShowDoctorResults(false), 200)}
                                         />
@@ -2080,28 +2175,49 @@ function PathLabBillEdit() {
 
                                         {showDoctorResults && (
                                             <SearchResults>
-                                                {doctorResults.length > 0 ? (
-                                                    doctorResults.map((doc, index) => (
+                                                {mergedDoctorResults.length > 0 ? (
+                                                    mergedDoctorResults.map((doc, index) => (
                                                         <SearchResultItem
                                                             key={index}
                                                             onMouseDown={() => {
                                                                 setBillingData((prev) => ({
                                                                     ...prev,
                                                                     ref_practitioner: {
-                                                                        id: doc.name,
-                                                                        name: doc.practitioner_name,
+                                                                        id: doc.id,
+                                                                        name: doc.name,
                                                                     },
                                                                 }));
                                                                 setDoctorSearch("");
                                                                 setShowDoctorResults(false);
                                                             }}
                                                         >
-                                                            {doc.practitioner_name} ({doc.mobile_phone || "No Mobile"})
+                                                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                                                <span>
+                                                                    {doc.name}
+                                                                    {doc.mobile && ` (${doc.mobile})`}
+                                                                </span>
+
+                                                                {doc.isAvailable && (
+                                                                    <span style={{ color: "green", fontSize: "12px" }}>
+                                                                        • Available Today
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {doc.isAvailable && (
+                                                                <div style={{ fontSize: "11px", color: "#666" }}>
+                                                                    {doc.room} | {doc.from_time?.slice(0, 5)} - {doc.to_time?.slice(0, 5)}
+                                                                </div>
+                                                            )}
                                                         </SearchResultItem>
                                                     ))
                                                 ) : (
                                                     <SearchResultEmpty>
-                                                        {searchingDoctor ? "Searching..." : "No doctors found"}
+                                                        {searchingDoctor
+                                                            ? "Searching..."
+                                                            : doctorSearch
+                                                                ? "No doctors found"
+                                                                : "No doctors available today"}
                                                     </SearchResultEmpty>
                                                 )}
                                             </SearchResults>
@@ -2110,7 +2226,21 @@ function PathLabBillEdit() {
                                 )}
                             </FormGroup>
 
-                            <FormGroup>
+                            {!requiresAppointment && (
+                                <>
+                                    <FormGroup>
+                                        <AddDoctorButton
+                                            type="button"
+                                            onClick={() => setIsAddDoctorOpen(true)}
+                                        >
+                                            + Add New Doctor
+                                        </AddDoctorButton>
+
+                                    </FormGroup>
+                                </>
+                            )}
+
+                            <FormGroupD>
                                 <FormLabel>Posting Date</FormLabel>
                                 <FormInput
                                     type="date"
@@ -2119,40 +2249,7 @@ function PathLabBillEdit() {
                                     onChange={handleBillingChange}
                                     disabled
                                 />
-                            </FormGroup>
-
-                            {showAgentInfo && (
-                                <>
-                                    <FormGroup>
-                                        <FormLabel>Select Employee</FormLabel>
-
-                                        <Select
-                                            options={employees.map(emp => ({
-                                                label: emp.employee_name,
-                                                value: emp.name,
-                                            }))}
-                                            value={
-                                                employees
-                                                    .map(emp => ({
-                                                        label: emp.employee_name,
-                                                        value: emp.name,
-                                                    }))
-                                                    .find(opt => opt.value === selectedEmployee) || null
-                                            }
-                                            onChange={(selected) =>
-                                                setSelectedEmployee(selected ? selected.value : null)
-                                            }
-                                            placeholder={loadingEmployees ? "Loading..." : "Select employee"}
-                                            isSearchable
-                                            isClearable
-                                        />
-                                    </FormGroup>
-
-                                    <AddDoctorButton type="button">
-                                        + Add Employee
-                                    </AddDoctorButton>
-                                </>
-                            )}
+                            </FormGroupD>
 
                         </FormGrid>
 
@@ -2164,20 +2261,6 @@ function PathLabBillEdit() {
                             <ItemsTitle>Items</ItemsTitle>
 
                             <ItemButtons style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-
-                                {!showAgentInfo && (
-                                    billingData.company?.toLowerCase() === "ramakrishna mission sargachi" ||
-                                    billingData.company?.toLowerCase() === "alfa diagnostic centre & polyclinic"
-                                ) && (
-                                        <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "16px", fontWeight: "600", color: "#333333" }}>
-                                            <input
-                                                type="checkbox"
-                                                checked={showPHCOnly}
-                                                onChange={(e) => setShowPHCOnly(e.target.checked)}
-                                            />
-                                            Show Government Rate Only
-                                        </label>
-                                    )}
 
                                 <IconButton type="button" onClick={addItem}>
                                     <Plus />
@@ -2313,7 +2396,7 @@ function PathLabBillEdit() {
                     </ItemsSection>
 
                     {/* Bottom Section - Calculations & Payment */}
-                    <BottomSection style={{ marginTop: "8px" }}>
+                    <BottomSection style={{ marginTop: "24px" }}>
                         <CalculationCard>
                             <CardTitle>Calculation</CardTitle>
                             <CalculationRow>
@@ -2402,9 +2485,131 @@ function PathLabBillEdit() {
                         </SubmitButton>
                     </ActionButtons>
                 </form>
+                {isAddDoctorOpen && (
+                    <ModalOverlay>
+                        <ModalContent>
+                            <ModalHeader>Add New Doctor</ModalHeader>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>First Name <RequiredAsterisk>*</RequiredAsterisk></FormLabel>
+                                <FormInput
+                                    type="text"
+                                    placeholder="Enter first name (Include Dr.)"
+                                    value={newDoctorData.first_name}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            first_name: e.target.value,
+                                        })
+                                    }
+                                    required
+                                />
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormInput
+                                    type="text"
+                                    value={newDoctorData.last_name}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            last_name: e.target.value,
+                                        })
+                                    }
+                                />
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>Gender</FormLabel>
+                                <FormSelect
+                                    value={newDoctorData.gender}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            gender: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <option value="">Select</option>
+                                    {genderOptions.map((option) => (
+                                        <option key={option.name} value={option.name}>
+                                            {option.name}
+                                        </option>
+                                    ))}
+                                </FormSelect>
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>Practitioner Type</FormLabel>
+                                <FormSelect
+                                    value={newDoctorData.practitioner_type}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            practitioner_type: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <option value="External">External</option>
+                                    <option value="Internal">Empanelled</option>
+                                </FormSelect>
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "16px" }}>
+                                <FormLabel>
+                                    Specialization / Qualification
+                                    {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                                </FormLabel>
+                                <FormInput
+                                    type="text"
+                                    placeholder="Enter specialization or qualification"
+                                    value={newDoctorData.custom_specializedqualification}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            custom_specializedqualification: e.target.value,
+                                        })
+                                    }
+                                />
+                            </FormGroup>
+
+                            <FormGroup style={{ marginBottom: "20px" }}>
+                                <FormLabel>
+                                    Registration Number / MCI ID
+                                    {isEmpanelled && <RequiredAsterisk>*</RequiredAsterisk>}
+                                </FormLabel>
+                                <FormInput
+                                    type="text"
+                                    placeholder="Enter registration number"
+                                    value={newDoctorData.custom_registration_number}
+                                    onChange={(e) =>
+                                        setNewDoctorData({
+                                            ...newDoctorData,
+                                            custom_registration_number: e.target.value,
+                                        })
+                                    }
+                                />
+                            </FormGroup>
+
+                            <ModalActions>
+                                <BackButton type="button" onClick={() => setIsAddDoctorOpen(false)}>
+                                    Cancel
+                                </BackButton>
+                                <NextButton
+                                    type="submit"
+                                    onClick={createDoctor}
+                                    disabled={creatingDoctor}
+                                >
+                                    {creatingDoctor ? "Creating..." : "Create Doctor"}
+                                </NextButton>
+                            </ModalActions>
+                        </ModalContent>
+                    </ModalOverlay>
+                )}
             </BillingContainer>
-        </Layout>
+        </Layout >
     );
 };
 
-export default PathLabBillEdit
+export default OPDBillEdit;
